@@ -76,6 +76,6 @@ public class Console extends JFrame {
     }
 
     public void print(String output) {
-    	outputArea.append(output);
+    	outputArea.append(output+"\n");
     }
 }
