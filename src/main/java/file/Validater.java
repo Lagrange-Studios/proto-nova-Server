@@ -28,6 +28,8 @@ public class Validater {
 			File map1 = new File("worldRoot/planes/map1");
 			map1.mkdir();
 			
+			Creator.createEmptyPlane(map1, 1);
+			
 			File entities = new File("worldRoot/planes/map1/entities");
 			entities.mkdir();
 		}

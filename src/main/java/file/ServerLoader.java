@@ -25,7 +25,7 @@ public class ServerLoader {
 	
 	private Plane loadPlane(File directory) {
 		
-		File plane = new File(directory.getPath() + "plane.data");
+		File plane = new File(directory.getPath() + "/plane.data");
 		
 		try {
 			byte[] array = Files.readAllBytes(Paths.get(plane.getPath()));
