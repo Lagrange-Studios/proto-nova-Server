@@ -1,17 +1,25 @@
 package main;
 
 import javax.swing.*;
+
+import socket.Player;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.time.LocalTime;
+import java.util.ArrayList;
 
 @SuppressWarnings("serial")
 public class Console extends JFrame {
     private JTextArea outputArea;
     private JTextField inputField;
+    private Server server;
 
-    public Console() {
+    public Console(Server server) {
+    	
+    	this.server = server;
+    	
         setTitle("Proto Nova Server Console");
         setSize(600, 400);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -64,11 +72,31 @@ public class Console extends JFrame {
                 outputArea.append("Available commands:\n");
                 outputArea.append(" - help: Show this help message\n");
                 outputArea.append(" - time: Show current system time\n");
+                outputArea.append(" - kick [name]: Kicks the player with the correlated name\n");
                 outputArea.append(" - echo [text]: Repeat the text\n\n");
             } else if (input.equalsIgnoreCase("time")) {
                 outputArea.append("Current time: " + LocalTime.now() + "\n\n");
             } else if (input.startsWith("echo ")) {
                 outputArea.append(input.substring(5) + "\n\n");
+            } else if (input.startsWith("kick ")) {
+            	String name = input.substring(5);
+            	ArrayList<Player> playerList = server.getPlayers();
+            	boolean found = false;
+            	
+            	for (int i=0;i<playerList.size();i++) {
+            		if (playerList.get(i).getUsername().equals(name)) {
+            			playerList.get(i).disconnect();
+            			playerList.remove(i);
+
+                    	outputArea.append("Kicked "+name+"\n");
+            			found = true;
+            			break;
+            		}
+            	}
+            	
+            	if (!found) {
+                	outputArea.append("Failed to kick "+name+"\n");
+            	}
             } else {
                 outputArea.append("Unknown command. Type 'help' for options.\n\n");
             }

@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.SwingUtilities;
 
 import enums.Player.State;
+import file.ServerLoader;
 import protonova.protobuf.PlaneProto.Plane;
 import socket.PacketMaker;
 import socket.Player;
@@ -21,12 +22,13 @@ public class Server {
 	private static final int TPS = 20;
 	private PacketMaker packetMaker = new PacketMaker(serverSocket);
 	private HashMap<Integer, Plane> serverData;
+	private ServerLoader serverLoader;
 	
 	public Server() {
 		
 		// start console
 		SwingUtilities.invokeLater(() -> {
-            console = new Console();
+            console = new Console(this);
             console.setVisible(true);
         });
 		
@@ -37,6 +39,9 @@ public class Server {
 				e.printStackTrace();
 			}
 		}
+		
+		serverLoader = new ServerLoader(console);
+		serverData = serverLoader.loadWorld();
 		
 		serverSocket = new ServerSocketHandler(console);
 		startThread();
@@ -64,5 +69,9 @@ public class Server {
 				playerList.remove(i);
 			}
 		}
+	}
+	
+	public ArrayList<Player> getPlayers() {
+		return serverSocket.getPlayerList();
 	}
 }

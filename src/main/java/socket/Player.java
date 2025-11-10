@@ -55,9 +55,9 @@ public class Player {
 	    Thread thread = new Thread(() -> {
 	        try {
 	            while (state != State.DISCONNECTED) {
-	                System.out.println("started listen");
+	            	
 	                int length = input.readInt(); // length of incoming message
-	                System.out.println("Got length");
+	                
 	                byte[] data = new byte[length];
 	                input.readFully(data); // read exactly 'length' bytes
 
@@ -66,6 +66,9 @@ public class Player {
 		                UserDataProto.UserData user = UserDataProto.UserData.parseFrom(data);
 		                username = user.getUsername();
 		                console.print("Received user: " + user.getUsername());
+	                }
+	                else {
+	                	
 	                }
 	            }
 	        } catch (IOException e) {
