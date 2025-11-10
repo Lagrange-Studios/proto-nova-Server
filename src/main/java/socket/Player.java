@@ -11,6 +11,7 @@ import java.net.Socket;
 
 import main.Console;
 import protonova.protobuf.UserDataProto;
+import enums.Player.State;
 
 public class Player {
 	private Socket socket;
@@ -18,7 +19,7 @@ public class Player {
 	
 	private DataInputStream input;
 	private DataOutputStream output;
-	private boolean connected = false;
+	private State state = State.DISCONNECTED;
 	private Console console;
 	
 	public Player(Socket socket, Console console) {
@@ -28,7 +29,7 @@ public class Player {
 		try {
 			input = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
 			output = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
-			connected = true;
+			state = State.AWAITING_CLIENT_PACKET;
 			listen();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -40,27 +41,32 @@ public class Player {
 			input.close();
 			output.close();
 			socket.close();
-			connected = false;
+			state = State.DISCONNECTED;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public boolean isConnected() {
-		return connected;
+	public State getState() {
+		return state;
 	}
 	
 	public void listen() {
 	    Thread thread = new Thread(() -> {
 	        try {
-	            while (connected) {
+	            while (state != State.DISCONNECTED) {
+	                System.out.println("started listen");
 	                int length = input.readInt(); // length of incoming message
+	                System.out.println("Got length");
 	                byte[] data = new byte[length];
 	                input.readFully(data); // read exactly 'length' bytes
 
 	                // Deserialize
-	                UserDataProto.UserData user = UserDataProto.UserData.parseFrom(data);
-	                console.print("Received user: " + user.getUsername());
+	                if (username == null ) {
+		                UserDataProto.UserData user = UserDataProto.UserData.parseFrom(data);
+		                username = user.getUsername();
+		                console.print("Received user: " + user.getUsername());
+	                }
 	            }
 	        } catch (IOException e) {
 	            console.print("Connection closed or error: " + e.getMessage());
@@ -70,4 +76,7 @@ public class Player {
 	    thread.start();
 	}
 
+	public String getUsername() {
+		return username;
+	}
 }

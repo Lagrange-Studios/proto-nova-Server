@@ -1,12 +1,16 @@
 package main;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import javax.swing.SwingUtilities;
 
+import enums.Player.State;
+import protonova.protobuf.PlaneProto.Plane;
+import socket.PacketMaker;
 import socket.Player;
 import socket.ServerSocketHandler;
 
@@ -15,6 +19,8 @@ public class Server {
 	public Console console;
 	private ServerSocketHandler serverSocket;
 	private static final int TPS = 20;
+	private PacketMaker packetMaker = new PacketMaker(serverSocket);
+	private HashMap<Integer, Plane> serverData;
 	
 	public Server() {
 		
@@ -54,7 +60,7 @@ public class Server {
 		for (int i=0;i<playerList.size();i++) {
 			Player player = playerList.get(i);
 			
-			if (!player.isConnected()) {
+			if (player.getState() == State.DISCONNECTED) {
 				playerList.remove(i);
 			}
 		}
