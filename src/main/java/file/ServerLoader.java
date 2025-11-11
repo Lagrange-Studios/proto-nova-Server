@@ -94,6 +94,7 @@ public class ServerLoader {
 				byte[] entityBytes = Files.readAllBytes(Paths.get(entities[i].getPath()));
 				
 				Entity entity = Entity.parseFrom(entityBytes);
+				allEntities.put(entity.getId(), entity);
 				
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -102,6 +103,6 @@ public class ServerLoader {
 					
 		}
 		
-		return null;
+		return allEntities;
 	}
 }
