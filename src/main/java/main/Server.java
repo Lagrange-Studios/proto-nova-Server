@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.swing.SwingUtilities;
 
+import entity.EntityManager;
 import enums.Player.State;
 import file.ServerLoader;
 import protonova.protobuf.PlaneProto.Plane;
@@ -20,9 +21,10 @@ public class Server {
 	public Console console;
 	private ServerSocketHandler serverSocket;
 	private static final int TPS = 20;
-	private PacketMaker packetMaker = new PacketMaker(serverSocket);
-	private HashMap<Integer, Plane> serverData;
 	private ServerLoader serverLoader;
+	private PacketMaker packetMaker;
+	private HashMap<Integer, Plane> planes;
+	private EntityManager entityManager;
 	
 	public Server() {
 		
@@ -41,10 +43,13 @@ public class Server {
 		}
 		
 		serverLoader = new ServerLoader(console);
-		serverData = serverLoader.loadWorld();
+		planes = serverLoader.loadWorld();
+		entityManager = new EntityManager(serverLoader.loadEntities());
 		
 		serverSocket = new ServerSocketHandler(console);
 		startThread();
+		
+		packetMaker = new PacketMaker(serverSocket,serverLoader);
 	}
 	
 	private void startThread() {
@@ -67,6 +72,10 @@ public class Server {
 			
 			if (player.getState() == State.DISCONNECTED) {
 				playerList.remove(i);
+				// TODO: before removing save the player data
+			}
+			else {
+				packetMaker.SendPacket(player);
 			}
 		}
 	}

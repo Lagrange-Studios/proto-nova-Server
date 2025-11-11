@@ -13,7 +13,7 @@ public class Validater {
 	}
 	
 	public void validateWorldFiles() {
-		
+		System.out.println("this is dumb");
 		File root = new File("worldRoot");
 		if (!root.exists()) {
 			console.print("Missing world root files");
@@ -29,15 +29,19 @@ public class Validater {
 			map1.mkdir();
 			
 			Creator.createEmptyPlane(map1, 1);
-			
-			File entities = new File("worldRoot/planes/map1/entities");
-			entities.mkdir();
 		}
 		
 		File playerData = new File("worldRoot/playerData");
 		if (!playerData.exists()) {
 			console.print("WARNING: no player data found");
 			playerData.mkdir();
+		}
+		
+		File entities = new File("worldRoot/entities");
+		System.out.println(entities.exists());
+		if (!entities.exists()) {
+			console.print("WARNING: no entity data found");
+			entities.mkdir();
 		}
 		
 		console.print("Validated world files");

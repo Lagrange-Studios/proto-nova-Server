@@ -6,12 +6,15 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 
 import main.Console;
+import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.PlaneProto;
 import protonova.protobuf.PlaneProto.Plane;
+import protonova.protobuf.PlayerDataProto.PlayerData;
 
 public class ServerLoader {
 
@@ -57,5 +60,48 @@ public class ServerLoader {
 		}
 		
 		return planes;
+	}
+	
+	public PlayerData getPlayerData(String username) {
+		
+		File[] data = new File("worldRoot/playerData").listFiles();
+		
+		for (int i=0;i<data.length;i++) {
+			try {
+				PlayerData playerData = PlayerData.parseFrom(Files.readAllBytes(Path.of(data[i].getPath())));
+				
+				if (playerData.getUsername().equals(username)) {
+					return playerData;
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		// TODO: get the real entity id;
+		return Creator.createNewPlayer(username, 0);
+	}
+
+	public HashMap<Integer, Entity> loadEntities() {
+		
+		HashMap<Integer, Entity> allEntities = new HashMap<Integer, Entity>();
+		
+		File[] entities = new File("worldRoot/").listFiles();
+		
+		for (int i=0;i<entities.length;i++) {
+	
+			try {
+				byte[] entityBytes = Files.readAllBytes(Paths.get(entities[i].getPath()));
+				
+				Entity entity = Entity.parseFrom(entityBytes);
+				
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+					
+		}
+		
+		return null;
 	}
 }

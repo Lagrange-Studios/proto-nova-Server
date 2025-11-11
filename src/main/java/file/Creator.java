@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import protonova.protobuf.PlaneProto.Plane;
+import protonova.protobuf.PlayerDataProto.PlayerData;
 
 public class Creator {
 
@@ -22,5 +23,13 @@ public class Creator {
 			e.printStackTrace();
 		}
 		
+	}
+	
+	public static PlayerData createNewPlayer(String username, int id) {
+		PlayerData data = PlayerData.newBuilder()
+				.setUsername(username)
+				.setEntityId(id)
+				.build();
+		return data;
 	}
 }

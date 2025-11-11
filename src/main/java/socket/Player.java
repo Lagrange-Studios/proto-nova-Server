@@ -10,6 +10,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 import main.Console;
+import protonova.protobuf.PlayerDataProto.PlayerData;
 import protonova.protobuf.UserDataProto;
 import enums.Player.State;
 
@@ -21,6 +22,7 @@ public class Player {
 	private DataOutputStream output;
 	private State state = State.DISCONNECTED;
 	private Console console;
+	public PlayerData data;
 	
 	public Player(Socket socket, Console console) {
 		this.socket = socket;
