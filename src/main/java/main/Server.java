@@ -44,7 +44,7 @@ public class Server {
 		
 		serverLoader = new ServerLoader(console);
 		planes = serverLoader.loadWorld();
-		entityManager = new EntityManager(serverLoader.loadEntities());
+		entityManager = new EntityManager(serverLoader);
 		
 		serverSocket = new ServerSocketHandler(console);
 		startThread();
