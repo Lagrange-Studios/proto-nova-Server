@@ -97,6 +97,7 @@ public class Player {
 			
 			output.write(bytes);
 			output.flush();
+			console.print("Sent Packet");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
