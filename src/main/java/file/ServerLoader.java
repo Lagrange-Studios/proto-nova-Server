@@ -86,7 +86,7 @@ public class ServerLoader {
 		
 		HashMap<Integer, Entity> allEntities = new HashMap<Integer, Entity>();
 		
-		File[] entities = new File("worldRoot/").listFiles();
+		File[] entities = new File("worldRoot/entities").listFiles();
 		
 		for (int i=0;i<entities.length;i++) {
 	
@@ -98,9 +98,7 @@ public class ServerLoader {
 				
 			} catch (IOException e) {
 				e.printStackTrace();
-			}
-			
-					
+			}	
 		}
 		
 		return allEntities;

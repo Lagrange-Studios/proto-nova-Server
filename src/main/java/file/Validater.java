@@ -13,7 +13,7 @@ public class Validater {
 	}
 	
 	public void validateWorldFiles() {
-		System.out.println("this is dumb");
+		
 		File root = new File("worldRoot");
 		if (!root.exists()) {
 			console.print("Missing world root files");
@@ -38,7 +38,6 @@ public class Validater {
 		}
 		
 		File entities = new File("worldRoot/entities");
-		System.out.println(entities.exists());
 		if (!entities.exists()) {
 			console.print("WARNING: no entity data found");
 			entities.mkdir();
