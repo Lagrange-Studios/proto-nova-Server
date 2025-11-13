@@ -22,7 +22,7 @@ public class Console extends JFrame {
     	
         setTitle("Proto Nova Server Console");
         setSize(600, 400);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
         // Set dark theme colors
