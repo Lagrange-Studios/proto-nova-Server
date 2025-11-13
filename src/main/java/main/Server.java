@@ -49,7 +49,7 @@ public class Server {
 		serverSocket = new ServerSocketHandler(console);
 		startThread();
 		
-		packetMaker = new PacketMaker(serverSocket,serverLoader);
+		packetMaker = new PacketMaker(serverSocket,serverLoader,entityManager);
 	}
 	
 	private void startThread() {
@@ -75,7 +75,7 @@ public class Server {
 				// TODO: before removing save the player data
 			}
 			else {
-				packetMaker.SendPacket(player);
+				packetMaker.sendPacket(player);
 			}
 		}
 	}

@@ -12,6 +12,7 @@ import java.net.Socket;
 import main.Console;
 import protonova.protobuf.PlayerDataProto.PlayerData;
 import protonova.protobuf.UserDataProto;
+import protonova.protobuf.UserDataProto.UserData;
 import enums.Player.State;
 
 public class Player {
@@ -53,6 +54,10 @@ public class Player {
 		return state;
 	}
 	
+	public void setState(State state) {
+		this.state = state;
+	}
+	
 	public void listen() {
 	    Thread thread = new Thread(() -> {
 	        try {
@@ -65,7 +70,7 @@ public class Player {
 
 	                // Deserialize
 	                if (username == null ) {
-		                UserDataProto.UserData user = UserDataProto.UserData.parseFrom(data);
+		                UserData user = UserData.parseFrom(data);
 		                username = user.getUsername();
 		                console.print("Received user: " + user.getUsername());
 	                }
@@ -83,5 +88,17 @@ public class Player {
 
 	public String getUsername() {
 		return username;
+	}
+	
+	public void send(byte[] bytes) {
+		
+		try {
+			output.writeInt(bytes.length);
+			
+			output.write(bytes);
+			output.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }

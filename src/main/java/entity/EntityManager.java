@@ -41,12 +41,18 @@ public class EntityManager {
 				.setId(currentId)
 				.build();
 		
+		entities.put(currentId, entity);
+		
 		return entity;
 		
 	}
 	
 	public Entity makeNewEntity(String name) {
 		return makeNewEntity(name,1);
+	}
+	
+	public Entity getEntity(int id) {
+		return entities.get(id);
 	}
 	
 }
