@@ -72,6 +72,7 @@ public class Player {
 	                if (username == null ) {
 		                UserData user = UserData.parseFrom(data);
 		                username = user.getUsername();
+		                state = State.AWAITING_SERVER_PACKET;
 		                console.print("Received user: " + user.getUsername());
 	                }
 	                else {

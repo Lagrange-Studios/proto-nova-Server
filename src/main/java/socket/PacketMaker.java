@@ -43,7 +43,7 @@ public class PacketMaker {
 					if (player.data.getEntityId() == 0) {
 						Entity newEntity = entityManager.makeNewEntity("human");
 						
-						player.data.toBuilder()
+						player.data = player.data.toBuilder()
 							.setEntityId(newEntity.getId())
 							.build();
 						
@@ -55,6 +55,8 @@ public class PacketMaker {
 				}
 				
 				break;
+			case AWAITING_CLIENT_PACKET:
+				break;
 		default:
 			sendNormalPacket(player);
 			break;
@@ -63,6 +65,7 @@ public class PacketMaker {
 	}
 	
 	private void sendNormalPacket(Player player) {
+		
 		ServerToClientPacket packet = ServerToClientPacket.newBuilder()
 				.setPlayerEntity(entityManager.getEntity(player.data.getEntityId()))
 				.build();

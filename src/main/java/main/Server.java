@@ -72,6 +72,7 @@ public class Server {
 			
 			if (player.getState() == State.DISCONNECTED) {
 				playerList.remove(i);
+				console.print("Removed player: " +player.getUsername());
 				// TODO: before removing save the player data
 			}
 			else {
