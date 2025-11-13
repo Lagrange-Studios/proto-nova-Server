@@ -1,8 +1,10 @@
 package file;
 
 import java.io.File;
+import java.util.HashMap;
 
 import main.Console;
+import protonova.protobuf.PlaneProto.Plane;
 
 public class Validater {
 
@@ -28,7 +30,7 @@ public class Validater {
 			File map1 = new File("worldRoot/planes/map1");
 			map1.mkdir();
 			
-			Creator.createEmptyPlane(map1, 1);
+			Creator.createEmptyPlane(map1, new HashMap<Integer,Plane>());
 		}
 		
 		File playerData = new File("worldRoot/playerData");

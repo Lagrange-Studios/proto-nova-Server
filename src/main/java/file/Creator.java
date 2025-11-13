@@ -4,17 +4,15 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
 
 import protonova.protobuf.PlaneProto.Plane;
 import protonova.protobuf.PlayerDataProto.PlayerData;
 
 public class Creator {
 
-	public static void createEmptyPlane(File mapDirectory, int id) {
-		Plane plane = Plane.newBuilder()
-				.setId(id)
-				.build();
-		
+	public static void createEmptyPlane(File mapDirectory, HashMap<Integer,Plane> planes) {
+		Plane plane = PlaneGenerator.generatePlane(planes);
 		File planeFile = new File(mapDirectory.getPath() + "/plane.data");
 		
 		try {
