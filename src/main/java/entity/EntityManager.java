@@ -55,4 +55,7 @@ public class EntityManager {
 		return entities.get(id);
 	}
 	
+	public HashMap<Integer,Entity> getAllEntities() {
+		return entities;
+	}
 }

@@ -8,6 +8,8 @@ import java.util.concurrent.TimeUnit;
 
 import javax.swing.SwingUtilities;
 
+import entity.ChunckManager;
+import entity.EntityFinder;
 import entity.EntityManager;
 import enums.Player.State;
 import file.ServerLoader;
@@ -25,6 +27,8 @@ public class Server {
 	private PacketMaker packetMaker;
 	private HashMap<Integer, Plane> planes;
 	private EntityManager entityManager;
+	private EntityFinder entityFinder;
+	private ChunckManager chunckManager;
 	
 	public Server() {
 		
@@ -42,9 +46,12 @@ public class Server {
 			}
 		}
 		
+		chunckManager = new ChunckManager(entityManager.getAllEntities());
+		
 		serverLoader = new ServerLoader(console);
 		planes = serverLoader.loadWorld();
 		entityManager = new EntityManager(serverLoader);
+		entityFinder = new EntityFinder(entityManager.getAllEntities(),chunckManager);
 		
 		serverSocket = new ServerSocketHandler(console);
 		startThread();
