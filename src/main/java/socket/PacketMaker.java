@@ -1,24 +1,31 @@
 package socket;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 
 import entity.EntityManager;
 import enums.Player.State;
 import file.ServerLoader;
 import protonova.protobuf.EntityProto.Entity;
-import protonova.protobuf.ServerToClientPacketProto;
+import protonova.protobuf.PlaneProto.Plane;
 import protonova.protobuf.ServerToClientPacketProto.ServerToClientPacket;
+import protonova.protobuf.ServerToClientPacketProto.ServerToClientPacket.Builder;
+import protonova.protobuf.TileProto.Tile;
 
 public class PacketMaker {
 
 	private ServerSocketHandler serverSocket;
 	private ServerLoader serverLoader;
 	private EntityManager entityManager;
+	private HashMap<Integer,Plane> planes;
 	
-	public PacketMaker(ServerSocketHandler serverSocket, ServerLoader serverLoader, EntityManager entityManager) {
+	public PacketMaker(ServerSocketHandler serverSocket, ServerLoader serverLoader,
+			EntityManager entityManager, HashMap<Integer,Plane> planes) {
 		this.serverSocket = serverSocket;
 		this.serverLoader = serverLoader;
 		this.entityManager = entityManager;
+		this.planes = planes;
 	}
 	
 	public void sendPacket(Player player) {
@@ -66,10 +73,28 @@ public class PacketMaker {
 	
 	private void sendNormalPacket(Player player) {
 		
-		ServerToClientPacket packet = ServerToClientPacket.newBuilder()
-				.setPlayerEntity(entityManager.getEntity(player.data.getEntityId()))
-				.build();
+		Entity playerEntity = entityManager.getEntity(player.data.getEntityId());
 		
-		player.send(packet.toByteArray());
+		Plane currentPlane = planes.get(playerEntity.getMap());
+		
+		Builder packet = ServerToClientPacket.newBuilder()
+				.setPlayerEntity(playerEntity);
+		
+		int startX = Math.round(playerEntity.getPosition().getX());
+		int startY = Math.round(playerEntity.getPosition().getY());
+		
+		for (int x=-20;x<=20;x++) {
+			for (int y=-10;y<=10;y++) {
+				int planeX = startX + x;
+				int planeY = startY + y;
+				String key = x+","+y;
+				
+				if (currentPlane.getTilesMap().containsKey(key)) {
+					packet.putTiles(key, currentPlane.getTilesMap().get(key));
+				}
+			}
+		}
+		
+		player.send(packet.build().toByteArray());
 	}
 }

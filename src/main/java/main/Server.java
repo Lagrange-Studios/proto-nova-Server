@@ -49,7 +49,7 @@ public class Server {
 		serverSocket = new ServerSocketHandler(console);
 		startThread();
 		
-		packetMaker = new PacketMaker(serverSocket,serverLoader,entityManager);
+		packetMaker = new PacketMaker(serverSocket,serverLoader,entityManager,planes);
 	}
 	
 	private void startThread() {
