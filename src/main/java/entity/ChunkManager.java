@@ -1,7 +1,9 @@
 package entity;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 
 import protonova.protobuf.ChunkProto.Chunk;
 import protonova.protobuf.CoordinateProto.Coordinate;
@@ -48,7 +50,7 @@ public class ChunkManager {
 		
 		Chunk selectedChunk = chunkMap.get(coordinate);
 		selectedChunk = selectedChunk.toBuilder()
-			.addEntities(entity)
+			.addEntityIds(entity.getId())
 			.build();	
 		
 		chunkMap.put(coordinate, selectedChunk);
@@ -62,12 +64,26 @@ public class ChunkManager {
 		if (chunkMap.containsKey(coordinate)) {
 			Chunk selectedChunk = chunkMap.get(coordinate);
 			
-			for (int i=0;i<selectedChunk.getEntitiesCount();i++) {
-				if (entity.equals(selectedChunk.getEntities(i))) {
-					selectedChunk = selectedChunk.toBuilder()
-							.removeEntities(i)
-							.build();
-					chunkMap.put(coordinate, selectedChunk);
+			for (int i=0;i<selectedChunk.getEntityIdsCount();i++) {
+				if (entity.getId() == selectedChunk.getEntityIds(i)) {
+
+					// This is the proper way to do it but its long and boring
+					
+					Chunk.Builder builder = selectedChunk.toBuilder();
+					List<Integer> list = builder.getEntityIdsList();
+					List<Integer> modifableList = new ArrayList<>(list);
+					modifableList.remove(i);
+					builder.clearEntityIds();
+					builder.addAllEntityIds(modifableList);
+					selectedChunk = builder.build();
+					
+					if (selectedChunk.getEntityIdsCount() == 0) {
+						chunkMap.remove(coordinate);
+					}
+					else {
+						chunkMap.put(coordinate, selectedChunk);
+					}
+							
 					break;
 				}
 			}

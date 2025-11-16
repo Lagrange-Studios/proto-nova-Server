@@ -90,14 +90,6 @@ public class Server {
 			}
 			else {
 				packetMaker.sendPacket(player);
-				/*entityFinder.DEBUG_METHOD();
-				
-				Vector newPosition = entityManager.getEntity(player.data.getEntityId()).getPosition();
-				newPosition = newPosition.toBuilder()
-						.setX(newPosition.getX()+11*Math.round(((Math.random()-0.5)*2)))
-						.setY(newPosition.getY()+11*Math.round(((Math.random()-0.5)*2)))
-						.build();
-				chunkManager.updateEntityPosition(entityManager.getEntity(player.data.getEntityId()), newPosition);*/
 			}
 		}
 		
