@@ -8,12 +8,13 @@ import java.util.concurrent.TimeUnit;
 
 import javax.swing.SwingUtilities;
 
-import entity.ChunckManager;
+import entity.ChunkManager;
 import entity.EntityFinder;
 import entity.EntityManager;
 import enums.Player.State;
 import file.ServerLoader;
 import protonova.protobuf.PlaneProto.Plane;
+import protonova.protobuf.VectorProto.Vector;
 import socket.PacketMaker;
 import socket.Player;
 import socket.ServerSocketHandler;
@@ -22,13 +23,13 @@ public class Server {
 	
 	public Console console;
 	private ServerSocketHandler serverSocket;
-	private static final int TPS = 20;
+	private final int TPS = 20;
 	private ServerLoader serverLoader;
 	private PacketMaker packetMaker;
 	private HashMap<Integer, Plane> planes;
 	private EntityManager entityManager;
 	private EntityFinder entityFinder;
-	private ChunckManager chunckManager;
+	private ChunkManager chunkManager;
 	
 	public Server() {
 		
@@ -46,17 +47,22 @@ public class Server {
 			}
 		}
 		
-		chunckManager = new ChunckManager(entityManager.getAllEntities());
+		
 		
 		serverLoader = new ServerLoader(console);
 		planes = serverLoader.loadWorld();
-		entityManager = new EntityManager(serverLoader);
-		entityFinder = new EntityFinder(entityManager.getAllEntities(),chunckManager);
+		entityManager = new EntityManager(serverLoader,console);
+		
+		chunkManager = new ChunkManager(entityManager.getAllEntities());
+		chunkManager.groupAllEntites();
+		entityManager.setChunkManager(chunkManager);
+		
+		entityFinder = new EntityFinder(entityManager.getAllEntities(),chunkManager);
 		
 		serverSocket = new ServerSocketHandler(console);
 		startThread();
 		
-		packetMaker = new PacketMaker(serverSocket,serverLoader,entityManager,planes);
+		packetMaker = new PacketMaker(serverSocket,serverLoader,entityManager,planes,chunkManager);
 	}
 	
 	private void startThread() {
@@ -84,8 +90,18 @@ public class Server {
 			}
 			else {
 				packetMaker.sendPacket(player);
+				/*entityFinder.DEBUG_METHOD();
+				
+				Vector newPosition = entityManager.getEntity(player.data.getEntityId()).getPosition();
+				newPosition = newPosition.toBuilder()
+						.setX(newPosition.getX()+11*Math.round(((Math.random()-0.5)*2)))
+						.setY(newPosition.getY()+11*Math.round(((Math.random()-0.5)*2)))
+						.build();
+				chunkManager.updateEntityPosition(entityManager.getEntity(player.data.getEntityId()), newPosition);*/
 			}
 		}
+		
+		console.addTick();
 	}
 	
 	public ArrayList<Player> getPlayers() {

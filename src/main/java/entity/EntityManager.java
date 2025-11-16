@@ -3,6 +3,7 @@ package entity;
 import java.util.HashMap;
 
 import file.ServerLoader;
+import main.Console;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.VectorProto.Vector;
 
@@ -10,10 +11,13 @@ public class EntityManager {
 
 	private HashMap<Integer, Entity> entities;
 	private ServerLoader serverLoader;
+	private ChunkManager chunkManager;
+	private Console console;
 
-	public EntityManager(ServerLoader serverLoader) {
+	public EntityManager(ServerLoader serverLoader,Console console) {
 		this.serverLoader = serverLoader;
 		entities = serverLoader.loadEntities();
+		this.console = console;
 	}
 	
 	public Entity makeNewEntity(String name,int mapId) {
@@ -43,6 +47,13 @@ public class EntityManager {
 		
 		entities.put(currentId, entity);
 		
+		if (chunkManager != null) {
+			chunkManager.addEntity(entity);
+		}
+		else {
+			console.print("WARNING: created entity without adding it to the chunk manager");
+		}
+		
 		return entity;
 		
 	}
@@ -57,5 +68,9 @@ public class EntityManager {
 	
 	public HashMap<Integer,Entity> getAllEntities() {
 		return entities;
+	}
+
+	public void setChunkManager(ChunkManager chunkManager) {
+		this.chunkManager = chunkManager;
 	}
 }

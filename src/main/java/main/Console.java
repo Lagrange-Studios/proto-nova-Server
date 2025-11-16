@@ -9,12 +9,17 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("serial")
 public class Console extends JFrame {
     private JTextArea outputArea;
     private JTextField inputField;
+    private JLabel infoBar;
     private Server server;
+    private int countedTicks = 0;
 
     public Console(Server server) {
     	
@@ -47,10 +52,39 @@ public class Console extends JFrame {
         inputField.setFont(new Font("Consolas", Font.PLAIN, 14));
         inputField.addActionListener(new InputListener());
 
+        infoBar = new JLabel();
+        infoBar.setOpaque(true);
+        infoBar.setBackground(backgroundColor);
+        infoBar.setForeground(textColor);
+        infoBar.setFont(new Font("Consolas", Font.PLAIN, 14));
+        infoBar.setText("TPS: 0");
+        
         add(scrollPane, BorderLayout.CENTER);
         add(inputField, BorderLayout.SOUTH);
+        add(infoBar, BorderLayout.NORTH);
 
         printWelcomeMessage();
+        startUpdateThread();
+    }
+    
+    private void startUpdateThread() {
+    	try {
+			ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+			
+			Runnable task = () -> updateBar();
+			
+			scheduler.scheduleAtFixedRate(task, 1, 1, TimeUnit.SECONDS);
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+    }
+    
+    private void updateBar() {
+        infoBar.setText(
+        		"TPS: "+ countedTicks + "  " + 
+        		"Players: " + server.getPlayers().size()
+        		);
+        countedTicks = 0;
     }
 
     private void printWelcomeMessage() {
@@ -106,4 +140,8 @@ public class Console extends JFrame {
     public void print(String output) {
     	outputArea.append(output+"\n");
     }
+
+	public void addTick() {
+		countedTicks++;		
+	}
 }

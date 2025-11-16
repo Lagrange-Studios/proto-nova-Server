@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 
+import entity.ChunkManager;
 import entity.EntityManager;
 import enums.Player.State;
 import file.ServerLoader;
@@ -19,13 +20,15 @@ public class PacketMaker {
 	private ServerLoader serverLoader;
 	private EntityManager entityManager;
 	private HashMap<Integer,Plane> planes;
+	private ChunkManager chunkManager;
 	
 	public PacketMaker(ServerSocketHandler serverSocket, ServerLoader serverLoader,
-			EntityManager entityManager, HashMap<Integer,Plane> planes) {
+			EntityManager entityManager, HashMap<Integer,Plane> planes, ChunkManager chunkManager) {
 		this.serverSocket = serverSocket;
 		this.serverLoader = serverLoader;
 		this.entityManager = entityManager;
 		this.planes = planes;
+		this.chunkManager = chunkManager;
 	}
 	
 	public void sendPacket(Player player) {
@@ -49,7 +52,7 @@ public class PacketMaker {
 					
 					if (player.data.getEntityId() == 0) {
 						Entity newEntity = entityManager.makeNewEntity("human");
-						
+
 						player.data = player.data.toBuilder()
 							.setEntityId(newEntity.getId())
 							.build();
@@ -87,7 +90,7 @@ public class PacketMaker {
 			for (int y=-10;y<=10;y++) {
 				int planeX = startX + x;
 				int planeY = startY + y;
-				String key = x+","+y;
+				String key = planeX+","+planeY;
 				
 				if (currentPlane.getTilesMap().containsKey(key)) {
 					packet.putTiles(key, currentPlane.getTilesMap().get(key));

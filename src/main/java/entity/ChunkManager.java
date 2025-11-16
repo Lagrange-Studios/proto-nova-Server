@@ -8,15 +8,15 @@ import protonova.protobuf.CoordinateProto.Coordinate;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.VectorProto.Vector;
 
-public class ChunckManager {
+public class ChunkManager {
 
 	private HashMap<Integer, HashMap<Coordinate, Chunk>> chunks;
 	private HashMap<Integer, Entity> entities;
 	private final int CHUNK_SIZE = 10;
 	
-	public ChunckManager(HashMap<Integer, Entity> allEntities) {
+	public ChunkManager(HashMap<Integer, Entity> allEntities) {
 		entities = allEntities;
-		chuncks = new HashMap<Integer, HashMap<Coordinate, Chunk>>();
+		chunks = new HashMap<Integer, HashMap<Coordinate, Chunk>>();
 	}
 
 	private Coordinate getChunkCoordinate(Vector position) {
@@ -49,7 +49,13 @@ public class ChunckManager {
 		Chunk selectedChunk = chunkMap.get(coordinate);
 		selectedChunk = selectedChunk.toBuilder()
 			.addEntities(entity)
-			.build();			
+			.build();	
+		
+		chunkMap.put(coordinate, selectedChunk);
+	}
+	
+	public void addEntity(Entity entity) {
+		addEntityToChunk(getPlaneChunks(entity),getChunkCoordinate(entity.getPosition()),entity);
 	}
 	
 	private void removeEntityFromChunk(HashMap<Coordinate, Chunk> chunkMap, Coordinate coordinate, Entity entity) {
@@ -61,6 +67,7 @@ public class ChunckManager {
 					selectedChunk = selectedChunk.toBuilder()
 							.removeEntities(i)
 							.build();
+					chunkMap.put(coordinate, selectedChunk);
 					break;
 				}
 			}
@@ -89,12 +96,17 @@ public class ChunckManager {
 	}
 	
 	public void updateEntityPosition(Entity entity, Vector newPosition) {
-		removeEntityFromChunk(chunks.get(entity.getMap()), getChunkCoordinate(entity.getPosition()), entity);
+		removeEntityFromChunk(getPlaneChunks(entity), getChunkCoordinate(entity.getPosition()), entity);
 		
 		entity = entity.toBuilder()
 				.setPosition(newPosition)
 				.build();
+		entities.put(entity.getId(), entity);
 		
-		addEntityToChunk(chunks.get(entity.getMap()), getChunkCoordinate(entity.getPosition()), entity);
+		addEntityToChunk(getPlaneChunks(entity), getChunkCoordinate(entity.getPosition()), entity);
+	}
+	
+	public HashMap<Integer, HashMap<Coordinate, Chunk>> getChunks() {
+		return chunks;
 	}
 }
