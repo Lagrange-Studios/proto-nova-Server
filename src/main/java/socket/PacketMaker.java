@@ -84,7 +84,7 @@ public class PacketMaker {
 		Plane currentPlane = planes.get(playerEntity.getMap());
 		
 		Builder packet = ServerToClientPacket.newBuilder()
-				.setPlayerEntity(playerEntity);
+				.setMindId(player.data.getEntityId());
 		
 		int startX = Math.round(playerEntity.getPosition().getX());
 		int startY = Math.round(playerEntity.getPosition().getY());
@@ -104,9 +104,7 @@ public class PacketMaker {
 		ArrayList<Entity> foundEntities = entityFinder.getAllEntitiesInRadis(playerEntity, renderDistance);
 		
 		for (int i=0;i<foundEntities.size();i++) {
-			if (!foundEntities.get(i).equals(playerEntity)) {
-				packet.addEntities(foundEntities.get(i));
-			}
+			packet.addEntities(foundEntities.get(i));
 		}
 		
 		player.send(packet.build().toByteArray());

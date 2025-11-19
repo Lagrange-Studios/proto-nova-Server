@@ -13,8 +13,8 @@ import entity.EntityFinder;
 import entity.EntityManager;
 import enums.Player.State;
 import file.ServerLoader;
+import file.ServerSaver;
 import protonova.protobuf.PlaneProto.Plane;
-import protonova.protobuf.VectorProto.Vector;
 import socket.PacketMaker;
 import socket.Player;
 import socket.ServerSocketHandler;
@@ -25,6 +25,7 @@ public class Server {
 	private ServerSocketHandler serverSocket;
 	private final int TPS = 20;
 	private ServerLoader serverLoader;
+	private ServerSaver serverSaver;
 	private PacketMaker packetMaker;
 	private HashMap<Integer, Plane> planes;
 	private EntityManager entityManager;
@@ -32,6 +33,7 @@ public class Server {
 	private ChunkManager chunkManager;
 	
 	public Server() {
+		
 		
 		// start console
 		SwingUtilities.invokeLater(() -> {
@@ -63,6 +65,8 @@ public class Server {
 		startThread();
 		
 		packetMaker = new PacketMaker(serverSocket,serverLoader,entityManager,entityFinder,planes);
+
+		serverSaver = new ServerSaver(this);
 	}
 	
 	private void startThread() {
@@ -92,8 +96,14 @@ public class Server {
 				packetMaker.sendPacket(player);
 			}
 		}
-		
 		console.addTick();
+		
+		try {
+			serverSaver.save();
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public ArrayList<Player> getPlayers() {
