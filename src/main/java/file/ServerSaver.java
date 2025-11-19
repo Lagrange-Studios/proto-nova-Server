@@ -5,27 +5,54 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
 
+import entity.EntityManager;
 import main.Server;
+import protonova.protobuf.EntityProto.Entity;
 import socket.Player;
 
 public class ServerSaver {
 
 	private Server server;
+	private EntityManager entityManager;
 	
-	public ServerSaver(Server server) {
+	public ServerSaver(Server server, EntityManager entityManager) {
 		this.server = server;
+		this.entityManager = entityManager;
 	}
 	
 	public String save() {
 
 		ArrayList<Player> players = server.getPlayers();
 		
-		
 		try {
-			
 			for (int i=0;i<players.size();i++) {
 				savePlayer(players.get(i));
+			}
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+			return e.getMessage();
+		}
+		
+		HashMap<Integer, Entity> entities = entityManager.getAllEntities();
+		
+		try {
+			Set<Integer> keys = entities.keySet();
+			Iterator<Integer> iterator = keys.iterator();
+			
+			while (iterator.hasNext()) {
+				int key = iterator.next();
+				
+				Entity entity = entities.get(key);
+				
+				byte[] array = entity.toByteArray();
+				Path newPath = Paths.get("worldRoot/entities/"+entity.getId()+".data");
+				
+				Files.write(newPath, array);
 			}
 		}
 		catch(Exception e) {

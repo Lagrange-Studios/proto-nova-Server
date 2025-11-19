@@ -26,12 +26,11 @@ public class ServerLoader {
 		validater = new Validater(console);
 	}
 	
-	private Plane loadPlane(File directory) {
+	private Plane loadPlane(File planeFile) {
 		
-		File plane = new File(directory.getPath() + "/plane.data");
 		
 		try {
-			byte[] array = Files.readAllBytes(Paths.get(plane.getPath()));
+			byte[] array = Files.readAllBytes(Paths.get(planeFile.getPath()));
 			
 			Plane planeObject = PlaneProto.Plane.parseFrom(array);
 			
@@ -39,7 +38,7 @@ public class ServerLoader {
 			
 		} catch (IOException e) {
 			e.printStackTrace();
-			console.print("ERROR: " + plane.getPath() + " not found");
+			console.print("ERROR: " + planeFile.getPath() + " not found");
 		}
 		
 		return null;
@@ -52,10 +51,10 @@ public class ServerLoader {
 		
 		HashMap<Integer, Plane> planes = new HashMap<Integer,Plane>();
 		
-		File[] planesDirectories = new File("worldRoot/planes").listFiles();
+		File[] planesFiles = new File("worldRoot/planes").listFiles();
 		
-		for (int i=0;i<planesDirectories.length;i++) {
-			Plane newPlane = loadPlane(planesDirectories[i]);
+		for (int i=0;i<planesFiles.length;i++) {
+			Plane newPlane = loadPlane(planesFiles[i]);
 			planes.put(newPlane.getId(), newPlane);
 		}
 		

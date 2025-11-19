@@ -11,9 +11,9 @@ import protonova.protobuf.PlayerDataProto.PlayerData;
 
 public class Creator {
 
-	public static void createEmptyPlane(File mapDirectory, HashMap<Integer,Plane> planes) {
+	public static void createEmptyPlane(HashMap<Integer,Plane> planes) {
 		Plane plane = PlaneGenerator.generatePlane(planes);
-		File planeFile = new File(mapDirectory.getPath() + "/plane.data");
+		File planeFile = new File("worldRoot/planes/plane" + plane.getId() + ".data");
 		
 		try {
 			Files.write(Paths.get(planeFile.getPath()), plane.toByteArray());

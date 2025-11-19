@@ -27,10 +27,7 @@ public class Validater {
 		if (!planes.exists()) {
 			planes.mkdir();
 			
-			File map1 = new File("worldRoot/planes/map1");
-			map1.mkdir();
-			
-			Creator.createEmptyPlane(map1, new HashMap<Integer,Plane>());
+			Creator.createEmptyPlane(new HashMap<Integer,Plane>());
 		}
 		
 		File playerData = new File("worldRoot/playerData");

@@ -62,11 +62,12 @@ public class Server {
 		entityFinder = new EntityFinder(entityManager.getAllEntities(),chunkManager);
 		
 		serverSocket = new ServerSocketHandler(console);
+		serverSaver = new ServerSaver(this,entityManager);
+		
 		startThread();
 		
 		packetMaker = new PacketMaker(serverSocket,serverLoader,entityManager,entityFinder,planes);
 
-		serverSaver = new ServerSaver(this);
 	}
 	
 	private void startThread() {

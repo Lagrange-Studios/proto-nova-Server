@@ -140,6 +140,10 @@ public class Console extends JFrame {
     public void print(String output) {
     	outputArea.append(output+"\n");
     }
+    
+    public void print(int output) {
+    	print(String.valueOf(output));
+    }
 
 	public void addTick() {
 		countedTicks++;		
