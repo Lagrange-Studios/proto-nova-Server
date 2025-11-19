@@ -32,6 +32,9 @@ public class Server {
 	private EntityFinder entityFinder;
 	private ChunkManager chunkManager;
 	
+	private int saveCounter = 0;
+	private int saveInterval = 15 * 60 * TPS; // Minutes
+	
 	public Server() {
 		
 		
@@ -67,6 +70,8 @@ public class Server {
 		startThread();
 		
 		packetMaker = new PacketMaker(serverSocket,serverLoader,entityManager,entityFinder,planes);
+		
+		console.setCommandClasses(serverSaver);
 
 	}
 	
@@ -99,11 +104,15 @@ public class Server {
 		}
 		console.addTick();
 		
-		try {
-			serverSaver.save();
-		}
-		catch (Exception e) {
-			e.printStackTrace();
+		saveCheck();
+	}
+	
+	private void saveCheck() {
+		saveCounter++;
+		
+		if (saveCounter > saveInterval) {
+			saveCounter = 0;
+			console.print(serverSaver.save());
 		}
 	}
 	

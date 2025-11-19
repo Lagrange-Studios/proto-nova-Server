@@ -2,6 +2,7 @@ package main;
 
 import javax.swing.*;
 
+import file.ServerSaver;
 import socket.Player;
 
 import java.awt.*;
@@ -20,6 +21,7 @@ public class Console extends JFrame {
     private JLabel infoBar;
     private Server server;
     private int countedTicks = 0;
+    private ServerSaver serverSaver;
 
     public Console(Server server) {
     	
@@ -106,8 +108,10 @@ public class Console extends JFrame {
                 outputArea.append("Available commands:\n");
                 outputArea.append(" - help: Show this help message\n");
                 outputArea.append(" - time: Show current system time\n");
+                outputArea.append(" - echo [text]: Repeat the text\n");
                 outputArea.append(" - kick [name]: Kicks the player with the correlated name\n");
-                outputArea.append(" - echo [text]: Repeat the text\n\n");
+                outputArea.append(" - save: Saves all data to the world root\n");
+                outputArea.append("\n");
             } else if (input.equalsIgnoreCase("time")) {
                 outputArea.append("Current time: " + LocalTime.now() + "\n\n");
             } else if (input.startsWith("echo ")) {
@@ -131,6 +135,13 @@ public class Console extends JFrame {
             	if (!found) {
                 	outputArea.append("Failed to kick "+name+"\n");
             	}
+            } else if (input.equalsIgnoreCase("save")) {
+            	if (serverSaver != null) {
+            		print(serverSaver.save());
+            	}
+            	else {
+            		print("No server saver attached to console");
+            	}
             } else {
                 outputArea.append("Unknown command. Type 'help' for options.\n\n");
             }
@@ -147,5 +158,9 @@ public class Console extends JFrame {
 
 	public void addTick() {
 		countedTicks++;		
+	}
+	
+	public void setCommandClasses(ServerSaver serverSaver) {
+		this.serverSaver = serverSaver;
 	}
 }
