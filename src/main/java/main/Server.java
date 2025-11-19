@@ -62,7 +62,7 @@ public class Server {
 		serverSocket = new ServerSocketHandler(console);
 		startThread();
 		
-		packetMaker = new PacketMaker(serverSocket,serverLoader,entityManager,planes,chunkManager);
+		packetMaker = new PacketMaker(serverSocket,serverLoader,entityManager,entityFinder,planes);
 	}
 	
 	private void startThread() {

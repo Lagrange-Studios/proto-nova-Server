@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashMap;
 
 import entity.ChunkManager;
+import entity.EntityFinder;
 import entity.EntityManager;
 import enums.Player.State;
 import file.ServerLoader;
@@ -19,17 +20,18 @@ public class PacketMaker {
 	private ServerSocketHandler serverSocket;
 	private ServerLoader serverLoader;
 	private EntityManager entityManager;
-	private HashMap<Integer,Plane> planes;
-	private ChunkManager chunkManager;
+	private EntityFinder entityFinder;
+	private HashMap<Integer, Plane> planes;
+	
 	private static final double renderDistance = 40;
 	
 	public PacketMaker(ServerSocketHandler serverSocket, ServerLoader serverLoader,
-			EntityManager entityManager, HashMap<Integer,Plane> planes, ChunkManager chunkManager) {
+			EntityManager entityManager, EntityFinder entityFinder, HashMap<Integer, Plane> planes) {
 		this.serverSocket = serverSocket;
 		this.serverLoader = serverLoader;
 		this.entityManager = entityManager;
+		this.entityFinder = entityFinder;
 		this.planes = planes;
-		this.chunkManager = chunkManager;
 	}
 	
 	public void sendPacket(Player player) {
@@ -99,7 +101,13 @@ public class PacketMaker {
 			}
 		}
 		
-		ArrayList<Entity> foundEntities;
+		ArrayList<Entity> foundEntities = entityFinder.getAllEntitiesInRadis(playerEntity, renderDistance);
+		
+		for (int i=0;i<foundEntities.size();i++) {
+			if (!foundEntities.get(i).equals(playerEntity)) {
+				packet.addEntities(foundEntities.get(i));
+			}
+		}
 		
 		player.send(packet.build().toByteArray());
 	}
