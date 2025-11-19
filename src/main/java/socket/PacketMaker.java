@@ -21,6 +21,7 @@ public class PacketMaker {
 	private EntityManager entityManager;
 	private HashMap<Integer,Plane> planes;
 	private ChunkManager chunkManager;
+	private static final double renderDistance = 40;
 	
 	public PacketMaker(ServerSocketHandler serverSocket, ServerLoader serverLoader,
 			EntityManager entityManager, HashMap<Integer,Plane> planes, ChunkManager chunkManager) {
@@ -97,6 +98,8 @@ public class PacketMaker {
 				}
 			}
 		}
+		
+		ArrayList<Entity> foundEntities;
 		
 		player.send(packet.build().toByteArray());
 	}
