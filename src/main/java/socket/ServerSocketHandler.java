@@ -17,7 +17,7 @@ public class ServerSocketHandler {
 	private Console console;
 	private ArrayList<Player> playerList;
 	
-	public ServerSocketHandler(Console console) {
+	public ServerSocketHandler(Console console, PacketReciver packetReciver) {
 		this.console = console;
 		playerList = new ArrayList<Player>();
 		
@@ -31,7 +31,7 @@ public class ServerSocketHandler {
 	
 				while (!serverSocket.isClosed()) {
 					Socket clientSocket = serverSocket.accept();
-					playerList.add(new Player(clientSocket, console));
+					playerList.add(new Player(clientSocket, console, packetReciver));
 					console.print("New player joined");
 				}
 			

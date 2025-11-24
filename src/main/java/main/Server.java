@@ -16,6 +16,7 @@ import file.ServerLoader;
 import file.ServerSaver;
 import protonova.protobuf.PlaneProto.Plane;
 import socket.PacketMaker;
+import socket.PacketReciver;
 import socket.Player;
 import socket.ServerSocketHandler;
 
@@ -27,6 +28,7 @@ public class Server {
 	private ServerLoader serverLoader;
 	private ServerSaver serverSaver;
 	private PacketMaker packetMaker;
+	private PacketReciver packetReciver;
 	private HashMap<Integer, Plane> planes;
 	private EntityManager entityManager;
 	private EntityFinder entityFinder;
@@ -64,7 +66,9 @@ public class Server {
 		
 		entityFinder = new EntityFinder(entityManager.getAllEntities(),chunkManager);
 		
-		serverSocket = new ServerSocketHandler(console);
+		packetReciver = new PacketReciver(entityFinder, chunkManager, entityManager);
+		
+		serverSocket = new ServerSocketHandler(console, packetReciver);
 		serverSaver = new ServerSaver(this,entityManager);
 		
 		startThread();

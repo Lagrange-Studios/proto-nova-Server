@@ -69,6 +69,15 @@ public class EntityManager {
 	public HashMap<Integer,Entity> getAllEntities() {
 		return entities;
 	}
+	
+	public void updateEntity(Entity entity) {
+		if (entities.containsKey(entity.getId())) {
+			entities.put(entity.getId(), entity);
+		}
+		else {
+			System.err.println("Tried to update entity that dosent exist, Id: "+entity.getId());
+		}
+	}
 
 	public void setChunkManager(ChunkManager chunkManager) {
 		this.chunkManager = chunkManager;

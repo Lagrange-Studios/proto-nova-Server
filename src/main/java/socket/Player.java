@@ -10,6 +10,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 import main.Console;
+import protonova.protobuf.ClientToServerPacketProto.ClientToServerPacket;
 import protonova.protobuf.PlayerDataProto.PlayerData;
 import protonova.protobuf.UserDataProto;
 import protonova.protobuf.UserDataProto.UserData;
@@ -24,10 +25,12 @@ public class Player {
 	private State state = State.DISCONNECTED;
 	private Console console;
 	public PlayerData data;
+	private PacketReciver packetReciver;
 	
-	public Player(Socket socket, Console console) {
+	public Player(Socket socket, Console console, PacketReciver packetReciver) {
 		this.socket = socket;
 		this.console = console;
+		this.packetReciver = packetReciver;
 		
 		try {
 			input = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
@@ -76,7 +79,7 @@ public class Player {
 		                console.print("Received user: " + user.getUsername());
 	                }
 	                else {
-	                	
+	                	packetReciver.recivePacket(this, ClientToServerPacket.parseFrom(data));
 	                }
 	            }
 	        } catch (IOException e) {
