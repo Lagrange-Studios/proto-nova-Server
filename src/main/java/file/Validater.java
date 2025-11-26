@@ -14,7 +14,9 @@ public class Validater {
 		this.console = console;
 	}
 	
-	public void validateWorldFiles() {
+	public boolean validateWorldFiles() {
+		
+		boolean shouldGenerate = false;
 		
 		File root = new File("worldRoot");
 		if (!root.exists()) {
@@ -27,7 +29,12 @@ public class Validater {
 		if (!planes.exists()) {
 			planes.mkdir();
 			
-			Creator.createEmptyPlane(new HashMap<Integer,Plane>());
+			shouldGenerate = true;
+		}
+		
+		// if there's no planes then we should generate one
+		if (!shouldGenerate) {
+			shouldGenerate = planes.listFiles().length == 0;
 		}
 		
 		File playerData = new File("worldRoot/playerData");
@@ -51,5 +58,6 @@ public class Validater {
 		}
 		
 		console.print("Validated world files");
+		return shouldGenerate;
 	}
 }

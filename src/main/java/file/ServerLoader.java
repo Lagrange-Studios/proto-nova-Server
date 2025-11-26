@@ -20,11 +20,9 @@ import protonova.protobuf.PlayerDataProto.PlayerData;
 public class ServerLoader {
 
 	private Console console;
-	private Validater validater;
 	
 	public ServerLoader(Console console) {
 		this.console = console;
-		validater = new Validater(console);
 	}
 	
 	private Plane loadPlane(File planeFile) {
@@ -46,8 +44,6 @@ public class ServerLoader {
 	}
 	
 	public HashMap<Integer, Plane> loadWorld() {
-		
-		validater.validateWorldFiles();
 		
 		HashMap<Integer, Plane> planes = new HashMap<Integer,Plane>();
 		
@@ -78,7 +74,10 @@ public class ServerLoader {
 		}
 		
 		// TODO: get the real entity id;
-		return Creator.createNewPlayer(username, 0);
+		return PlayerData.newBuilder()
+				.setEntityId(0)
+				.setUsername(username)
+				.build();
 	}
 
 	public HashMap<Integer, Entity> loadEntities() {

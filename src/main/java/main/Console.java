@@ -8,6 +8,8 @@ import socket.Player;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
@@ -29,7 +31,7 @@ public class Console extends JFrame {
     	
         setTitle("Proto Nova Server Console");
         setSize(600, 400);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         setLocationRelativeTo(null);
 
         // Set dark theme colors
@@ -65,6 +67,17 @@ public class Console extends JFrame {
         add(inputField, BorderLayout.SOUTH);
         add(infoBar, BorderLayout.NORTH);
 
+        // Add a window listener for custom behavior
+        this.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                // Perform cleanup if needed
+                System.out.println("Saving data");
+                System.out.println(serverSaver.save());
+                System.exit(0);  // Exit the application
+            }
+        });
+        
         printWelcomeMessage();
         startUpdateThread();
     }

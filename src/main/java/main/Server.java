@@ -14,6 +14,8 @@ import entity.EntityManager;
 import enums.Player.State;
 import file.ServerLoader;
 import file.ServerSaver;
+import file.Validater;
+import generation.Generator;
 import protonova.protobuf.PlaneProto.Plane;
 import socket.PacketMaker;
 import socket.PacketReciver;
@@ -35,6 +37,8 @@ public class Server {
 	private EntityFinder entityFinder;
 	private ChunkManager chunkManager;
 	private CelestialObjectManager celestialObjectManager;
+	private Validater validater;
+	private Generator generator;
 	
 	private int saveCounter = 0;
 	private int saveInterval = 15 * 60 * TPS; // Minutes
@@ -56,7 +60,9 @@ public class Server {
 			}
 		}
 		
+		validater = new Validater(console);
 		
+		boolean shouldGenerate = validater.validateWorldFiles();
 		
 		serverLoader = new ServerLoader(console);
 		planes = serverLoader.loadWorld();
@@ -70,10 +76,15 @@ public class Server {
 		
 		celestialObjectManager = new CelestialObjectManager(serverLoader, console);
 		
+		generator = new Generator(console, planes, entityManager);
+		if (shouldGenerate) {
+			generator.generateWorld();
+		}
+		
 		packetReciver = new PacketReciver(entityFinder, chunkManager, entityManager);
 		
 		serverSocket = new ServerSocketHandler(console, packetReciver);
-		serverSaver = new ServerSaver(this,entityManager);
+		serverSaver = new ServerSaver(this, entityManager, planes);
 		
 		startThread();
 		

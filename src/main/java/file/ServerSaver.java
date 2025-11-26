@@ -12,20 +12,24 @@ import java.util.Set;
 import entity.EntityManager;
 import main.Server;
 import protonova.protobuf.EntityProto.Entity;
+import protonova.protobuf.PlaneProto.Plane;
 import socket.Player;
 
 public class ServerSaver {
 
 	private Server server;
 	private EntityManager entityManager;
+	private HashMap<Integer, Plane> planes;
 	
-	public ServerSaver(Server server, EntityManager entityManager) {
+	public ServerSaver(Server server, EntityManager entityManager, HashMap<Integer, Plane> planes) {
 		this.server = server;
 		this.entityManager = entityManager;
+		this.planes = planes;
 	}
 	
 	public String save() {
 
+		// Saving Players
 		ArrayList<Player> players = server.getPlayers();
 		
 		try {
@@ -38,6 +42,7 @@ public class ServerSaver {
 			return e.getMessage();
 		}
 		
+		// Saving entities
 		HashMap<Integer, Entity> entities = entityManager.getAllEntities();
 		
 		try {
@@ -51,6 +56,27 @@ public class ServerSaver {
 				
 				byte[] array = entity.toByteArray();
 				Path newPath = Paths.get("worldRoot/entities/"+entity.getId()+".data");
+				
+				Files.write(newPath, array);
+			}
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+			return e.getMessage();
+		}
+		
+		//Saving planes
+		try {
+			Set<Integer> keys = planes.keySet();
+			Iterator<Integer> iterator = keys.iterator();
+			
+			while (iterator.hasNext()) {
+				int key = iterator.next();
+				
+				Plane plane = planes.get(key);
+				
+				byte[] array = plane.toByteArray();
+				Path newPath = Paths.get("worldRoot/planes/"+plane.getId()+".data");
 				
 				Files.write(newPath, array);
 			}
