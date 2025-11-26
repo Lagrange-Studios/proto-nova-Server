@@ -19,6 +19,7 @@ import socket.PacketMaker;
 import socket.PacketReciver;
 import socket.Player;
 import socket.ServerSocketHandler;
+import space.CelestialObjectManager;
 
 public class Server {
 	
@@ -33,6 +34,7 @@ public class Server {
 	private EntityManager entityManager;
 	private EntityFinder entityFinder;
 	private ChunkManager chunkManager;
+	private CelestialObjectManager celestialObjectManager;
 	
 	private int saveCounter = 0;
 	private int saveInterval = 15 * 60 * TPS; // Minutes
@@ -65,6 +67,8 @@ public class Server {
 		entityManager.setChunkManager(chunkManager);
 		
 		entityFinder = new EntityFinder(entityManager.getAllEntities(),chunkManager);
+		
+		celestialObjectManager = new CelestialObjectManager(serverLoader, console);
 		
 		packetReciver = new PacketReciver(entityFinder, chunkManager, entityManager);
 		

@@ -42,6 +42,14 @@ public class Validater {
 			entities.mkdir();
 		}
 		
+		File celestialObjects = new File("worldRoot/celestialObjects");
+		if (!celestialObjects.exists()) {
+			console.print("WARNING: no celestial objects data found");
+			celestialObjects.mkdir();
+			
+			//Creator.createCelestialObject(new HashMap<Integer,>)
+		}
+		
 		console.print("Validated world files");
 	}
 }

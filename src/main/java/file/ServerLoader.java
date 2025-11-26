@@ -11,6 +11,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 
 import main.Console;
+import protonova.protobuf.CelestialObjectProto.CelestialObject;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.PlaneProto;
 import protonova.protobuf.PlaneProto.Plane;
@@ -27,7 +28,6 @@ public class ServerLoader {
 	}
 	
 	private Plane loadPlane(File planeFile) {
-		
 		
 		try {
 			byte[] array = Files.readAllBytes(Paths.get(planeFile.getPath()));
@@ -101,5 +101,22 @@ public class ServerLoader {
 		}
 		
 		return allEntities;
+	}
+
+	public HashMap<Integer, CelestialObject> loadCelestialObjects() {
+		HashMap<Integer, CelestialObject> celestialObjects = new HashMap<Integer,CelestialObject>();
+		
+		File[] celestialObjectFiles = new File("worldRoot/celestialObjects").listFiles();
+		
+		for (int i=0;i<celestialObjectFiles.length;i++) {
+			try {
+				CelestialObject newObject = CelestialObject.parseFrom(Files.readAllBytes(Path.of(celestialObjectFiles[i].getPath())));
+				celestialObjects.put(newObject.getId(), newObject);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return celestialObjects;
 	}
 }

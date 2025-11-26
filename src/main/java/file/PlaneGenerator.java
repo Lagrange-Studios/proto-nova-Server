@@ -7,6 +7,7 @@ import protonova.protobuf.PlaneProto.Plane;
 import protonova.protobuf.PlaneProto.Plane.Builder;
 import protonova.protobuf.TileProto.Tile;
 import util.CoordinateConverter;
+import util.Id;
 
 public class PlaneGenerator {
 
@@ -15,16 +16,7 @@ public class PlaneGenerator {
 	
 	public static Plane generatePlane(HashMap<Integer, Plane> planes) {
 		
-		int planeId = 1;
-		
-		while (true) {
-			if (planes.containsKey(planeId)) {
-				planeId++;
-			}
-			else {
-				break;
-			}
-		}
+		int planeId = Id.getNewId(planes.keySet());
 		
 		Builder plane = Plane.newBuilder()
 				.setId(planeId);
