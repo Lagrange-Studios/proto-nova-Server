@@ -10,7 +10,7 @@ import protonova.protobuf.CoordinateProto.Coordinate;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.VectorProto.Vector;
 import util.CoordinateConverter;
-import util.Distance;
+import util.VectorMath;
 
 public class EntityFinder {
 	private HashMap<Integer, Entity> entities;
@@ -50,7 +50,7 @@ public class EntityFinder {
 					for (int i=0;i<chunkEntities.size();i++) {
 						Entity selectedEntity = entities.get(chunkEntities.get(i));
 						
-						double distance = Distance.getDistance(start, selectedEntity.getPosition());
+						double distance = VectorMath.distance(start, selectedEntity.getPosition());
 						
 						if (distance <= radius) {
 							foundEntities.add(selectedEntity);
