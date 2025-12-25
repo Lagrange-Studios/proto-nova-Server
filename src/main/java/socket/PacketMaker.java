@@ -64,7 +64,6 @@ public class PacketMaker {
 						player.setState(State.PLAYING);
 					}
 					
-					//TODO: send the player their entity
 				}
 				
 				break;
@@ -106,6 +105,8 @@ public class PacketMaker {
 		for (int i=0;i<foundEntities.size();i++) {
 			packet.addEntities(foundEntities.get(i));
 		}
+		
+		packet.setReconcile(player.shouldReconcile);
 		
 		player.send(packet.build().toByteArray());
 	}

@@ -6,6 +6,7 @@ import file.ServerLoader;
 import main.Console;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.VectorProto.Vector;
+import socket.Player;
 
 public class EntityManager {
 
@@ -38,11 +39,18 @@ public class EntityManager {
 				.setY(0)
 				.build();
 		
+		Vector vector2 = Vector.newBuilder()
+				.setX(0)
+				.setY(0)
+				.build();
+		
 		Entity entity = Entity.newBuilder()
 				.setName(name)
 				.setMap(mapId)
 				.setPosition(vector)
 				.setId(currentId)
+				.setSpeed(1)
+				.setVelocity(vector2) // make a copy cheaply
 				.build();
 		
 		entities.put(currentId, entity);
@@ -64,6 +72,10 @@ public class EntityManager {
 	
 	public Entity getEntity(int id) {
 		return entities.get(id);
+	}
+	
+	public Entity getEntity(Player player) {
+		return entities.get(player.data.getEntityId());
 	}
 	
 	public HashMap<Integer,Entity> getAllEntities() {

@@ -26,6 +26,7 @@ public class Player {
 	private Console console;
 	public PlayerData data;
 	private PacketReciver packetReciver;
+	public boolean shouldReconcile = false;
 	
 	public Player(Socket socket, Console console, PacketReciver packetReciver) {
 		this.socket = socket;
