@@ -66,13 +66,15 @@ public class ServerLoader {
 				PlayerData playerData = PlayerData.parseFrom(Files.readAllBytes(Path.of(data[i].getPath())));
 				
 				if (playerData.getUsername().equals(username)) {
+					console.print("Succesfully loaded: "+username);
 					return playerData;
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
-		
+
+		console.print("Unuccesfully loaded: "+username);
 		// TODO: get the real entity id;
 		return PlayerData.newBuilder()
 				.setEntityId(0)

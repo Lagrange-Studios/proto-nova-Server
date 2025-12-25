@@ -32,14 +32,8 @@ public class ServerSaver {
 		// Saving Players
 		ArrayList<Player> players = server.getPlayers();
 		
-		try {
-			for (int i=0;i<players.size();i++) {
-				savePlayer(players.get(i));
-			}
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-			return e.getMessage();
+		for (int i=0;i<players.size();i++) {
+			savePlayer(players.get(i));
 		}
 		
 		// Saving entities
@@ -89,12 +83,16 @@ public class ServerSaver {
 		return "Saved all data without errors";
 	}
 	
-	public void savePlayer(Player player) throws IOException {
+	public void savePlayer(Player player) {
 		if (player.data != null) {
 			Path path = Paths.get("worldRoot/playerData/"+player.getUsername()+".data");
 			byte[] data = player.data.toByteArray();
 			
-			Files.write(path, data);
+			try {
+				Files.write(path, data);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 }

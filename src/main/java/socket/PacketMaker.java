@@ -60,9 +60,10 @@ public class PacketMaker {
 							.setEntityId(newEntity.getId())
 							.build();
 						
-						sendNormalPacket(player);
-						player.setState(State.PLAYING);
 					}
+					
+					sendNormalPacket(player);
+					player.setState(State.PLAYING);
 					
 				}
 				

@@ -1,13 +1,10 @@
 package socket;
 
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import protonova.protobuf.UserDataProto;
-
 import main.Console;
 
 public class ServerSocketHandler {
