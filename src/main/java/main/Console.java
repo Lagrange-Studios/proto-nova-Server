@@ -24,6 +24,8 @@ public class Console extends JFrame {
     private Server server;
     private int countedTicks = 0;
     private ServerSaver serverSaver;
+    private final double byteToGigaByteRatio = Math.pow(10, 9);
+    private final double byteToMegaByteRatio = Math.pow(10, 6);
 
     public Console(Server server) {
     	
@@ -95,9 +97,12 @@ public class Console extends JFrame {
     }
     
     private void updateBar() {
+    	Runtime runtime = Runtime.getRuntime();
+    	
         infoBar.setText(
         		"TPS: "+ countedTicks + "  " + 
-        		"Players: " + server.getPlayers().size()
+        		"Players: " + server.getPlayers().size() + "  " + 
+        		"Memory: " +  Math.round((runtime.totalMemory() - runtime.freeMemory())/byteToMegaByteRatio) + "/" + Math.round(runtime.totalMemory()/byteToMegaByteRatio) + "MB"
         		);
         countedTicks = 0;
     }
