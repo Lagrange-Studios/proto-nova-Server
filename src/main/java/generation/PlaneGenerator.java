@@ -2,6 +2,8 @@ package generation;
 
 import java.util.HashMap;
 
+import org.lefmaroli.perlin.PerlinNoise;
+
 import protonova.protobuf.CoordinateProto.Coordinate;
 import protonova.protobuf.PlaneProto.Plane;
 import protonova.protobuf.PlaneProto.Plane.Builder;
@@ -11,13 +13,16 @@ import util.Id;
 
 public class PlaneGenerator {
 
+	// Perlin noise generator https://github.com/LefMarOli/PerlinNoiseJava.git
+	
 	private HashMap<Integer, Plane> planes;
+	private static final double frequency = 0.05;
 	
 	public PlaneGenerator(HashMap<Integer, Plane> planes) {
 		this.planes = planes;
 	}
 	
-	public Plane generatePlane(int sizeX, int sizeY, String tileName) {
+	public Plane generatePlane(int sizeX, int sizeY) {
 		
 		int planeId = Id.getNewId(planes.keySet());
 		
@@ -30,25 +35,40 @@ public class PlaneGenerator {
 				.setId(planeId)
 				.setSize(size);
 				
+		PerlinNoise perlinNoise = new PerlinNoise(System.currentTimeMillis());
 		
-		if (tileName != null) {
-			for (int x=-sizeX/2;x<=sizeX/2;x++) {
-				for (int y=-sizeY/2;y<=sizeY/2;y++) {
-					
-					Coordinate coordinate = Coordinate.newBuilder()
-							.setX(x)
-							.setY(y)
-							.build();
-					
-					Tile tile = Tile.newBuilder()
-							.setName(tileName)
-							.setCoordinate(coordinate)
-							.build();
-					
-					plane.putTiles(CoordinateConverter.convert(coordinate), tile);
+		
+		for (int x=-sizeX/2;x<=sizeX/2;x++) {
+			for (int y=-sizeY/2;y<=sizeY/2;y++) {
+				
+				double value = perlinNoise.getFor((x+sizeX)*frequency,(y+sizeY)*frequency);
+				
+				String tileName;
+				
+				if (value > 0.75) {
+					tileName = "stone";
+				}else if (value > .45) {
+					tileName = "grass";
+				}else if (value > .4) {
+					tileName = "sand";
+				}else {
+					tileName = "water";
 				}
+				
+				Coordinate coordinate = Coordinate.newBuilder()
+						.setX(x)
+						.setY(y)
+						.build();
+				
+				Tile tile = Tile.newBuilder()
+						.setName(tileName)
+						.setCoordinate(coordinate)
+						.build();
+				
+				plane.putTiles(CoordinateConverter.convert(coordinate), tile);
 			}
 		}
+		
 		
 		return plane.build();
 	}

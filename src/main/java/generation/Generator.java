@@ -28,7 +28,7 @@ public class Generator {
 	
 	public void generateWorld() {
 		
-		Plane plane = planeGenerator.generatePlane(100, 100, "Grass");
+		Plane plane = planeGenerator.generatePlane(100, 100);
 		planes.put(plane.getId(), plane);
 	}
 	
