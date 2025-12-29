@@ -89,8 +89,8 @@ public class PacketMaker {
 		int startX = Math.round(playerEntity.getPosition().getX());
 		int startY = Math.round(playerEntity.getPosition().getY());
 		
-		for (int x=-20;x<=20;x++) {
-			for (int y=-10;y<=10;y++) {
+		for (int x=-30;x<=30;x++) {
+			for (int y=-20;y<=20;y++) {
 				int planeX = startX + x;
 				int planeY = startY + y;
 				String key = planeX+","+planeY;

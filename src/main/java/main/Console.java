@@ -129,6 +129,7 @@ public class Console extends JFrame {
                 outputArea.append(" - echo [text]: Repeat the text\n");
                 outputArea.append(" - kick [name]: Kicks the player with the correlated name\n");
                 outputArea.append(" - save: Saves all data to the world root\n");
+                outputArea.append(" - players: Shows all currently connected players\n");
                 outputArea.append("\n");
             } else if (input.equalsIgnoreCase("time")) {
                 outputArea.append("Current time: " + LocalTime.now() + "\n\n");
@@ -160,6 +161,13 @@ public class Console extends JFrame {
             	else {
             		print("No server saver attached to console");
             	}
+            } else if (input.equalsIgnoreCase("players")) {
+            	print("Players:");
+            	ArrayList<Player> players = server.getPlayers();
+            	
+                for (int i=0;i<players.size();i++) {
+                	print(players.get(i).getUsername());
+                }
             } else {
                 outputArea.append("Unknown command. Type 'help' for options.\n\n");
             }
