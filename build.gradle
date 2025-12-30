@@ -16,6 +16,7 @@ dependencies {
 	implementation files('../proto-nova-Library/build/libs/proto-nova-Library.jar')
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'com.google.protobuf:protobuf-java:3.25.3'
+    implementation 'org.json:json:20230227'
     // any other dependencies
 }
 
