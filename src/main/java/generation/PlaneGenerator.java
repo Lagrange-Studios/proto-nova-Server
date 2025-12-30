@@ -33,10 +33,12 @@ public class PlaneGenerator {
 				.setId(planeId)
 				.setSize(size);		
 		
+		long seed = System.currentTimeMillis();
+		
 		for (int x=-sizeX/2;x<=sizeX/2;x++) {
 			for (int y=-sizeY/2;y<=sizeY/2;y++) {
 				
-				double value = OpenSimplex2S.noise2(System.currentTimeMillis(),(x+sizeX),(y+sizeY));
+				double value = OpenSimplex2S.noise2(seed,(x+sizeX),(y+sizeY));
 				
 				String tileName;
 				
