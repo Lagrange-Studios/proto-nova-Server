@@ -15,7 +15,7 @@ public class PlaneGenerator {
 	// Perlin noise generator https://github.com/LefMarOli/PerlinNoiseJava.git
 	
 	private HashMap<Integer, Plane> planes;
-	private final double frequency = 0.01;
+	private final double frequency = 0.025;
 	
 	public PlaneGenerator(HashMap<Integer, Plane> planes) {
 		this.planes = planes;
@@ -40,14 +40,13 @@ public class PlaneGenerator {
 			for (int y=-sizeY/2;y<=sizeY/2;y++) {
 				
 				double value = OpenSimplex2S.noise2(seed,(x*frequency),(y*frequency));
-				
 				String tileName;
 				
 				if (value > 0.75) {
 					tileName = "stone";
-				}else if (value > .45) {
+				}else if (value > .2) {
 					tileName = "grass";
-				}else if (value > .4) {
+				}else if (value > 0) {
 					tileName = "sand";
 				}else {
 					tileName = "water";
@@ -65,8 +64,7 @@ public class PlaneGenerator {
 				
 				plane.putTiles(CoordinateConverter.convert(coordinate), tile);
 			}
-		}
-		
+		}		
 		
 		return plane.build();
 	}

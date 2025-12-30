@@ -9,7 +9,9 @@ import java.util.HashMap;
 import entity.EntityManager;
 import main.Console;
 import protonova.protobuf.CelestialObjectProto.CelestialObject;
+import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.PlaneProto.Plane;
+import protonova.protobuf.VectorProto.Vector;
 import util.Id;
 
 public class Generator {
@@ -30,6 +32,19 @@ public class Generator {
 		
 		Plane plane = planeGenerator.generatePlane(100, 100);
 		planes.put(plane.getId(), plane);
+	}
+	
+	private void generateEcosystem(int planeId) {
+		
+		for (int i=0;i<10;i++) {
+			Vector position = Vector.newBuilder()
+					.setX((float) (Math.random()*100-50))
+					.setY((float) (Math.random()*100-50))
+					.build();
+			
+			Entity frog = entityManager.makeNewEntity("frog", planeId);
+			entityManager.updateEntity(frog.toBuilder().setPosition(position).build());
+		}
 	}
 	
 	
