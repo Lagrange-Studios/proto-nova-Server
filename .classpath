@@ -26,6 +26,5 @@
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.buildship.core.gradleclasspathcontainer"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/proto-nova-Library"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/PerlinNoiseJava"/>
 	<classpathentry kind="output" path="bin/default"/>
 </classpath>
