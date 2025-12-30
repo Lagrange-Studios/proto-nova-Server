@@ -2,8 +2,7 @@ package generation;
 
 import java.util.HashMap;
 
-import org.lefmaroli.perlin.PerlinNoise;
-
+import perlinNoise.OpenSimplex2S;
 import protonova.protobuf.CoordinateProto.Coordinate;
 import protonova.protobuf.PlaneProto.Plane;
 import protonova.protobuf.PlaneProto.Plane.Builder;
@@ -16,7 +15,7 @@ public class PlaneGenerator {
 	// Perlin noise generator https://github.com/LefMarOli/PerlinNoiseJava.git
 	
 	private HashMap<Integer, Plane> planes;
-	private static final double frequency = 0.05;
+	private static final double frequency = 1;//0.05;
 	
 	public PlaneGenerator(HashMap<Integer, Plane> planes) {
 		this.planes = planes;
@@ -33,15 +32,12 @@ public class PlaneGenerator {
 		
 		Builder plane = Plane.newBuilder()
 				.setId(planeId)
-				.setSize(size);
-				
-		PerlinNoise perlinNoise = new PerlinNoise(System.currentTimeMillis());
-		
+				.setSize(size);		
 		
 		for (int x=-sizeX/2;x<=sizeX/2;x++) {
 			for (int y=-sizeY/2;y<=sizeY/2;y++) {
 				
-				double value = perlinNoise.getFor((x+sizeX)*frequency,(y+sizeY)*frequency);
+				double value = OpenSimplex2S.noise2(System.currentTimeMillis(),(x+sizeX)*frequency,(y+sizeY)*frequency);
 				
 				String tileName;
 				
