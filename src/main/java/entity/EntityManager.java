@@ -49,7 +49,7 @@ public class EntityManager {
 				.setMap(mapId)
 				.setPosition(vector)
 				.setId(currentId)
-				.setSpeed(15)
+				.setSpeed(30)
 				.setVelocity(vector2) // make a copy cheaply
 				.build();
 		

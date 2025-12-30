@@ -32,6 +32,8 @@ public class Generator {
 		
 		Plane plane = planeGenerator.generatePlane(100, 100);
 		planes.put(plane.getId(), plane);
+		
+		generateEcosystem(plane.getId());
 	}
 	
 	private void generateEcosystem(int planeId) {
