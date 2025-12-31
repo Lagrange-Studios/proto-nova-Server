@@ -25,15 +25,32 @@ public class Generator {
 		this.console = console;
 		this.planes = planes;
 		this.entityManager = entityManager;
-		planeGenerator = new PlaneGenerator(planes);
+		planeGenerator = new PlaneGenerator(planes,console);
+	}
+	
+	private String getRandomWorldType() {
+		File[] files = new File("assets/generation/terrain").listFiles();
+		File randomFile = files[(int) Math.round(Math.random()*(files.length-1))];
+		String fileName = randomFile.getName();
+		
+		return fileName.substring(0,fileName.lastIndexOf('.'));
+	}
+	
+	public void generateWorld(String worldType) {
+		
+		Plane plane = planeGenerator.generatePlane(100, 100, worldType);
+		
+		if (plane != null) {
+			planes.put(plane.getId(), plane);
+			
+			generateEcosystem(plane.getId());
+			
+			console.print("Generated new plane with id: "+plane.getId()+ " Type: "+worldType);
+		}
 	}
 	
 	public void generateWorld() {
-		
-		Plane plane = planeGenerator.generatePlane(100, 100);
-		planes.put(plane.getId(), plane);
-		
-		generateEcosystem(plane.getId());
+		generateWorld(getRandomWorldType());
 	}
 	
 	private void generateEcosystem(int planeId) {

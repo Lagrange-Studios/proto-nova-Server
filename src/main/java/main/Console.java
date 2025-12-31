@@ -4,6 +4,7 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 
 import file.ServerSaver;
+import generation.Generator;
 import socket.Player;
 
 import java.awt.*;
@@ -29,6 +30,7 @@ public class Console extends JFrame {
     private ServerSaver serverSaver;
     private final double byteToGigaByteRatio = Math.pow(10, 9);
     private final double byteToMegaByteRatio = Math.pow(10, 6);
+	private Generator generator;
 
     public Console(Server server) {
     	
@@ -140,6 +142,7 @@ public class Console extends JFrame {
                 outputArea.append(" - kick [name]: Kicks the player with the correlated name\n");
                 outputArea.append(" - save: Saves all data to the world root\n");
                 outputArea.append(" - players: Shows all currently connected players\n");
+                outputArea.append(" - generate plane [generation type (optional)]: Generates a new plane optionally passing in a generation type\n");
                 outputArea.append("\n");
             } else if (input.equalsIgnoreCase("time")) {
                 outputArea.append("Current time: " + LocalTime.now() + "\n\n");
@@ -178,6 +181,15 @@ public class Console extends JFrame {
                 for (int i=0;i<players.size();i++) {
                 	print(players.get(i).getUsername());
                 }
+            } else if (input.startsWith("generate plane")) {
+            	if (input.length() == 14) {
+            		generator.generateWorld();
+            	} else if (input.length() > 15) {
+                	String generationType = input.substring(15);
+            		generator.generateWorld(generationType);
+            	} else {
+            		print("Improper arguments");
+            	}
             } else {
                 outputArea.append("Unknown command. Type 'help' for options.\n\n");
             }
@@ -196,7 +208,8 @@ public class Console extends JFrame {
 		countedTicks++;		
 	}
 	
-	public void setCommandClasses(ServerSaver serverSaver) {
+	public void setCommandClasses(ServerSaver serverSaver, Generator generator) {
 		this.serverSaver = serverSaver;
+		this.generator = generator;
 	}
 }
