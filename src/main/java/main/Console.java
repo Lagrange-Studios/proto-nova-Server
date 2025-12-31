@@ -3,8 +3,11 @@ package main;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
+import entity.EntityManager;
 import file.ServerSaver;
 import generation.Generator;
+import protonova.protobuf.EntityProto.Entity;
+import protonova.protobuf.VectorProto.Vector;
 import socket.Player;
 
 import java.awt.*;
@@ -31,6 +34,7 @@ public class Console extends JFrame {
     private final double byteToGigaByteRatio = Math.pow(10, 9);
     private final double byteToMegaByteRatio = Math.pow(10, 6);
 	private Generator generator;
+	private EntityManager entityManager;
 
     public Console(Server server) {
     	
@@ -190,6 +194,64 @@ public class Console extends JFrame {
             	} else {
             		print("Improper arguments");
             	}
+            } else if (input.startsWith("tp ")) {
+            	String args = input.substring(3);
+            	
+            	String playerName;
+            	float x;
+            	float y;
+            	int p;
+            	
+            	try {
+            		int index1 = args.indexOf(' ');
+            		playerName = args.substring(0,index1);
+                	
+                	int index2 = args.substring(index1+1).indexOf(' ')+index1+1;
+                	x = Float.valueOf(args.substring(index1+1,index2));
+                	
+                	int index3 = args.substring(index2+1).indexOf(' ')+index2+1;
+                	y = Float.valueOf(args.substring(index2+1,index3));
+                	
+                	p = Integer.valueOf(args.substring(index3+1));
+            	}
+            	catch(Exception argumentError) {
+            		print(argumentError.getMessage());
+            		return;
+            	}
+            	/*
+            	print("Tp data");
+            	print(playerName);
+            	print(x);
+            	print(y);
+            	print(p);
+            	*/
+            	Player selectedPlayer = null;
+            	
+            	for (Player player : server.getPlayers()) {
+            		if (player.getUsername().equals(playerName)) {
+            			selectedPlayer = player;
+            			break;
+            		}
+            	}
+            	
+            	if (selectedPlayer == null) {
+            		print("Couldn't find player: "+playerName);
+            		return;
+            	}
+            	
+            	Entity playerEntity = entityManager.getEntity(selectedPlayer);
+            	
+            	Vector newPosition = Vector.newBuilder()
+            			.setX(x)
+            			.setY(y)
+            			.build();
+            	
+            	playerEntity = playerEntity.toBuilder()
+            			.setPosition(newPosition)
+            			.setMap(p)
+            			.build();
+            	
+            	entityManager.updateEntity(playerEntity);
             } else {
                 outputArea.append("Unknown command. Type 'help' for options.\n\n");
             }
@@ -203,13 +265,18 @@ public class Console extends JFrame {
     public void print(int output) {
     	print(String.valueOf(output));
     }
+    
+    public void print(double output) {
+    	print(String.valueOf(output));
+    }
 
 	public void addTick() {
 		countedTicks++;		
 	}
 	
-	public void setCommandClasses(ServerSaver serverSaver, Generator generator) {
+	public void setCommandClasses(ServerSaver serverSaver, Generator generator, EntityManager entityManager) {
 		this.serverSaver = serverSaver;
 		this.generator = generator;
+		this.entityManager = entityManager;
 	}
 }

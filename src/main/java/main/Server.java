@@ -90,7 +90,7 @@ public class Server {
 		
 		packetMaker = new PacketMaker(serverSocket,serverLoader,entityManager,entityFinder,planes);
 		
-		console.setCommandClasses(serverSaver,generator);
+		console.setCommandClasses(serverSaver,generator,entityManager);
 
 	}
 	
