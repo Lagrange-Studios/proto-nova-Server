@@ -84,7 +84,13 @@ public class EntityManager {
 	
 	public void updateEntity(Entity entity) {
 		if (entities.containsKey(entity.getId())) {
+			Entity oldEntity = entities.get(entity.getId());
+			
+			if (!oldEntity.getPosition().equals(entity.getPosition()) || oldEntity.getMap() != entity.getMap()) {
+				chunkManager.updateEntityChunck(oldEntity, entity);
+			}
 			entities.put(entity.getId(), entity);
+			
 		}
 		else {
 			System.err.println("Tried to update entity that dosent exist, Id: "+entity.getId());

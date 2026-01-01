@@ -102,15 +102,10 @@ public class ChunkManager {
         }
 	}
 	
-	public void updateEntityPosition(Entity entity, Vector newPosition) {
-		removeEntityFromChunk(getPlaneChunks(entity), CoordinateConverter.toChunkCoordinates(entity.getPosition()), entity);
+	public void updateEntityChunck(Entity oldEntity, Entity newEntity) {
+		removeEntityFromChunk(getPlaneChunks(oldEntity), CoordinateConverter.toChunkCoordinates(oldEntity.getPosition()), oldEntity);
 		
-		entity = entity.toBuilder()
-				.setPosition(newPosition)
-				.build();
-		entities.put(entity.getId(), entity);
-		
-		addEntityToChunk(getPlaneChunks(entity), CoordinateConverter.toChunkCoordinates(entity.getPosition()), entity);
+		addEntityToChunk(getPlaneChunks(newEntity), CoordinateConverter.toChunkCoordinates(newEntity.getPosition()), newEntity);
 	}
 	
 	public HashMap<Integer, HashMap<Coordinate, Chunk>> getChunks() {

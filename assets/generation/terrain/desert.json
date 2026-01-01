@@ -1,9 +1,8 @@
 {
   "frequency": 0.025,
   "tiles": {
-    "stone":0.7,
-    "grass":-0.35,
-    "sand":-0.5,
+	"stone": 0.85,
+    "sand":-0.85,
     "water":-1
   }
 }
