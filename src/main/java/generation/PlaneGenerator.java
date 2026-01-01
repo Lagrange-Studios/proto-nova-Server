@@ -96,6 +96,7 @@ public class PlaneGenerator {
 				Tile tile = Tile.newBuilder()
 						.setName(name)
 						.setCoordinate(coordinate)
+						.setVariant((int) (Math.round(Math.random()*3)+1))
 						.build();
 				
 				plane.putTiles(CoordinateConverter.convert(coordinate), tile);

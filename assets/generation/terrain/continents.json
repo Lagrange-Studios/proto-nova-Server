@@ -3,7 +3,7 @@
   "tiles": {
     "stone":0.7,
     "grass":0,
-    "sand":-0.75,
+    "sand":-0.85,
     "water":-1
   }
 }
