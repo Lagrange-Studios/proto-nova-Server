@@ -131,7 +131,6 @@ public class ServerLoader {
 				String fileName = entityAssetFiles[i].getName();
 				Entity newObject = Entity.parseFrom(Files.readAllBytes(Path.of(entityAssetFiles[i].getPath())));
 				entityAssets.put(fileName.substring(0,fileName.lastIndexOf('.')), newObject);
-				System.out.println(fileName.substring(0,fileName.lastIndexOf('.')));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

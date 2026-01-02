@@ -6,11 +6,11 @@ import entity.EntityManager;
 import protonova.protobuf.EntityProto.Entity;
 import util.Id;
 
-public class AssetHandler {
+public class AssetManager {
 	private HashMap<String, Entity> entityAssets;
 	private EntityManager entityManager;
 	
-	public AssetHandler(EntityManager entityManager, HashMap<String, Entity> entityAssets) {
+	public AssetManager(EntityManager entityManager, HashMap<String, Entity> entityAssets) {
 		this.entityAssets = entityAssets;
 		this.entityManager = entityManager;
 	}
@@ -27,5 +27,9 @@ public class AssetHandler {
 			return clone;
 		}
 		return null;
+	}
+	
+	public boolean containsEntity(String name) {
+		return entityAssets.containsKey(name);
 	}
 }

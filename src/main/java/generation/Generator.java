@@ -7,7 +7,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 
 import entity.EntityManager;
-import file.AssetHandler;
+import file.AssetManager;
 import main.Console;
 import protonova.protobuf.CelestialObjectProto.CelestialObject;
 import protonova.protobuf.EntityProto.Entity;
@@ -21,13 +21,16 @@ public class Generator {
 	private HashMap<Integer, Plane> planes;
 	private EntityManager entityManager;
 	private PlaneGenerator planeGenerator;
-	private AssetHandler assetHandler;
+	private AssetManager assetManager;
+	private EnviromentGenerator enviromentGenerator;
 	
-	public Generator(Console console, HashMap<Integer, Plane> planes, EntityManager entityManager, AssetHandler assetHandler) {
+	public Generator(Console console, HashMap<Integer, Plane> planes, EntityManager entityManager, AssetManager assetManager) {
 		this.console = console;
 		this.planes = planes;
 		this.entityManager = entityManager;
-		this.assetHandler = assetHandler;
+		this.assetManager = assetManager;
+		
+		enviromentGenerator = new EnviromentGenerator(assetManager,entityManager,console);
 		planeGenerator = new PlaneGenerator(planes,console);
 	}
 	
@@ -46,7 +49,7 @@ public class Generator {
 		if (plane != null) {
 			planes.put(plane.getId(), plane);
 			
-			generateEcosystem(plane.getId());
+			enviromentGenerator.generateEnviroment(plane, worldType);
 			
 			console.print("Generated new plane with id: "+plane.getId()+ " Type: "+worldType);
 		}
@@ -55,20 +58,6 @@ public class Generator {
 	public void generateWorld() {
 		generateWorld(getRandomWorldType());
 	}
-	
-	private void generateEcosystem(int planeId) {
-		
-		for (int i=0;i<10;i++) {
-			Vector position = Vector.newBuilder()
-					.setX((float) (Math.random()*100-50))
-					.setY((float) (Math.random()*100-50))
-					.build();
-			
-			Entity frog = assetHandler.getEntity("frog", planeId);
-			entityManager.updateEntity(frog.toBuilder().setPosition(position).build());
-		}
-	}
-	
 	
 	// Decreptated
 	public static void createCelestialObject(HashMap<Integer,CelestialObject> celestialObjects, int peroid, int speed) {
