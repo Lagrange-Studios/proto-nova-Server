@@ -27,7 +27,7 @@ public class Server {
 	
 	public Console console;
 	private ServerSocketHandler serverSocket;
-	private final int TPS = 20;
+	private final int TPS = 60;
 	private ServerLoader serverLoader;
 	private ServerSaver serverSaver;
 	private PacketMaker packetMaker;
