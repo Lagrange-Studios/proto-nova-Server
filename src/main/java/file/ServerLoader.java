@@ -120,4 +120,22 @@ public class ServerLoader {
 		
 		return celestialObjects;
 	}
+
+	public HashMap<String, Entity> loadEntityAssets() {
+		HashMap<String, Entity> entityAssets = new HashMap<String,Entity>();
+		
+		File[] entityAssetFiles = new File("assets/entities").listFiles();
+		
+		for (int i=0;i<entityAssetFiles.length;i++) {
+			try {
+				String fileName = entityAssetFiles[i].getName();
+				Entity newObject = Entity.parseFrom(Files.readAllBytes(Path.of(entityAssetFiles[i].getPath())));
+				entityAssets.put(fileName.substring(0,fileName.lastIndexOf('.')), newObject);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return entityAssets;
+	}
 }

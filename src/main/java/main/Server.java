@@ -12,6 +12,7 @@ import entity.ChunkManager;
 import entity.EntityFinder;
 import entity.EntityManager;
 import enums.Player.State;
+import file.AssetManager;
 import file.ServerLoader;
 import file.ServerSaver;
 import file.Validater;
@@ -39,6 +40,7 @@ public class Server {
 	private CelestialObjectManager celestialObjectManager;
 	private Validater validater;
 	private Generator generator;
+	private AssetManager assetManager;
 	
 	private int saveCounter = 0;
 	private int saveInterval = 15 * 60 * TPS; // Minutes
@@ -67,6 +69,7 @@ public class Server {
 		serverLoader = new ServerLoader(console);
 		planes = serverLoader.loadWorld();
 		entityManager = new EntityManager(serverLoader,console);
+		assetManager = new AssetManager(entityManager,serverLoader.loadEntityAssets());
 		
 		chunkManager = new ChunkManager(entityManager.getAllEntities());
 		chunkManager.groupAllEntites();
@@ -76,7 +79,7 @@ public class Server {
 		
 		celestialObjectManager = new CelestialObjectManager(serverLoader, console);
 		
-		generator = new Generator(console, planes, entityManager);
+		generator = new Generator(console, planes, entityManager, assetManager);
 		if (shouldGenerate) {
 			generator.generateWorld();
 		}
