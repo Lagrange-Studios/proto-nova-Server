@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 
 import entity.EntityManager;
+import file.AssetHandler;
 import main.Console;
 import protonova.protobuf.CelestialObjectProto.CelestialObject;
 import protonova.protobuf.EntityProto.Entity;
@@ -20,11 +21,13 @@ public class Generator {
 	private HashMap<Integer, Plane> planes;
 	private EntityManager entityManager;
 	private PlaneGenerator planeGenerator;
+	private AssetHandler assetHandler;
 	
-	public Generator(Console console, HashMap<Integer, Plane> planes, EntityManager entityManager) {
+	public Generator(Console console, HashMap<Integer, Plane> planes, EntityManager entityManager, AssetHandler assetHandler) {
 		this.console = console;
 		this.planes = planes;
 		this.entityManager = entityManager;
+		this.assetHandler = assetHandler;
 		planeGenerator = new PlaneGenerator(planes,console);
 	}
 	
@@ -61,7 +64,7 @@ public class Generator {
 					.setY((float) (Math.random()*100-50))
 					.build();
 			
-			Entity frog = entityManager.makeNewEntity("frog", planeId);
+			Entity frog = assetHandler.getEntity("frog", planeId);
 			entityManager.updateEntity(frog.toBuilder().setPosition(position).build());
 		}
 	}
