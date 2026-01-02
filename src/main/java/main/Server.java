@@ -101,7 +101,13 @@ public class Server {
 		try {
 			ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 			
-			Runnable task = () -> tick();
+			Runnable task = () -> {
+				try {
+					tick();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			};
 			
 			scheduler.scheduleAtFixedRate(task, 1, Math.round(1000/TPS), TimeUnit.MILLISECONDS);
 		} catch(Exception e) {
@@ -109,7 +115,7 @@ public class Server {
 		}
 	}
 	
-	private void tick() {
+	private void tick() throws Exception {
 		ArrayList<Player> playerList = serverSocket.getPlayerList();
 		
 		for (int i=0;i<playerList.size();i++) {

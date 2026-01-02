@@ -13,7 +13,7 @@ public class PacketReciver {
 	private EntityFinder entityFinder;
 	private ChunkManager chunkManager;
 	private EntityManager entityManager;
-	private final double reconcileDistance = 0.1; // nessecary distance to reconcile
+	private final double reconcileDistance = 1; // nessecary distance to reconcile
 	
 	public PacketReciver(EntityFinder entityFinder, ChunkManager chunkManager, EntityManager entityManager) {
 		this.entityFinder = entityFinder;

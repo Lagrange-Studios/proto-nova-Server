@@ -35,7 +35,6 @@ public class PacketMaker {
 	}
 	
 	public void sendPacket(Player player) {
-		
 		switch(player.getState()) {
 			case AWAITING_SERVER_PACKET:
 				
@@ -53,9 +52,9 @@ public class PacketMaker {
 				if (player.getState() != State.DISCONNECTED) {
 					player.data = serverLoader.getPlayerData(player.getUsername());
 					
-					if (player.data.getEntityId() == 0) {
+					if (player.data.getEntityId() == 0 || entityManager.getEntity(player.data.getEntityId()) == null) {
 						Entity newEntity = entityManager.makeNewEntity("human");
-
+						
 						player.data = player.data.toBuilder()
 							.setEntityId(newEntity.getId())
 							.build();

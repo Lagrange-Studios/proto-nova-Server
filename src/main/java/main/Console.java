@@ -113,6 +113,9 @@ public class Console extends JFrame {
     }
     
     private void updateBar() {
+    	
+    	if (countedTicks == 0) print("WARNING TPS is 0");
+    	
     	Runtime runtime = Runtime.getRuntime();
     	
         infoBar.setText(
@@ -147,6 +150,7 @@ public class Console extends JFrame {
                 outputArea.append(" - save: Saves all data to the world root\n");
                 outputArea.append(" - players: Shows all currently connected players\n");
                 outputArea.append(" - generate plane [generation type (optional)]: Generates a new plane optionally passing in a generation type\n");
+                outputArea.append(" - state: shows all the players states");
                 outputArea.append("\n");
             } else if (input.equalsIgnoreCase("time")) {
                 outputArea.append("Current time: " + LocalTime.now() + "\n\n");
@@ -218,13 +222,6 @@ public class Console extends JFrame {
             		print(argumentError.getMessage());
             		return;
             	}
-            	/*
-            	print("Tp data");
-            	print(playerName);
-            	print(x);
-            	print(y);
-            	print(p);
-            	*/
             	Player selectedPlayer = null;
             	
             	for (Player player : server.getPlayers()) {
@@ -252,6 +249,10 @@ public class Console extends JFrame {
             			.build();
             	
             	entityManager.updateEntity(playerEntity);
+            } else if (input.equalsIgnoreCase("state")) {
+            	for (Player player : server.getPlayers()) {
+            		print(player.getUsername()+": "+player.getState());
+            	}
             } else {
                 outputArea.append("Unknown command. Type 'help' for options.\n\n");
             }
