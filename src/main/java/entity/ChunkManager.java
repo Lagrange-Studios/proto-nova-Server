@@ -21,13 +21,18 @@ public class ChunkManager {
 		chunks = new HashMap<Integer, HashMap<Coordinate, Chunk>>();
 	}
 	
-	private HashMap<Coordinate, Chunk> getPlaneChunks(Entity entity) {
+	public HashMap<Coordinate, Chunk> getPlaneChunks(int mapId) {
 		
-		if (!chunks.containsKey(entity.getMap())) {
-			chunks.put(entity.getMap(), new HashMap<Coordinate, Chunk>());
+		if (!chunks.containsKey(mapId)) {
+			chunks.put(mapId, new HashMap<Coordinate, Chunk>());
 		}
 		
-		return chunks.get(entity.getMap());
+		return chunks.get(mapId);
+	}
+	
+	private HashMap<Coordinate, Chunk> getPlaneChunks(Entity entity) {
+		
+		return getPlaneChunks(entity.getMap());
 	}
 	
 	private void addEntityToChunk(HashMap<Coordinate, Chunk> chunkMap, Coordinate coordinate, Entity entity) {
@@ -110,9 +115,5 @@ public class ChunkManager {
 	
 	public HashMap<Integer, HashMap<Coordinate, Chunk>> getChunks() {
 		return chunks;
-	}
-	
-	public HashMap<Coordinate, Chunk> getPlaneChunks(int mapId) {
-		return chunks.get(mapId);
 	}
 }

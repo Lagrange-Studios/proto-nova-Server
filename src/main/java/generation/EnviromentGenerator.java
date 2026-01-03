@@ -7,6 +7,8 @@ import java.util.HashMap;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import collision.EntityCollision;
+import entity.EntityFinder;
 import entity.EntityManager;
 import file.AssetManager;
 import main.Console;
@@ -22,11 +24,13 @@ public class EnviromentGenerator {
 	private Console console;
 	private EntityManager entityManager;
 	private AssetManager assetManager;
-
-	public EnviromentGenerator(AssetManager assetManager, EntityManager entityManager, Console console) {
+	private EntityFinder entityFinder;
+	
+	public EnviromentGenerator(AssetManager assetManager, EntityManager entityManager, Console console, EntityFinder entityFinder) {
 		this.assetManager = assetManager;
 		this.entityManager = entityManager;
 		this.console = console;
+		this.entityFinder = entityFinder;
 	}
 	
 	private HashMap<String, ArrayList<Tile>> countTiles(Plane plane) {
@@ -92,10 +96,14 @@ public class EnviromentGenerator {
 				
 				clone = clone.toBuilder()
 					.setPosition(newPosition)
+					.setDirectionValue((int) (Math.random()*3))
 					.build();
 				
+				for (Entity entity : entityFinder.getAllEntitiesInRadis(clone, 2)) {
+					if (EntityCollision.checkCollision(entity, clone)) continue;
+				}
+				
 				entityManager.updateEntity(clone);
-				validTiles.remove(randomIndex);
 			}
 		}
 	}

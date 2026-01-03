@@ -4,9 +4,11 @@ import java.util.HashMap;
 
 import file.ServerLoader;
 import main.Console;
+import protonova.protobuf.EntityProto.Direction;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.VectorProto.Vector;
 import socket.Player;
+import util.Id;
 
 public class EntityManager {
 
@@ -23,16 +25,7 @@ public class EntityManager {
 	
 	public Entity makeNewEntity(String name,int mapId) {
 		
-		int currentId = 1;
-		
-		while (true) {
-			if (!entities.containsKey(currentId)) {
-				break;
-			}
-			else {
-				currentId++;
-			}
-		}
+		int currentId = Id.getNewId(entities.keySet());
 		
 		Vector vector = Vector.newBuilder()
 				.setX(0)
@@ -49,8 +42,9 @@ public class EntityManager {
 				.setMap(mapId)
 				.setPosition(vector)
 				.setId(currentId)
-				.setSpeed(30)
-				.setVelocity(vector2) // make a copy cheaply
+				.setSpeed(15)
+				.setVelocity(vector2)
+				.setDirection(Direction.Down)
 				.build();
 		
 		entities.put(currentId, entity);
@@ -89,12 +83,11 @@ public class EntityManager {
 			if (!oldEntity.getPosition().equals(entity.getPosition()) || oldEntity.getMap() != entity.getMap()) {
 				chunkManager.updateEntityChunck(oldEntity, entity);
 			}
-			entities.put(entity.getId(), entity);
-			
 		}
 		else {
-			System.err.println("Tried to update entity that dosent exist, Id: "+entity.getId());
+			chunkManager.addEntity(entity);
 		}
+		entities.put(entity.getId(), entity);
 	}
 
 	public void setChunkManager(ChunkManager chunkManager) {

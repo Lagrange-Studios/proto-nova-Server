@@ -79,7 +79,7 @@ public class Server {
 		
 		celestialObjectManager = new CelestialObjectManager(serverLoader, console);
 		
-		generator = new Generator(console, planes, entityManager, assetManager);
+		generator = new Generator(console, planes, entityManager, assetManager, entityFinder);
 		if (shouldGenerate) {
 			generator.generateWorld();
 		}

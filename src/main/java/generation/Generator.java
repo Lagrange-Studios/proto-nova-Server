@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 
+import entity.EntityFinder;
 import entity.EntityManager;
 import file.AssetManager;
 import main.Console;
@@ -23,14 +24,16 @@ public class Generator {
 	private PlaneGenerator planeGenerator;
 	private AssetManager assetManager;
 	private EnviromentGenerator enviromentGenerator;
+	private EntityFinder entityFinder;
 	
-	public Generator(Console console, HashMap<Integer, Plane> planes, EntityManager entityManager, AssetManager assetManager) {
+	public Generator(Console console, HashMap<Integer, Plane> planes, EntityManager entityManager, AssetManager assetManager, EntityFinder entityFinder) {
 		this.console = console;
 		this.planes = planes;
 		this.entityManager = entityManager;
 		this.assetManager = assetManager;
+		this.entityFinder = entityFinder;
 		
-		enviromentGenerator = new EnviromentGenerator(assetManager,entityManager,console);
+		enviromentGenerator = new EnviromentGenerator(assetManager,entityManager,console, entityFinder);
 		planeGenerator = new PlaneGenerator(planes,console);
 	}
 	
