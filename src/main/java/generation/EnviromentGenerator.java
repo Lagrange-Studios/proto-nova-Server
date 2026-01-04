@@ -102,7 +102,7 @@ public class EnviromentGenerator {
 				
 				boolean foundCollision = false;
 				for (Entity entity : entityFinder.getAllEntitiesInRadis(clone, 3)) {
-					if (EntityCollision.checkCollision(entity, clone, false)) {
+					if (EntityCollision.checkCollision(entity, clone)) {
 						foundCollision = true;
 						break;
 					};
