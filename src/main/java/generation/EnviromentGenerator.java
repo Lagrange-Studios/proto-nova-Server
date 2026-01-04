@@ -18,6 +18,7 @@ import protonova.protobuf.TileProto.Tile;
 import protonova.protobuf.VectorProto.Vector;
 import util.CoordinateConverter;
 import util.FileReader;
+import util.VectorMath;
 
 public class EnviromentGenerator {
 
@@ -80,8 +81,8 @@ public class EnviromentGenerator {
 			}
 			
 			// divide the size by density and then add entities randomly
-			for (int u=0;u<Math.ceil(validTiles.size()/generationData.getDouble("tileDensity"));u++) {
-				int randomIndex = (int) Math.round(Math.random()*validTiles.size());
+			for (int u=0;u<Math.floor(validTiles.size()/generationData.getDouble("tileDensity"));u++) {
+				int randomIndex = (int) Math.round(Math.random()*(validTiles.size()-1));
 				
 				Entity clone = assetManager.getEntity(generationData.getString("name"), plane.getId());
 				
@@ -99,11 +100,18 @@ public class EnviromentGenerator {
 					.setDirectionValue((int) (Math.random()*3))
 					.build();
 				
-				for (Entity entity : entityFinder.getAllEntitiesInRadis(clone, 2)) {
-					if (EntityCollision.checkCollision(entity, clone)) continue;
+				boolean foundCollision = false;
+				for (Entity entity : entityFinder.getAllEntitiesInRadis(clone, 3)) {
+					if (EntityCollision.checkCollision(entity, clone, false)) {
+						foundCollision = true;
+						break;
+					};
 				}
 				
-				entityManager.updateEntity(clone);
+				if (!foundCollision) {
+					entityManager.updateEntity(clone);
+				}
+				
 			}
 		}
 	}

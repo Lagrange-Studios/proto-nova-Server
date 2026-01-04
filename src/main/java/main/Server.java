@@ -69,7 +69,7 @@ public class Server {
 		serverLoader = new ServerLoader(console);
 		planes = serverLoader.loadWorld();
 		entityManager = new EntityManager(serverLoader,console);
-		assetManager = new AssetManager(entityManager,serverLoader.loadEntityAssets());
+		assetManager = new AssetManager(entityManager,serverLoader.loadEntityAssets(), console);
 		
 		chunkManager = new ChunkManager(entityManager.getAllEntities());
 		chunkManager.groupAllEntites();
@@ -84,7 +84,7 @@ public class Server {
 			generator.generateWorld();
 		}
 		
-		packetReciver = new PacketReciver(entityFinder, chunkManager, entityManager);
+		packetReciver = new PacketReciver(entityFinder, chunkManager, entityManager, console);
 		
 		serverSocket = new ServerSocketHandler(console, packetReciver);
 		serverSaver = new ServerSaver(this, entityManager, planes);
