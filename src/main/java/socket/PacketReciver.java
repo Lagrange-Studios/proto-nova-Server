@@ -21,7 +21,7 @@ public class PacketReciver {
 	private Console console;
 	private ActionHandler actionHandler;
 	
-	public PacketReciver(EntityManager entityManager, Console console, ActionHandler actionHandler) {
+public PacketReciver(EntityManager entityManager, SoundManager soundManager, Console console, ActionHandler actionHandler) {
 		this.entityManager = entityManager;
 		this.soundManager = soundManager;
 		this.console = console;

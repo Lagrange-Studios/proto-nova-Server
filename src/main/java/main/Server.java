@@ -98,7 +98,7 @@ public class Server {
 			generator.generateWorld();
 		}
 
-		packetReciver = new PacketReciver(entityFinder, chunkManager, entityManager, soundManager, console);
+		packetReciver = new PacketReciver(entityManager, soundManager, console, actionHandler);
 		
 		serverSocket = new ServerSocketHandler(console, packetReciver);
 		serverSaver = new ServerSaver(this, entityManager, planes);
