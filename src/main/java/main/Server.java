@@ -75,7 +75,8 @@ public class Server {
 		planes = serverLoader.loadWorld();
 		entityManager = new EntityManager(serverLoader,console);
 		soundManager = new SoundManager(serverLoader,console, this);
-		assetManager = new AssetManager(entityManager,serverLoader.loadEntityAssets());
+		
+		assetManager = new AssetManager(entityManager,serverLoader.loadEntityAssets(), console);
 		
 		chunkManager = new ChunkManager(entityManager.getAllEntities());
 		chunkManager.groupAllEntites();
@@ -92,7 +93,8 @@ public class Server {
 			generator.generateWorld();
 		}
 		
-		packetReciver = new PacketReciver(entityFinder, chunkManager, entityManager, soundManager);
+
+		packetReciver = new PacketReciver(entityFinder, chunkManager, entityManager, soundManager, console);
 		
 		serverSocket = new ServerSocketHandler(console, packetReciver);
 		serverSaver = new ServerSaver(this, entityManager, planes);

@@ -1,8 +1,10 @@
 package main;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import protonova.protobuf.EntityProto.Direction;
 import protonova.protobuf.EntityProto.Entity;
@@ -10,24 +12,24 @@ import protonova.protobuf.VectorProto.Vector;
 
 public class AssetMaker {
     public static void main(String[] args) {
-    	Vector zero = Vector.newBuilder()
+    	/*Vector zero = Vector.newBuilder()
     			.setX(0)
     			.setY(0)
     			.build();
     	
     	Vector one = Vector.newBuilder()
-    			.setX(0)
-    			.setY(0)
+    			.setX(1)
+    			.setY(1)
     			.build();
     	
     	Entity entity = Entity.newBuilder()
     			.setDirection(Direction.Down)
-    			.setName("rock")
+    			.setName("frog")
     			.setPosition(zero)
-    			.setCanCollide(true)
-    			.setAnchored(true)
-    			.setHealth(200)
-    			.setMaxHealth(200)
+    			.setCanCollide(false)
+    			.setAnchored(false)
+    			.setHealth(50)
+    			.setMaxHealth(50)
     			.setSize(one)
     			.build();
     	
@@ -35,6 +37,18 @@ public class AssetMaker {
 			Files.write(Path.of("assets/bin/"+entity.getName()+".data"), entity.toByteArray());
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+		}*/
+    	
+    	/*for (File file : new File("assets/entities").listFiles()) {
+    		try {
+				Entity entity = Entity.parseFrom(Files.readAllBytes(Paths.get(file.getPath())));
+				entity = entity.toBuilder()
+						.setSize(Vector.newBuilder().setX(1).setY(1).build())
+						.build();
+				Files.write(Paths.get(file.getPath()), entity.toByteArray());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+    	}*/
     }
 }

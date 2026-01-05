@@ -45,6 +45,7 @@ public class EntityManager {
 				.setSpeed(15)
 				.setVelocity(vector2)
 				.setDirection(Direction.Down)
+				.setSelectedSlot("leftHand")
 				.build();
 		
 		entities.put(currentId, entity);

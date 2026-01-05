@@ -3,6 +3,7 @@ package socket;
 import entity.ChunkManager;
 import entity.EntityFinder;
 import entity.EntityManager;
+import main.Console;
 import protonova.protobuf.ClientToServerPacketProto.ClientToServerPacket;
 import protonova.protobuf.EntityProto.Entity;
 import simulation.EntitySimulation;
@@ -16,21 +17,31 @@ public class PacketReciver {
 	private EntityManager entityManager;
 	private SoundManager soundManager;
 	private final double reconcileDistance = 1; // nessecary distance to reconcile
+	private Console console;
 	
-	public PacketReciver(EntityFinder entityFinder, ChunkManager chunkManager, EntityManager entityManager, SoundManager soundManager) {
+
+public PacketReciver(EntityFinder entityFinder, ChunkManager chunkManager, EntityManager entityManager, SoundManager soundManager, Console console) {
 		this.entityFinder = entityFinder;
 		this.chunkManager = chunkManager;
 		this.entityManager = entityManager;
 		this.soundManager = soundManager;
+		this.console = console;
 	}
 	
 	public void recivePacket(Player player, ClientToServerPacket packet) {
 		
+		Entity clientEntity = packet.getUpdatedEntity();
+		Entity serverEntity = entityManager.getEntity(player);
 		// simulate the entity serverside
+		
+		// update all the client trusted values
+		serverEntity = serverEntity.toBuilder()
+				.setSelectedSlot(clientEntity.getSelectedSlot())
+				.build();
 		
 		// simulate keyPresses
 		for (int i=0;i<packet.getActionsCount();i++) {
-			entityManager.updateEntity(EntitySimulation.simulateMovement(entityManager.getEntity(player), packet.getActions(i)));
+			serverEntity = EntitySimulation.simulateMovement(serverEntity, packet.getActions(i));
 		}
 		
 		for (int i=0;i<packet.getSoundsCount();i++) {
@@ -38,10 +49,12 @@ public class PacketReciver {
 		}
 		
 		// Simulate final velocity
-		entityManager.updateEntity(EntitySimulation.simulateVelocity(entityManager.getEntity(player)));
+		entityManager.updateEntity(EntitySimulation.simulateVelocity(serverEntity));
 		
-		if (VectorMath.distance(packet.getUpdatedEntity().getPosition(), entityManager.getEntity(player).getPosition()) >= reconcileDistance) {
+		if (VectorMath.distance(clientEntity.getPosition(), serverEntity.getPosition()) >= reconcileDistance) {
 			player.shouldReconcile = true;
+			console.print("WARNING: Player "+player.getUsername()+" is moving too fast!");
+			
 		}
 	}
 }
