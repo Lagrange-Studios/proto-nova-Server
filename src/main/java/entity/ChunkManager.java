@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 
+import protonova.protobuf.AudioProto.Audio;
 import protonova.protobuf.ChunkProto.Chunk;
 import protonova.protobuf.CoordinateProto.Coordinate;
 import protonova.protobuf.EntityProto.Entity;
@@ -52,8 +53,37 @@ public class ChunkManager {
 		chunkMap.put(coordinate, selectedChunk);
 	}
 	
+	private void addSoundToChunk(HashMap<Coordinate, Chunk> chunkMap, Coordinate coordinate, Audio audio) {
+		if (!chunkMap.containsKey(coordinate)) {
+			Chunk newChunk = Chunk.newBuilder()
+					.setCoordinate(coordinate)
+					.build();
+			
+			chunkMap.put(coordinate,newChunk);
+		}
+		
+		Chunk selectedChunk = chunkMap.get(coordinate);
+		selectedChunk = selectedChunk.toBuilder()
+			.addSounds(audio)
+			.build();
+		
+		chunkMap.put(coordinate, selectedChunk);
+	}
+	
 	public void addEntity(Entity entity) {
 		addEntityToChunk(getPlaneChunks(entity),CoordinateConverter.toChunkCoordinates(entity.getPosition()),entity);
+	}
+	
+	public void addSound(Audio audio) {
+		Vector position;
+		
+		if (audio.getPosition() == null) {
+			position = entities.get(audio.getEntityID()).getPosition();
+		} else {
+			position = audio.getPosition();
+		}
+		
+		addSoundToChunk(getPlaneChunks(audio.getMap()),CoordinateConverter.toChunkCoordinates(position),audio);
 	}
 	
 	private void removeEntityFromChunk(HashMap<Coordinate, Chunk> chunkMap, Coordinate coordinate, Entity entity) {

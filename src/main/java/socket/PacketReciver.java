@@ -6,6 +6,7 @@ import entity.EntityManager;
 import protonova.protobuf.ClientToServerPacketProto.ClientToServerPacket;
 import protonova.protobuf.EntityProto.Entity;
 import simulation.EntitySimulation;
+import sound.SoundManager;
 import util.VectorMath;
 
 public class PacketReciver {
@@ -13,12 +14,14 @@ public class PacketReciver {
 	private EntityFinder entityFinder;
 	private ChunkManager chunkManager;
 	private EntityManager entityManager;
+	private SoundManager soundManager;
 	private final double reconcileDistance = 1; // nessecary distance to reconcile
 	
-	public PacketReciver(EntityFinder entityFinder, ChunkManager chunkManager, EntityManager entityManager) {
+	public PacketReciver(EntityFinder entityFinder, ChunkManager chunkManager, EntityManager entityManager, SoundManager soundManager) {
 		this.entityFinder = entityFinder;
 		this.chunkManager = chunkManager;
 		this.entityManager = entityManager;
+		this.soundManager = soundManager;
 	}
 	
 	public void recivePacket(Player player, ClientToServerPacket packet) {
@@ -28,6 +31,10 @@ public class PacketReciver {
 		// simulate keyPresses
 		for (int i=0;i<packet.getActionsCount();i++) {
 			entityManager.updateEntity(EntitySimulation.simulateMovement(entityManager.getEntity(player), packet.getActions(i)));
+		}
+		
+		for (int i=0;i<packet.getSoundsCount();i++) {
+			soundManager.makeNewSound(packet.getSounds(i));
 		}
 		
 		// Simulate final velocity
