@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.swing.SwingUtilities;
 
+import action.ActionHandler;
 import entity.ChunkManager;
 import entity.EntityFinder;
 import entity.EntityManager;
@@ -41,6 +42,7 @@ public class Server {
 	private Validater validater;
 	private Generator generator;
 	private AssetManager assetManager;
+	private ActionHandler actionHandler;
 	
 	private int saveCounter = 0;
 	private int saveInterval = 15 * 60 * TPS; // Minutes
@@ -80,11 +82,14 @@ public class Server {
 		celestialObjectManager = new CelestialObjectManager(serverLoader, console);
 		
 		generator = new Generator(console, planes, entityManager, assetManager, entityFinder);
+		
+		actionHandler = new ActionHandler(console, entityManager, entityFinder, planes);
+		
 		if (shouldGenerate) {
 			generator.generateWorld();
 		}
 		
-		packetReciver = new PacketReciver(entityFinder, chunkManager, entityManager, console);
+		packetReciver = new PacketReciver(entityManager, console, actionHandler);
 		
 		serverSocket = new ServerSocketHandler(console, packetReciver);
 		serverSaver = new ServerSaver(this, entityManager, planes);

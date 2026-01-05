@@ -12,32 +12,31 @@ import protonova.protobuf.VectorProto.Vector;
 
 public class AssetMaker {
     public static void main(String[] args) {
-    	/*Vector zero = Vector.newBuilder()
+    	Vector zero = Vector.newBuilder()
     			.setX(0)
     			.setY(0)
     			.build();
     	
     	Vector one = Vector.newBuilder()
-    			.setX(1)
-    			.setY(1)
+    			.setX(.5f)
+    			.setY(.5f)
     			.build();
     	
     	Entity entity = Entity.newBuilder()
     			.setDirection(Direction.Down)
-    			.setName("frog")
+    			.setName("stick")
     			.setPosition(zero)
-    			.setCanCollide(false)
-    			.setAnchored(false)
-    			.setHealth(50)
-    			.setMaxHealth(50)
     			.setSize(one)
+    			.setIsItem(true)
+    			.setStackable(true)
+    			.setAmount(1)
     			.build();
     	
     	try {
 			Files.write(Path.of("assets/bin/"+entity.getName()+".data"), entity.toByteArray());
 		} catch (IOException e) {
 			e.printStackTrace();
-		}*/
+		}
     	
     	/*for (File file : new File("assets/entities").listFiles()) {
     		try {

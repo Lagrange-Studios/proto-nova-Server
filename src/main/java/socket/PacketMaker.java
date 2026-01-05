@@ -100,12 +100,18 @@ public class PacketMaker {
 			}
 		}
 		
+		// add nearby entities
 		ArrayList<Entity> foundEntities = entityFinder.getAllEntitiesInRadis(playerEntity, renderDistance);
 		
-		for (int i=0;i<foundEntities.size();i++) {
-			packet.addEntities(foundEntities.get(i));
+		for (Entity entity : foundEntities) {
+			packet.addEntities(entity);
 		}
 		
+		// Add inventory
+		for (int id : playerEntity.getInventorySlotsMap().values()) {
+			packet.addEntities(entityManager.getEntity(id));
+		}
+
 		packet.setReconcile(player.shouldReconcile);
 		
 		player.send(packet.build().toByteArray());

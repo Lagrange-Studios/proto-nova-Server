@@ -1,9 +1,12 @@
 package socket;
 
+import action.ActionHandler;
 import entity.ChunkManager;
 import entity.EntityFinder;
 import entity.EntityManager;
 import main.Console;
+import protonova.protobuf.ActionProto.Action;
+import protonova.protobuf.ActionProto.ActionType;
 import protonova.protobuf.ClientToServerPacketProto.ClientToServerPacket;
 import protonova.protobuf.EntityProto.Entity;
 import simulation.EntitySimulation;
@@ -11,17 +14,15 @@ import util.VectorMath;
 
 public class PacketReciver {
 
-	private EntityFinder entityFinder;
-	private ChunkManager chunkManager;
 	private EntityManager entityManager;
 	private final double reconcileDistance = 1; // nessecary distance to reconcile
 	private Console console;
+	private ActionHandler actionHandler;
 	
-	public PacketReciver(EntityFinder entityFinder, ChunkManager chunkManager, EntityManager entityManager, Console console) {
-		this.entityFinder = entityFinder;
-		this.chunkManager = chunkManager;
+	public PacketReciver(EntityManager entityManager, Console console, ActionHandler actionHandler) {
 		this.entityManager = entityManager;
 		this.console = console;
+		this.actionHandler = actionHandler;
 	}
 	
 	public void recivePacket(Player player, ClientToServerPacket packet) {
@@ -36,8 +37,14 @@ public class PacketReciver {
 				.build();
 		
 		// simulate keyPresses
-		for (int i=0;i<packet.getActionsCount();i++) {
-			serverEntity = EntitySimulation.simulateMovement(serverEntity, packet.getActions(i));
+		for (Action action : packet.getActionsList()) {
+			
+			if (action.getActionType() != ActionType.Interact) {
+				serverEntity = EntitySimulation.simulateMovement(serverEntity, action);
+			}
+			else {
+				serverEntity = actionHandler.executeAction(player, action);
+			}
 		}
 		
 		// Simulate final velocity

@@ -31,19 +31,19 @@ public class EntityManager {
 				.setX(0)
 				.setY(0)
 				.build();
-		
-		Vector vector2 = Vector.newBuilder()
-				.setX(0)
-				.setY(0)
+		Vector one = Vector.newBuilder()
+				.setX(1)
+				.setY(1)
 				.build();
 		
 		Entity entity = Entity.newBuilder()
 				.setName(name)
 				.setMap(mapId)
 				.setPosition(vector)
+				.setSize(one)
 				.setId(currentId)
-				.setSpeed(15)
-				.setVelocity(vector2)
+				.setSpeed(7.5)
+				.setVelocity(vector.toBuilder().build())
 				.setDirection(Direction.Down)
 				.setSelectedSlot("leftHand")
 				.build();
