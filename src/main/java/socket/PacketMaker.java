@@ -9,11 +9,13 @@ import entity.EntityFinder;
 import entity.EntityManager;
 import enums.Player.State;
 import file.ServerLoader;
+import protonova.protobuf.AudioProto.Audio;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.PlaneProto.Plane;
 import protonova.protobuf.ServerToClientPacketProto.ServerToClientPacket;
 import protonova.protobuf.ServerToClientPacketProto.ServerToClientPacket.Builder;
 import protonova.protobuf.TileProto.Tile;
+import sound.SoundFinder;
 
 public class PacketMaker {
 
@@ -21,16 +23,18 @@ public class PacketMaker {
 	private ServerLoader serverLoader;
 	private EntityManager entityManager;
 	private EntityFinder entityFinder;
+	private SoundFinder soundFinder;
 	private HashMap<Integer, Plane> planes;
 	
 	private static final double renderDistance = 40;
 	
 	public PacketMaker(ServerSocketHandler serverSocket, ServerLoader serverLoader,
-			EntityManager entityManager, EntityFinder entityFinder, HashMap<Integer, Plane> planes) {
+			EntityManager entityManager, EntityFinder entityFinder, SoundFinder soundFinder, HashMap<Integer, Plane> planes) {
 		this.serverSocket = serverSocket;
 		this.serverLoader = serverLoader;
 		this.entityManager = entityManager;
 		this.entityFinder = entityFinder;
+		this.soundFinder = soundFinder;
 		this.planes = planes;
 	}
 	
@@ -112,6 +116,12 @@ public class PacketMaker {
 			packet.addEntities(entityManager.getEntity(id));
 		}
 
+		ArrayList<Audio> foundSounds = soundFinder.getAllSoundsInRadis(playerEntity, renderDistance);
+		
+		for (int i=0;i<foundSounds.size();i++) {
+			packet.addSounds(foundSounds.get(i));
+		}
+		
 		packet.setReconcile(player.shouldReconcile);
 		
 		player.send(packet.build().toByteArray());

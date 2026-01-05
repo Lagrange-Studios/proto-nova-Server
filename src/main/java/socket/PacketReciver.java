@@ -10,17 +10,20 @@ import protonova.protobuf.ActionProto.ActionType;
 import protonova.protobuf.ClientToServerPacketProto.ClientToServerPacket;
 import protonova.protobuf.EntityProto.Entity;
 import simulation.EntitySimulation;
+import sound.SoundManager;
 import util.VectorMath;
 
 public class PacketReciver {
 
 	private EntityManager entityManager;
+	private SoundManager soundManager;
 	private final double reconcileDistance = 1; // nessecary distance to reconcile
 	private Console console;
 	private ActionHandler actionHandler;
 	
 	public PacketReciver(EntityManager entityManager, Console console, ActionHandler actionHandler) {
 		this.entityManager = entityManager;
+		this.soundManager = soundManager;
 		this.console = console;
 		this.actionHandler = actionHandler;
 	}
@@ -45,6 +48,10 @@ public class PacketReciver {
 			else {
 				serverEntity = actionHandler.executeAction(player, action);
 			}
+		}
+		
+		for (int i=0;i<packet.getSoundsCount();i++) {
+			soundManager.makeNewSound(packet.getSounds(i));
 		}
 		
 		// Simulate final velocity
