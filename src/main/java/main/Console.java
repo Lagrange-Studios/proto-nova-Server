@@ -262,7 +262,7 @@ public class Console extends JFrame {
             	entityManager.updateEntity(playerEntity);
             } else if (input.equalsIgnoreCase("state")) {
             	for (Player player : server.getPlayers()) {
-            		print(player.getUsername()+": "+player.getState());
+            		print(player.getUsername()+": "+player.getState()+" Map: "+entityManager.getEntity(player).getMap());
             	}
             } else {
                 outputArea.append("Unknown command. Type 'help' for options.\n\n");
