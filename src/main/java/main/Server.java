@@ -160,6 +160,6 @@ public class Server {
 	}
 	
 	public ArrayList<Player> getPlayers() {
-		return serverSocket.getPlayerList();
+		return serverSocket!=null?serverSocket.getPlayerList():new ArrayList<Player>();
 	}
 }

@@ -7,6 +7,7 @@ import entity.EntityManager;
 import main.Console;
 import protonova.protobuf.ActionProto.Action;
 import protonova.protobuf.ActionProto.ActionType;
+import protonova.protobuf.ActionProto.InteractionType;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.PlaneProto.Plane;
 import socket.Player;
@@ -27,47 +28,49 @@ public class ActionHandler {
 
 	public Entity executeAction(Player player, Action action) {
 		Entity playerEntity = entityManager.getEntity(player);
-		console.print(playerEntity.getSelectedSlot());
 		
-		for (String slotName : playerEntity.getInventorySlotsMap().keySet()) {
-			System.out.println(slotName);
-		}
+		if (action.getActionType() != ActionType.Interact) return playerEntity;
 		
-		if (action.getActionType() == ActionType.Interact) {
-			Entity interactingEntity = entityManager.getEntity(action.getInteractingEntityId());
-
-			System.out.println(interactingEntity == null);
-			System.out.println(playerEntity.getInventorySlotsMap().containsKey(playerEntity.getSelectedSlot()));
-			if (interactingEntity != null && interactingEntity.getIsItem()) {
-				if (playerEntity.getInventorySlotsMap().containsKey(playerEntity.getSelectedSlot())) {
-					
-				}
-				else {
-					interactingEntity = interactingEntity.toBuilder()
-							.setMap(0)
-							.build();
-					entityManager.updateEntity(interactingEntity);
-					
-					playerEntity = playerEntity.toBuilder()
-							.putInventorySlots(playerEntity.getSelectedSlot(), interactingEntity.getId())
-							.build();
-					
-					
-				}
-			}
-			else if (interactingEntity == null && playerEntity.getInventorySlotsMap().containsKey(playerEntity.getSelectedSlot())) {
+		switch(action.getInteractionType().getNumber()) {
+			case(InteractionType.PickUp_VALUE):
+				
+				if (action.getInteractingEntityId() == 0) break;
+				if (playerEntity.getInventorySlotsMap().containsKey(playerEntity.getSelectedSlot())) break; //TODO: add stacking
+				
+				Entity interactingEntity = entityManager.getEntity(action.getInteractingEntityId());
+				
+				if (!interactingEntity.getIsItem()) break;
+				
+				interactingEntity = interactingEntity.toBuilder()
+						.setMap(0)
+						.build();
+				
+				entityManager.updateEntity(interactingEntity);
+		
+				playerEntity = playerEntity.toBuilder()
+					.putInventorySlots(playerEntity.getSelectedSlot(), interactingEntity.getId())
+					.build();
+				break;
+				
+			case(InteractionType.Drop_VALUE):
+				
+				if (!playerEntity.getInventorySlotsMap().containsKey(playerEntity.getSelectedSlot())) break;
+				
 				Entity item = entityManager.getEntity(playerEntity.getInventorySlotsMap().get(playerEntity.getSelectedSlot()));
 				item = item.toBuilder()
-						.setPosition(action.getInteractionPosition())
-						.setMap(playerEntity.getMap())
-						.build();
-				
+					.setPosition(action.getInteractionPosition())
+					.setMap(playerEntity.getMap())
+					.build();
+				entityManager.updateEntity(item);
+			
 				playerEntity = playerEntity.toBuilder()
-						.removeInventorySlots(playerEntity.getSelectedSlot())
-						.build();
+					.removeInventorySlots(playerEntity.getSelectedSlot())
+					.build();
 				
-			}
+				break;
 		}
+		
+		
 		return playerEntity;
 	}
 }

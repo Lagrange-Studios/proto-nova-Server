@@ -91,7 +91,12 @@ public class Console extends JFrame {
             public void windowClosing(WindowEvent e) {
                 // Perform cleanup if needed
                 System.out.println("Saving data");
-                System.out.println(serverSaver.save());
+                if (serverSaver != null) {
+                    System.out.println(serverSaver.save());
+                }
+                else {
+                	System.err.println("Failed to save data due to no serverSaver");
+                }
                 System.exit(0);  // Exit the application
             }
         });
@@ -104,7 +109,13 @@ public class Console extends JFrame {
     	try {
 			ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 			
-			Runnable task = () -> updateBar();
+			Runnable task = () -> {
+				try {
+					updateBar();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			};
 			
 			scheduler.scheduleAtFixedRate(task, 1, 1, TimeUnit.SECONDS);
 		} catch(Exception e) {
@@ -112,7 +123,7 @@ public class Console extends JFrame {
 		}
     }
     
-    private void updateBar() {
+    private void updateBar() throws Exception {
     	
     	if (countedTicks == 0) print("WARNING TPS is 0");
     	
