@@ -8,6 +8,7 @@ import java.io.BufferedOutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 
 import main.Console;
 import protonova.protobuf.ClientToServerPacketProto.ClientToServerPacket;
@@ -17,12 +18,12 @@ import protonova.protobuf.UserDataProto.UserData;
 import enums.Player.State;
 
 public class Player {
-	private Socket socket;
+	public Socket socket;
 	private String username;
 	
 	private DataInputStream input;
 	private DataOutputStream output;
-	private State state = State.DISCONNECTED;
+	private volatile State state = State.DISCONNECTED;
 	private Console console;
 	public PlayerData data;
 	private PacketReciver packetReciver;
@@ -44,14 +45,14 @@ public class Player {
 	}
 	
 	public void disconnect() {
-		try {
-			input.close();
+		if (state == State.DISCONNECTED) return;
+		state = State.DISCONNECTED;
+
+	    try {
+	    	input.close();
 			output.close();
 			socket.close();
-			state = State.DISCONNECTED;
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	    } catch (IOException ignored) {}
 	}
 	
 	public State getState() {
@@ -99,11 +100,12 @@ public class Player {
 		
 		try {
 			output.writeInt(bytes.length);
-			
 			output.write(bytes);
 			output.flush();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		} catch (SocketException e) {
+	        disconnect(); // client is gone
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	    }
 	}
 }
