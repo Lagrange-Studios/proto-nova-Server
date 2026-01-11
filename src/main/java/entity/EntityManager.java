@@ -46,8 +46,6 @@ public class EntityManager {
 				.setVelocity(vector.toBuilder().build())
 				.setDirection(Direction.Down)
 				.setSelectedSlot("leftHand")
-				.setLightRange(5)
-				.setHexColor("FFFFFF40")
 				.build();
 		
 		entities.put(currentId, entity);

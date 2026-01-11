@@ -18,18 +18,24 @@ public class AssetMaker {
     			.build();
     	
     	Vector one = Vector.newBuilder()
+    			.setX(1)
+    			.setY(1)
+    			.build();
+   
+    	Vector pointFive = Vector.newBuilder()
     			.setX(.5f)
     			.setY(.5f)
     			.build();
     	
     	Entity entity = Entity.newBuilder()
     			.setDirection(Direction.Down)
-    			.setName("stick")
+    			.setName("campfire")
     			.setPosition(zero)
     			.setSize(one)
     			.setIsItem(true)
-    			.setStackable(true)
-    			.setAmount(1)
+    			.setStackable(false)
+    			.setLightRange(5)
+    			.setHexColor("FF0000")
     			.build();
     	
     	try {
