@@ -18,6 +18,7 @@ import file.ServerLoader;
 import file.ServerSaver;
 import file.Validater;
 import generation.Generator;
+import plane.PlaneManager;
 import protonova.protobuf.PlaneProto.Plane;
 import socket.PacketMaker;
 import socket.PacketReciver;
@@ -37,7 +38,7 @@ public class Server {
 	private ServerSaver serverSaver;
 	private PacketMaker packetMaker;
 	private PacketReciver packetReciver;
-	private HashMap<Integer, Plane> planes;
+	private PlaneManager planeManager;
 	private EntityManager entityManager;
 	private SoundManager soundManager;
 	private EntityFinder entityFinder;
@@ -74,7 +75,7 @@ public class Server {
 		boolean shouldGenerate = validater.validateWorldFiles();
 		
 		serverLoader = new ServerLoader(console);
-		planes = serverLoader.loadWorld();
+		planeManager = new PlaneManager(serverLoader.loadWorld());
 		entityManager = new EntityManager(serverLoader,console);
 		soundManager = new SoundManager(serverLoader,console, this);
 		
@@ -90,9 +91,9 @@ public class Server {
 		
 		celestialObjectManager = new CelestialObjectManager(serverLoader, console);
 		
-		generator = new Generator(console, planes, entityManager, assetManager, entityFinder);
+		generator = new Generator(console, planeManager, entityManager, assetManager, entityFinder);
 		
-		actionHandler = new ActionHandler(console, entityManager, entityFinder, planes);
+		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager);
 		
 		if (shouldGenerate) {
 			generator.generateWorld();
@@ -101,11 +102,11 @@ public class Server {
 		packetReciver = new PacketReciver(entityManager, soundManager, console, actionHandler);
 		
 		serverSocket = new ServerSocketHandler(console, packetReciver);
-		serverSaver = new ServerSaver(this, entityManager, planes);
+		serverSaver = new ServerSaver(this, entityManager, planeManager);
 		
 		startThread();
 		
-		packetMaker = new PacketMaker(serverSocket,serverLoader,entityManager,entityFinder,soundFinder,planes);
+		packetMaker = new PacketMaker(serverSocket,serverLoader,entityManager,entityFinder,soundFinder,planeManager);
 		
 		console.setCommandClasses(serverSaver,generator,entityManager);
 
