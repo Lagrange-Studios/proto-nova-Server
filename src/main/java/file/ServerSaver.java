@@ -11,6 +11,7 @@ import java.util.Set;
 
 import entity.EntityManager;
 import main.Server;
+import plane.PlaneManager;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.PlaneProto.Plane;
 import socket.Player;
@@ -19,12 +20,12 @@ public class ServerSaver {
 
 	private Server server;
 	private EntityManager entityManager;
-	private HashMap<Integer, Plane> planes;
+	private PlaneManager planeManager;
 	
-	public ServerSaver(Server server, EntityManager entityManager, HashMap<Integer, Plane> planes) {
+	public ServerSaver(Server server, EntityManager entityManager, PlaneManager planeManager) {
 		this.server = server;
 		this.entityManager = entityManager;
-		this.planes = planes;
+		this.planeManager = planeManager;
 	}
 	
 	public String save() {
@@ -61,13 +62,13 @@ public class ServerSaver {
 		
 		//Saving planes
 		try {
-			Set<Integer> keys = planes.keySet();
+			Set<Integer> keys = planeManager.getPlanes().keySet();
 			Iterator<Integer> iterator = keys.iterator();
 			
 			while (iterator.hasNext()) {
 				int key = iterator.next();
 				
-				Plane plane = planes.get(key);
+				Plane plane = planeManager.getPlane(key);
 				
 				byte[] array = plane.toByteArray();
 				Path newPath = Paths.get("worldRoot/planes/"+plane.getId()+".data");

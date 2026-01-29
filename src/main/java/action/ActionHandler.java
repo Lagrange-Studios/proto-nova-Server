@@ -5,6 +5,7 @@ import java.util.HashMap;
 import entity.EntityFinder;
 import entity.EntityManager;
 import main.Console;
+import plane.PlaneManager;
 import protonova.protobuf.ActionProto.Action;
 import protonova.protobuf.ActionProto.ActionType;
 import protonova.protobuf.ActionProto.InteractionType;
@@ -17,13 +18,13 @@ public class ActionHandler {
 	private Console console;
 	private EntityManager entityManager;
 	private EntityFinder entityFinder;
-	private HashMap<Integer, Plane> planes;
+	private PlaneManager planeManager;
 
-	public ActionHandler(Console console, EntityManager entityManager, EntityFinder entityFinder, HashMap<Integer, Plane> planes) {
+	public ActionHandler(Console console, EntityManager entityManager, EntityFinder entityFinder, PlaneManager planeManager) {
 		this.console = console;
 		this.entityManager = entityManager;
 		this.entityFinder = entityFinder;
-		this.planes = planes;
+		this.planeManager = planeManager;
 	}
 
 	public Entity executeAction(Player player, Action action) {

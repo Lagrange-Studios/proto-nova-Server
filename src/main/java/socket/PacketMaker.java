@@ -9,6 +9,7 @@ import entity.EntityFinder;
 import entity.EntityManager;
 import enums.Player.State;
 import file.ServerLoader;
+import plane.PlaneManager;
 import protonova.protobuf.AudioProto.Audio;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.PlaneProto.Plane;
@@ -24,18 +25,18 @@ public class PacketMaker {
 	private EntityManager entityManager;
 	private EntityFinder entityFinder;
 	private SoundFinder soundFinder;
-	private HashMap<Integer, Plane> planes;
+	private PlaneManager planeManager;
 	
 	private static final double renderDistance = 40;
 	
 	public PacketMaker(ServerSocketHandler serverSocket, ServerLoader serverLoader,
-			EntityManager entityManager, EntityFinder entityFinder, SoundFinder soundFinder, HashMap<Integer, Plane> planes) {
+			EntityManager entityManager, EntityFinder entityFinder, SoundFinder soundFinder, PlaneManager planeManager) {
 		this.serverSocket = serverSocket;
 		this.serverLoader = serverLoader;
 		this.entityManager = entityManager;
 		this.entityFinder = entityFinder;
 		this.soundFinder = soundFinder;
-		this.planes = planes;
+		this.planeManager = planeManager;
 	}
 	
 	public void sendPacket(Player player) {
@@ -84,7 +85,7 @@ public class PacketMaker {
 		
 		Entity playerEntity = entityManager.getEntity(player.data.getEntityId());
 		
-		Plane currentPlane = planes.get(playerEntity.getMap());
+		Plane currentPlane = planeManager.getPlane(playerEntity);
 		
 		Builder packet = ServerToClientPacket.newBuilder()
 				.setMindId(player.data.getEntityId());

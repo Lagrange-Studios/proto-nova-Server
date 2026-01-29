@@ -10,6 +10,7 @@ import entity.EntityFinder;
 import entity.EntityManager;
 import file.AssetManager;
 import main.Console;
+import plane.PlaneManager;
 import protonova.protobuf.CelestialObjectProto.CelestialObject;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.PlaneProto.Plane;
@@ -19,22 +20,22 @@ import util.Id;
 public class Generator {
 	
 	private Console console;
-	private HashMap<Integer, Plane> planes;
+	private PlaneManager planeManager;
 	private EntityManager entityManager;
 	private PlaneGenerator planeGenerator;
 	private AssetManager assetManager;
 	private EnviromentGenerator enviromentGenerator;
 	private EntityFinder entityFinder;
 	
-	public Generator(Console console, HashMap<Integer, Plane> planes, EntityManager entityManager, AssetManager assetManager, EntityFinder entityFinder) {
+	public Generator(Console console, PlaneManager planeManager, EntityManager entityManager, AssetManager assetManager, EntityFinder entityFinder) {
 		this.console = console;
-		this.planes = planes;
+		this.planeManager = planeManager;
 		this.entityManager = entityManager;
 		this.assetManager = assetManager;
 		this.entityFinder = entityFinder;
 		
 		enviromentGenerator = new EnviromentGenerator(assetManager,entityManager,console, entityFinder);
-		planeGenerator = new PlaneGenerator(planes,console);
+		planeGenerator = new PlaneGenerator(planeManager.getPlanes(),console);
 	}
 	
 	private String getRandomWorldType() {
@@ -50,7 +51,7 @@ public class Generator {
 		Plane plane = planeGenerator.generatePlane(100, 100, worldType);
 		
 		if (plane != null) {
-			planes.put(plane.getId(), plane);
+			planeManager.updatePlane(plane.getId(), plane);
 			
 			enviromentGenerator.generateEnviroment(plane, worldType);
 			
