@@ -69,6 +69,9 @@ public class ActionHandler {
 					.build();
 				
 				break;
+			case(InteractionType.Chat_VALUE):
+				
+				break;
 		}
 		
 		

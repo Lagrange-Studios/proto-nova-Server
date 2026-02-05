@@ -46,7 +46,7 @@ public class PlaneGenerator {
 		
 		Builder plane = Plane.newBuilder()
 				.setId(planeId)
-				.setSize(size);		
+				.setSize(size);
 		
 		long seed = System.currentTimeMillis();
 		
