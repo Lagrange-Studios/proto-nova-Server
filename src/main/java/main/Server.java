@@ -32,7 +32,7 @@ public class Server {
 	
 	public Console console;
 	private ServerSocketHandler serverSocket;
-	private final int TPS = 60;
+	public final int TPS = 60;
 	public Long globalTicks = 0L;
 	private ServerLoader serverLoader;
 	private ServerSaver serverSaver;
@@ -89,24 +89,24 @@ public class Server {
 		entityFinder = new EntityFinder(entityManager.getAllEntities(),chunkManager);
 		soundFinder = new SoundFinder(entityManager.getAllEntities(),soundManager.getAllSounds(),chunkManager);
 		
-		celestialObjectManager = new CelestialObjectManager(serverLoader, console);
+		celestialObjectManager = new CelestialObjectManager(serverLoader, console, this);
 		
-		generator = new Generator(console, planeManager, entityManager, assetManager, entityFinder);
+		generator = new Generator(console, planeManager, entityManager, assetManager, entityFinder, celestialObjectManager);
 		
 		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager);
 		
 		if (shouldGenerate) {
-			generator.generateWorld();
+			generator.generatePlanet("continents");
 		}
 
 		packetReciver = new PacketReciver(entityManager, soundManager, console, actionHandler);
 		
 		serverSocket = new ServerSocketHandler(console, packetReciver);
-		serverSaver = new ServerSaver(this, entityManager, planeManager);
+		serverSaver = new ServerSaver(this, entityManager, planeManager, celestialObjectManager);
 		
 		startThread();
 		
-		packetMaker = new PacketMaker(serverSocket,serverLoader,entityManager,entityFinder,soundFinder,planeManager);
+		packetMaker = new PacketMaker(serverSocket,serverLoader,entityManager,entityFinder,soundFinder,planeManager,celestialObjectManager);
 		
 		console.setCommandClasses(serverSaver,generator,entityManager);
 
@@ -145,6 +145,9 @@ public class Server {
 				packetMaker.sendPacket(player);
 			}
 		}
+		
+		celestialObjectManager.tickCelestialObjects();
+		
 		console.addTick();
 		globalTicks++;
 		
