@@ -40,10 +40,9 @@ public class Validater {
 			playerData.mkdir();
 		}
 		
-		File entities = new File("worldRoot/entities");
+		File entities = new File("worldRoot/entities.data");
 		if (!entities.exists()) {
 			console.print("WARNING: no entity data found");
-			entities.mkdir();
 		}
 		
 		File celestialObjects = new File("worldRoot/celestialObjects");

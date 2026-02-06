@@ -13,6 +13,8 @@ import entity.EntityManager;
 import main.Server;
 import plane.PlaneManager;
 import protonova.protobuf.CelestialObjectProto.CelestialObject;
+import protonova.protobuf.EntityDataProto.EntityData;
+import protonova.protobuf.EntityDataProto.EntityData.Builder;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.PlaneProto.Plane;
 import socket.Player;
@@ -43,14 +45,11 @@ public class ServerSaver {
 		
 		// Saving entities
 		try {
-			
-			for (Entity entity : entityManager.getAllEntities().values()) {			
-				
-				byte[] array = entity.toByteArray();
-				Path newPath = Paths.get("worldRoot/entities/"+entity.getId()+".data");
-				
-				Files.write(newPath, array);
-			}
+			Builder entityData = EntityData.newBuilder();
+			for (Entity entity : entityManager.getAllEntities().values()) entityData.putData(entity.getId(), entity);
+
+			Path newPath = Paths.get("worldRoot/entities.data");
+			Files.write(newPath, entityData.build().toByteArray());
 		}
 		catch(Exception e) {
 			e.printStackTrace();

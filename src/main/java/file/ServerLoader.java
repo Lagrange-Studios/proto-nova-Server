@@ -16,6 +16,7 @@ import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.PlaneProto;
 import protonova.protobuf.PlaneProto.Plane;
 import protonova.protobuf.PlayerDataProto.PlayerData;
+import protonova.protobuf.EntityDataProto.EntityData;
 
 public class ServerLoader {
 
@@ -86,20 +87,18 @@ public class ServerLoader {
 		
 		HashMap<Integer, Entity> allEntities = new HashMap<Integer, Entity>();
 		
-		File[] entities = new File("worldRoot/entities").listFiles();
+		File entities = new File("worldRoot/entities.data");
 		
-		for (int i=0;i<entities.length;i++) {
-	
+		if (entities.exists()) {
 			try {
-				byte[] entityBytes = Files.readAllBytes(Paths.get(entities[i].getPath()));
+				EntityData entityData = EntityData.parseFrom(Files.readAllBytes(Path.of(entities.getPath())));
 				
-				Entity entity = Entity.parseFrom(entityBytes);
-				allEntities.put(entity.getId(), entity);
-				
+				for (Entity entity : entityData.getDataMap().values()) allEntities.put(entity.getId(), entity);
 			} catch (IOException e) {
 				e.printStackTrace();
-			}	
-		}
+				console.print("Something went wrong loading entities: "+e.getMessage());
+			}
+		}		
 		
 		return allEntities;
 	}
