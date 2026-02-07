@@ -152,6 +152,8 @@ public class Server {
 		globalTicks++;
 		
 		saveCheck();
+		
+		entityManager.clearRemovedEntities();
 	}
 	
 	private void saveCheck() {

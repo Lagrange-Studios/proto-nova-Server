@@ -49,9 +49,9 @@ public class Generator {
 		return fileName.substring(0,fileName.lastIndexOf('.'));
 	}
 	
-	private Plane generatePlane(String worldType) {
+	private Plane generatePlane(String worldType, int size) {
 		
-		Plane plane = planeGenerator.generatePlane(100, 100, worldType);
+		Plane plane = planeGenerator.generatePlane(size, size, worldType);
 		
 		if (plane != null) {
 			planeManager.updatePlane(plane.getId(), plane);
@@ -67,7 +67,7 @@ public class Generator {
 	
 	public void generatePlanet(int width, String type, double rotationPeroid) {
 		
-		Plane plane = generatePlane(type);
+		Plane plane = generatePlane(type,width);
 		
 		if (plane != null) {
 			
@@ -86,7 +86,7 @@ public class Generator {
 	}
 	
 	public void generatePlanet(String type) {
-		generatePlanet(100, type, 5);
+		generatePlanet(500, type, 5);
 	}
 	
 	public void generatePlanet() {

@@ -1,5 +1,6 @@
 package entity;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import file.ServerLoader;
@@ -16,6 +17,7 @@ public class EntityManager {
 	private ServerLoader serverLoader;
 	private ChunkManager chunkManager;
 	private Console console;
+	private final HashMap<Integer, Integer> removedEntities = new HashMap<>(); // Entity ids to old maps
 
 	public EntityManager(ServerLoader serverLoader,Console console) {
 		this.serverLoader = serverLoader;
@@ -77,6 +79,10 @@ public class EntityManager {
 		return entities;
 	}
 	
+	/**
+	 * Updates the entity list with the new value and checks for movement both position wise and map change then updates the chunk manager
+	 * @param entity
+	 */
 	public void updateEntity(Entity entity) {
 		if (entities.containsKey(entity.getId())) {
 			Entity oldEntity = entities.get(entity.getId());
@@ -89,6 +95,33 @@ public class EntityManager {
 			chunkManager.addEntity(entity);
 		}
 		entities.put(entity.getId(), entity);
+	}
+	
+	/**
+	 * Force fully updates the entity list with the new value and DOES NOT update the chunk manager
+	 * @param entity
+	 */
+	private void forceUpdateEntity(Entity entity) {
+		entities.put(entity.getId(), entity);
+	}
+	
+	/**
+	 * Removes the given entity next tick
+	 * @param entity
+	 */
+	public void removeEntity(Entity entity) {
+		removedEntities.put(entity.getId(),entity.getMap());
+		forceUpdateEntity(entity.toBuilder().setMap(0).build());
+	}
+	
+	public void clearRemovedEntities() {
+		
+		for (int id : removedEntities.keySet()) {
+			Entity entity = entities.get(id);
+			if (entity != null) entities.remove(id);
+			chunkManager.removeEntityFromChunk(entity.toBuilder().setMap(removedEntities.get(id)).build());
+		}
+		removedEntities.clear();
 	}
 
 	public void setChunkManager(ChunkManager chunkManager) {
