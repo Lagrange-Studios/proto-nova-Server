@@ -21,6 +21,11 @@ public class AssetMaker {
     			.setX(1)
     			.setY(1)
     			.build();
+    	
+    	Vector oneHalfTwo = Vector.newBuilder()
+    			.setX(1.5f)
+    			.setY(2)
+    			.build();
    
     	Vector pointFive = Vector.newBuilder()
     			.setX(.5f)
@@ -29,13 +34,12 @@ public class AssetMaker {
     	
     	Entity entity = Entity.newBuilder()
     			.setDirection(Direction.Down)
-    			.setName("campfire")
+    			.setName("tree")
     			.setPosition(zero)
-    			.setSize(one)
-    			.setIsItem(true)
-    			.setStackable(false)
-    			.setLightRange(5)
-    			.setHexColor("FF0000")
+    			.setSize(oneHalfTwo)
+    			.setIsItem(false)
+    			.setCanCollide(true)
+    			.setAnchored(true)
     			.build();
     	
     	try {
