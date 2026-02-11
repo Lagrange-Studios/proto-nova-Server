@@ -50,6 +50,8 @@ public PacketReciver(EntityManager entityManager, SoundManager soundManager, Con
 			}
 		}
 		
+		serverEntity = serverEntity.toBuilder().clearChatMessage().addAllChatMessage(clientEntity.getChatMessageList()).build();
+		
 		for (int i=0;i<packet.getSoundsCount();i++) {
 			soundManager.makeNewSound(packet.getSounds(i));
 		}
