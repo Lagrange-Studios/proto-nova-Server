@@ -15,6 +15,7 @@ import protonova.protobuf.CelestialObjectProto.CelestialObject;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.PlaneProto.Plane;
 import protonova.protobuf.VectorProto.Vector;
+import space.CelestialObjectManager;
 import util.Id;
 
 public class Generator {
@@ -26,13 +27,15 @@ public class Generator {
 	private AssetManager assetManager;
 	private EnviromentGenerator enviromentGenerator;
 	private EntityFinder entityFinder;
+	private CelestialObjectManager celestialObjectManager;
 	
-	public Generator(Console console, PlaneManager planeManager, EntityManager entityManager, AssetManager assetManager, EntityFinder entityFinder) {
+	public Generator(Console console, PlaneManager planeManager, EntityManager entityManager, AssetManager assetManager, EntityFinder entityFinder, CelestialObjectManager celestialObjectManager) {
 		this.console = console;
 		this.planeManager = planeManager;
 		this.entityManager = entityManager;
 		this.assetManager = assetManager;
 		this.entityFinder = entityFinder;
+		this.celestialObjectManager = celestialObjectManager;
 		
 		enviromentGenerator = new EnviromentGenerator(assetManager,entityManager,console, entityFinder);
 		planeGenerator = new PlaneGenerator(planeManager.getPlanes(),console);
@@ -46,9 +49,9 @@ public class Generator {
 		return fileName.substring(0,fileName.lastIndexOf('.'));
 	}
 	
-	public void generateWorld(String worldType) {
+	private Plane generatePlane(String worldType, int size) {
 		
-		Plane plane = planeGenerator.generatePlane(100, 100, worldType);
+		Plane plane = planeGenerator.generatePlane(size, size, worldType);
 		
 		if (plane != null) {
 			planeManager.updatePlane(plane.getId(), plane);
@@ -56,30 +59,39 @@ public class Generator {
 			enviromentGenerator.generateEnviroment(plane, worldType);
 			
 			console.print("Generated new plane with id: "+plane.getId()+ " Type: "+worldType);
+			
+			return plane;
+		}
+		return null;
+	}
+	
+	public void generatePlanet(int width, String type, double rotationPeroid) {
+		
+		Plane plane = generatePlane(type,width);
+		
+		if (plane != null) {
+			
+			CelestialObject planet = CelestialObject.newBuilder()
+					.setId(Id.getNewId(celestialObjectManager.getCelestialObjects().keySet()))
+					.setTileWidth(width)
+					.setRotationPeroidMinutes(rotationPeroid)
+					.setSurfacePlaneId(plane.getId())
+					.setCurrentRotation(0.5)
+					.build();
+			
+			celestialObjectManager.updateCelestialObject(planet);
+
+			console.print("Generated new planet with id: "+planet.getId());
 		}
 	}
 	
-	public void generateWorld() {
-		generateWorld(getRandomWorldType());
+	public void generatePlanet(String type) {
+		generatePlanet(500, type, 5);
 	}
 	
-	// Decreptated
-	public static void createCelestialObject(HashMap<Integer,CelestialObject> celestialObjects, int peroid, int speed) {
-		
-		CelestialObject newObject = CelestialObject.newBuilder()
-				.setId(Id.getNewId(celestialObjects.keySet()))
-				.setCurrentRotation(0)
-				.setRotationPeroid(peroid)
-				.setRotationSpeed(speed)
-				.build();
-		
-		File objectFile = new File("worldRoot/planes/plane" + newObject.getId() + ".data");
-		
-		try {
-			Files.write(Paths.get(objectFile.getPath()), newObject.toByteArray());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
+	public void generatePlanet() {
+		generatePlanet(getRandomWorldType());
 	}
+	
+	
 }

@@ -88,6 +88,11 @@ public class EnviromentGenerator {
 				
 				Vector newPosition = CoordinateConverter.toVector(validTiles.get(randomIndex).getCoordinate());
 				
+				newPosition = newPosition.toBuilder()
+						.setX(newPosition.getX()-(clone.getSize().getX()-1)/2)
+						.setY(newPosition.getY()+(clone.getSize().getY()-1)/2)
+						.build();
+				
 				if (!generationData.getBoolean("grid")) {
 					newPosition = newPosition.toBuilder()
 							.setX((float) (newPosition.getX()+Math.random()/2))

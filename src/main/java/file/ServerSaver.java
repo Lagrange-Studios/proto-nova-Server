@@ -12,20 +12,26 @@ import java.util.Set;
 import entity.EntityManager;
 import main.Server;
 import plane.PlaneManager;
+import protonova.protobuf.CelestialObjectProto.CelestialObject;
+import protonova.protobuf.EntityDataProto.EntityData;
+import protonova.protobuf.EntityDataProto.EntityData.Builder;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.PlaneProto.Plane;
 import socket.Player;
+import space.CelestialObjectManager;
 
 public class ServerSaver {
 
 	private Server server;
 	private EntityManager entityManager;
 	private PlaneManager planeManager;
+	private CelestialObjectManager celestialObjectManager;
 	
-	public ServerSaver(Server server, EntityManager entityManager, PlaneManager planeManager) {
+	public ServerSaver(Server server, EntityManager entityManager, PlaneManager planeManager, CelestialObjectManager celestialObjectManager) {
 		this.server = server;
 		this.entityManager = entityManager;
 		this.planeManager = planeManager;
+		this.celestialObjectManager = celestialObjectManager;
 	}
 	
 	public String save() {
@@ -38,22 +44,12 @@ public class ServerSaver {
 		}
 		
 		// Saving entities
-		HashMap<Integer, Entity> entities = entityManager.getAllEntities();
-		
 		try {
-			Set<Integer> keys = entities.keySet();
-			Iterator<Integer> iterator = keys.iterator();
-			
-			while (iterator.hasNext()) {
-				int key = iterator.next();
-				
-				Entity entity = entities.get(key);
-				
-				byte[] array = entity.toByteArray();
-				Path newPath = Paths.get("worldRoot/entities/"+entity.getId()+".data");
-				
-				Files.write(newPath, array);
-			}
+			Builder entityData = EntityData.newBuilder();
+			for (Entity entity : entityManager.getAllEntities().values()) entityData.putData(entity.getId(), entity);
+
+			Path newPath = Paths.get("worldRoot/entities.data");
+			Files.write(newPath, entityData.build().toByteArray());
 		}
 		catch(Exception e) {
 			e.printStackTrace();
@@ -61,14 +57,8 @@ public class ServerSaver {
 		}
 		
 		//Saving planes
-		try {
-			Set<Integer> keys = planeManager.getPlanes().keySet();
-			Iterator<Integer> iterator = keys.iterator();
-			
-			while (iterator.hasNext()) {
-				int key = iterator.next();
-				
-				Plane plane = planeManager.getPlane(key);
+		try {			
+			for (Plane plane : planeManager.getPlanes().values()) {
 				
 				byte[] array = plane.toByteArray();
 				Path newPath = Paths.get("worldRoot/planes/"+plane.getId()+".data");
@@ -80,6 +70,22 @@ public class ServerSaver {
 			e.printStackTrace();
 			return e.getMessage();
 		}
+		
+		//Saving celestialObjects
+		try {
+			for (CelestialObject object : celestialObjectManager.getCelestialObjects().values()) {
+				
+				byte[] array = object.toByteArray();
+				Path newPath = Paths.get("worldRoot/celestialObjects/"+object.getId()+".data");
+				
+				Files.write(newPath, array);
+			}
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+			return e.getMessage();
+		}
+		
 		
 		return "Saved all data without errors";
 	}

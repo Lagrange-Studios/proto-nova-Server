@@ -138,12 +138,16 @@ public class ChunkManager {
 	}
 	
 	public void updateEntityChunck(Entity oldEntity, Entity newEntity) {
-		removeEntityFromChunk(getPlaneChunks(oldEntity), CoordinateConverter.toChunkCoordinates(oldEntity.getPosition()), oldEntity);
+		removeEntityFromChunk(oldEntity);
 		
 		addEntityToChunk(getPlaneChunks(newEntity), CoordinateConverter.toChunkCoordinates(newEntity.getPosition()), newEntity);
 	}
 	
 	public HashMap<Integer, HashMap<Coordinate, Chunk>> getChunks() {
 		return chunks;
+	}
+	
+	public void removeEntityFromChunk(Entity entity) {
+		removeEntityFromChunk(getPlaneChunks(entity), CoordinateConverter.toChunkCoordinates(entity.getPosition()), entity);
 	}
 }

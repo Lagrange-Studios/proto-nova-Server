@@ -32,10 +32,7 @@ public class Validater {
 			shouldGenerate = true;
 		}
 		
-		// if there's no planes then we should generate one
-		if (!shouldGenerate) {
-			shouldGenerate = planes.listFiles().length == 0;
-		}
+		
 		
 		File playerData = new File("worldRoot/playerData");
 		if (!playerData.exists()) {
@@ -43,18 +40,20 @@ public class Validater {
 			playerData.mkdir();
 		}
 		
-		File entities = new File("worldRoot/entities");
+		File entities = new File("worldRoot/entities.data");
 		if (!entities.exists()) {
 			console.print("WARNING: no entity data found");
-			entities.mkdir();
 		}
 		
 		File celestialObjects = new File("worldRoot/celestialObjects");
 		if (!celestialObjects.exists()) {
 			console.print("WARNING: no celestial objects data found");
 			celestialObjects.mkdir();
-			
-			//Creator.createCelestialObject(new HashMap<Integer,>)
+		}
+		
+		// if there's no planes then we should generate one
+		if (!shouldGenerate) {
+			shouldGenerate = celestialObjects.listFiles().length == 0;
 		}
 		
 		console.print("Validated world files");

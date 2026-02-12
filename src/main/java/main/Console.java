@@ -160,7 +160,7 @@ public class Console extends JFrame {
                 outputArea.append(" - kick [name]: Kicks the player with the correlated name\n");
                 outputArea.append(" - save: Saves all data to the world root\n");
                 outputArea.append(" - players: Shows all currently connected players\n");
-                outputArea.append(" - generate plane [generation type (optional)]: Generates a new plane optionally passing in a generation type\n");
+                outputArea.append(" - generate planet [generation type (optional)]: Generates a new planet optionally passing in a generation type\n");
                 outputArea.append(" - state: shows all the players states");
                 outputArea.append("\n");
             } else if (input.equalsIgnoreCase("time")) {
@@ -200,12 +200,12 @@ public class Console extends JFrame {
                 for (int i=0;i<players.size();i++) {
                 	print(players.get(i).getUsername());
                 }
-            } else if (input.startsWith("generate plane")) {
+            } else if (input.startsWith("generate planet")) {
             	if (input.length() == 14) {
-            		generator.generateWorld();
+            		generator.generatePlanet();
             	} else if (input.length() > 15) {
                 	String generationType = input.substring(15);
-            		generator.generateWorld(generationType);
+            		generator.generatePlanet(generationType);
             	} else {
             		print("Improper arguments");
             	}

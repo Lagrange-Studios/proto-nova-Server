@@ -17,6 +17,7 @@ import protonova.protobuf.ServerToClientPacketProto.ServerToClientPacket;
 import protonova.protobuf.ServerToClientPacketProto.ServerToClientPacket.Builder;
 import protonova.protobuf.TileProto.Tile;
 import sound.SoundFinder;
+import space.CelestialObjectManager;
 
 public class PacketMaker {
 
@@ -26,17 +27,19 @@ public class PacketMaker {
 	private EntityFinder entityFinder;
 	private SoundFinder soundFinder;
 	private PlaneManager planeManager;
+	private CelestialObjectManager celestialObjectManager;
 	
 	private static final double renderDistance = 40;
 	
 	public PacketMaker(ServerSocketHandler serverSocket, ServerLoader serverLoader,
-			EntityManager entityManager, EntityFinder entityFinder, SoundFinder soundFinder, PlaneManager planeManager) {
+			EntityManager entityManager, EntityFinder entityFinder, SoundFinder soundFinder, PlaneManager planeManager, CelestialObjectManager celestialObjectManager) {
 		this.serverSocket = serverSocket;
 		this.serverLoader = serverLoader;
 		this.entityManager = entityManager;
 		this.entityFinder = entityFinder;
 		this.soundFinder = soundFinder;
 		this.planeManager = planeManager;
+		this.celestialObjectManager = celestialObjectManager;
 	}
 	
 	public void sendPacket(Player player) {
@@ -122,6 +125,8 @@ public class PacketMaker {
 		for (int i=0;i<foundSounds.size();i++) {
 			packet.addSounds(foundSounds.get(i));
 		}
+		
+		packet.setCurrentCelestialObject(celestialObjectManager.getCelestialObjectFromPlane(currentPlane));
 		
 		packet.setReconcile(player.shouldReconcile);
 		
