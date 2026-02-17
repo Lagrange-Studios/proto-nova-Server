@@ -34,8 +34,8 @@ public class EntityManager {
 				.setY(0)
 				.build();
 		Vector one = Vector.newBuilder()
-				.setX(1)
-				.setY(1)
+				.setX(0.8f)
+				.setY(0.8f)
 				.build();
 		
 		Entity entity = Entity.newBuilder()

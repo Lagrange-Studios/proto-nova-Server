@@ -99,7 +99,7 @@ public class Server {
 			generator.generatePlanet("continents");
 		}
 
-		packetReciver = new PacketReciver(entityManager, soundManager, console, actionHandler);
+		packetReciver = new PacketReciver(entityManager, soundManager, console, actionHandler, entityFinder);
 		
 		serverSocket = new ServerSocketHandler(console, packetReciver);
 		serverSaver = new ServerSaver(this, entityManager, planeManager, celestialObjectManager);
