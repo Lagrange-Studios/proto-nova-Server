@@ -36,10 +36,11 @@ public class AssetMaker {
     			.setDirection(Direction.Down)
     			.setName("tree")
     			.setPosition(zero)
-    			.setSize(oneHalfTwo)
+    			.setSize(one)
     			.setIsItem(false)
     			.setCanCollide(true)
     			.setAnchored(true)
+    			.setCastShadow(true)
     			.build();
     	
     	try {
