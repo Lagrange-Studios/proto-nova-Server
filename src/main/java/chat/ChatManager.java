@@ -11,9 +11,7 @@ public class ChatManager {
 	}
 	
 	public void proccessMessage(ChatMessage chatMessage) {
-		if(chatMessage.getServerProssesed()) {
-			
-		} else {
+		if(!chatMessage.getServerProssesed()) {
 			chatMessages.add(chatMessage);
 		}
 	}
