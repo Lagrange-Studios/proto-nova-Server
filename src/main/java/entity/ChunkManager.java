@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.List;
 
 import protonova.protobuf.AudioProto.Audio;
+import protonova.protobuf.ChatProto.ChatMessage;
 import protonova.protobuf.ChunkProto.Chunk;
 import protonova.protobuf.CoordinateProto.Coordinate;
 import protonova.protobuf.EntityProto.Entity;
@@ -70,6 +71,23 @@ public class ChunkManager {
 		chunkMap.put(coordinate, selectedChunk);
 	}
 	
+	private void addChatMessageToChunk(HashMap<Coordinate, Chunk> chunkMap, Coordinate coordinate, ChatMessage message) {
+		if (!chunkMap.containsKey(coordinate)) {
+			Chunk newChunk = Chunk.newBuilder()
+					.setCoordinate(coordinate)
+					.build();
+			
+			chunkMap.put(coordinate,newChunk);
+		}
+		
+		Chunk selectedChunk = chunkMap.get(coordinate);
+		selectedChunk = selectedChunk.toBuilder()
+			.addChats(message)
+			.build();
+		
+		chunkMap.put(coordinate, selectedChunk);
+	}
+	
 	public void addEntity(Entity entity) {
 		addEntityToChunk(getPlaneChunks(entity),CoordinateConverter.toChunkCoordinates(entity.getPosition()),entity);
 	}
@@ -84,6 +102,18 @@ public class ChunkManager {
 		}
 		
 		addSoundToChunk(getPlaneChunks(audio.getMap()),CoordinateConverter.toChunkCoordinates(position),audio);
+	}
+	
+	public void addChatMessage(ChatMessage message) {
+		Vector position;
+		
+		if (message.getPosition() == null) {
+			position = entities.get(message.getEntityID()).getPosition();
+		} else {
+			position = message.getPosition();
+		}
+		
+		addChatMessageToChunk(getPlaneChunks(message.getMap()),CoordinateConverter.toChunkCoordinates(position),message);
 	}
 	
 	private void removeEntityFromChunk(HashMap<Coordinate, Chunk> chunkMap, Coordinate coordinate, Entity entity) {

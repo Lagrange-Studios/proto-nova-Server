@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 
+import chat.ChatFinder;
+import chat.ChatManager;
 import entity.ChunkManager;
 import entity.EntityFinder;
 import entity.EntityManager;
@@ -11,6 +13,7 @@ import enums.Player.State;
 import file.ServerLoader;
 import plane.PlaneManager;
 import protonova.protobuf.AudioProto.Audio;
+import protonova.protobuf.ChatProto.ChatMessage;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.PlaneProto.Plane;
 import protonova.protobuf.ServerToClientPacketProto.ServerToClientPacket;
@@ -26,18 +29,20 @@ public class PacketMaker {
 	private EntityManager entityManager;
 	private EntityFinder entityFinder;
 	private SoundFinder soundFinder;
+	private ChatFinder chatFinder;
 	private PlaneManager planeManager;
 	private CelestialObjectManager celestialObjectManager;
 	
 	private static final double renderDistance = 40;
 	
 	public PacketMaker(ServerSocketHandler serverSocket, ServerLoader serverLoader,
-			EntityManager entityManager, EntityFinder entityFinder, SoundFinder soundFinder, PlaneManager planeManager, CelestialObjectManager celestialObjectManager) {
+			EntityManager entityManager, EntityFinder entityFinder, SoundFinder soundFinder, ChatFinder chatFinder, PlaneManager planeManager, CelestialObjectManager celestialObjectManager) {
 		this.serverSocket = serverSocket;
 		this.serverLoader = serverLoader;
 		this.entityManager = entityManager;
 		this.entityFinder = entityFinder;
 		this.soundFinder = soundFinder;
+		this.chatFinder = chatFinder;
 		this.planeManager = planeManager;
 		this.celestialObjectManager = celestialObjectManager;
 	}
@@ -124,6 +129,12 @@ public class PacketMaker {
 		
 		for (int i=0;i<foundSounds.size();i++) {
 			packet.addSounds(foundSounds.get(i));
+		}
+		
+		ArrayList<ChatMessage> foundChats = chatFinder.getAllChatsInRadis(playerEntity, renderDistance);
+		
+		for (int i=0;i<foundChats.size();i++) {
+			packet.addChatMessage(foundChats.get(i));
 		}
 		
 		packet.setCurrentCelestialObject(celestialObjectManager.getCelestialObjectFromPlane(currentPlane));

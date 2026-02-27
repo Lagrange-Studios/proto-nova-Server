@@ -36,7 +36,7 @@ public class SoundManager {
 			chunkManager.addSound(audio);
 		}
 		else {
-			console.print("WARNING: created entity without adding it to the chunk manager");
+			console.print("WARNING: created Audio without adding it to the chunk manager");
 		}
 		
 		return audio;

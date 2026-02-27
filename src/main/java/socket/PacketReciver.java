@@ -55,9 +55,7 @@ public class PacketReciver {
 				serverEntity = actionHandler.executeAction(player, action);
 			}
 		}
-		
-		serverEntity = serverEntity.toBuilder().clearChatMessage().addAllChatMessage(clientEntity.getChatMessageList()).build();
-		
+				
 		for (int i=0;i<packet.getSoundsCount();i++) {
 			soundManager.makeNewSound(packet.getSounds(i));
 		}

@@ -9,6 +9,8 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.SwingUtilities;
 
 import action.ActionHandler;
+import chat.ChatFinder;
+import chat.ChatManager;
 import entity.ChunkManager;
 import entity.EntityFinder;
 import entity.EntityManager;
@@ -41,8 +43,10 @@ public class Server {
 	private PlaneManager planeManager;
 	private EntityManager entityManager;
 	private SoundManager soundManager;
+	private ChatManager chatManager;
 	private EntityFinder entityFinder;
 	private SoundFinder soundFinder;
+	private ChatFinder chatFinder;
 	private ChunkManager chunkManager;
 	private CelestialObjectManager celestialObjectManager;
 	private Validater validater;
@@ -78,6 +82,7 @@ public class Server {
 		planeManager = new PlaneManager(serverLoader.loadWorld());
 		entityManager = new EntityManager(serverLoader,console);
 		soundManager = new SoundManager(serverLoader,console, this);
+		chatManager = new ChatManager(serverLoader,console, this);
 		
 		assetManager = new AssetManager(entityManager,serverLoader.loadEntityAssets(), console);
 		
@@ -88,6 +93,7 @@ public class Server {
 		
 		entityFinder = new EntityFinder(entityManager.getAllEntities(),chunkManager);
 		soundFinder = new SoundFinder(entityManager.getAllEntities(),soundManager.getAllSounds(),chunkManager);
+		chatFinder = new ChatFinder(entityManager.getAllEntities(), chatManager.getAllChats(), chunkManager);
 		
 		celestialObjectManager = new CelestialObjectManager(serverLoader, console, this);
 		
@@ -106,7 +112,7 @@ public class Server {
 		
 		startThread();
 		
-		packetMaker = new PacketMaker(serverSocket,serverLoader,entityManager,entityFinder,soundFinder,planeManager,celestialObjectManager);
+		packetMaker = new PacketMaker(serverSocket,serverLoader,entityManager,entityFinder,soundFinder,chatFinder,planeManager,celestialObjectManager);
 		
 		console.setCommandClasses(serverSaver,generator,entityManager);
 
