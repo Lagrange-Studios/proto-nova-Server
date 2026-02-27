@@ -90,6 +90,7 @@ public class Server {
 		chunkManager.groupAllEntites();
 		entityManager.setChunkManager(chunkManager);
 		soundManager.setChunkManager(chunkManager);
+		chatManager.setChunkManager(chunkManager);
 		
 		entityFinder = new EntityFinder(entityManager.getAllEntities(),chunkManager);
 		soundFinder = new SoundFinder(entityManager.getAllEntities(),soundManager.getAllSounds(),chunkManager);
@@ -105,7 +106,7 @@ public class Server {
 			generator.generatePlanet("continents");
 		}
 
-		packetReciver = new PacketReciver(entityManager, soundManager, console, actionHandler, entityFinder);
+		packetReciver = new PacketReciver(entityManager, soundManager, chatManager, console, actionHandler, entityFinder);
 		
 		serverSocket = new ServerSocketHandler(console, packetReciver);
 		serverSaver = new ServerSaver(this, entityManager, planeManager, celestialObjectManager);

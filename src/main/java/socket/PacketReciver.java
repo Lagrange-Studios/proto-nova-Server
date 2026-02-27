@@ -3,6 +3,7 @@ package socket;
 import java.util.ArrayList;
 
 import action.ActionHandler;
+import chat.ChatManager;
 import collision.EntityCollision;
 import entity.ChunkManager;
 import entity.EntityFinder;
@@ -21,14 +22,16 @@ public class PacketReciver {
 
 	private EntityManager entityManager;
 	private SoundManager soundManager;
+	private ChatManager chatManager;
 	private final double reconcileDistance = 1; // nessecary distance to reconcile
 	private Console console;
 	private ActionHandler actionHandler;
 	private EntityFinder entityFinder;
 	
-	public PacketReciver(EntityManager entityManager, SoundManager soundManager, Console console, ActionHandler actionHandler, EntityFinder entityFinder) {
+	public PacketReciver(EntityManager entityManager, SoundManager soundManager, ChatManager chatManager, Console console, ActionHandler actionHandler, EntityFinder entityFinder) {
 		this.entityManager = entityManager;
 		this.soundManager = soundManager;
+		this.chatManager = chatManager;
 		this.console = console;
 		this.actionHandler = actionHandler;
 		this.entityFinder = entityFinder;
@@ -55,9 +58,14 @@ public class PacketReciver {
 				serverEntity = actionHandler.executeAction(player, action);
 			}
 		}
-				
+		
 		for (int i=0;i<packet.getSoundsCount();i++) {
 			soundManager.makeNewSound(packet.getSounds(i));
+		}
+		
+		for (int i=0;i<packet.getChatMessageCount();i++) {
+			chatManager.makeNewChat(packet.getChatMessage(i));
+			System.out.println("created new chat: " + packet.getChatMessage(i));
 		}
 		
 		// Simulate final velocity

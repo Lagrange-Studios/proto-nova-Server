@@ -99,4 +99,14 @@ public class ChatFinder {
 		}
 		
 	}
+	
+	public void clearAllChats() {
+	    HashMap<Integer, HashMap<Coordinate, Chunk>> allChunks = chunkManager.getChunks();
+
+	    for (HashMap<Coordinate, Chunk> planeChunks : allChunks.values()) {
+	        for (Chunk chunk : planeChunks.values()) {
+	            chunk.getChatsList().clear();
+	        }
+	    }
+	}
 }

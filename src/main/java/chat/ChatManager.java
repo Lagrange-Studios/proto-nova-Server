@@ -44,4 +44,8 @@ public class ChatManager {
 	public ArrayList<ChatMessage> getAllChats() {
 		return chats;
 	}
+	
+	public void setChunkManager(ChunkManager chunkManager) {
+		this.chunkManager = chunkManager;
+	}
 }
