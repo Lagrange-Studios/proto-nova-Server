@@ -13,6 +13,7 @@ import protonova.protobuf.EntityProto.Entity;;
 
 public class ChatManager {
 	
+	private ArrayList<ChatMessage> chatQueue;
 	private ArrayList<ChatMessage> chats;
 	private ServerLoader serverLoader;
 	private ChunkManager chunkManager;
@@ -22,11 +23,25 @@ public class ChatManager {
 	public ChatManager(ServerLoader serverLoader,Console console, Server server) {
 		this.serverLoader = serverLoader;
 		this.server = server;
+		chatQueue = new ArrayList<ChatMessage>();
 		chats = new ArrayList<ChatMessage>();
 		this.console = console;
 	}
 	
-	public ChatMessage makeNewChat(ChatMessage message) {
+	public void addChatToQueue(ChatMessage message) {
+		chatQueue.add(message);
+	}
+	
+	public void processChatMessagesToSend() {
+		removeAllChatsFromChuncks();
+		for (ChatMessage message : chatQueue) {
+			makeNewChat(message);
+		}
+		chatQueue.clear();
+		
+	}
+	
+	private ChatMessage makeNewChat(ChatMessage message) {
 		
 		chats.add(message);		
 		
@@ -39,6 +54,10 @@ public class ChatManager {
 		
 		return message;
 		
+	}
+	
+	public void removeAllChatsFromChuncks() {
+		chunkManager.removeAllChatMessages();
 	}
 	
 	public ArrayList<ChatMessage> getAllChats() {

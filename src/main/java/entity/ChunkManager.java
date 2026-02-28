@@ -3,6 +3,10 @@ package entity;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+
+import plane.PlaneManager;
+
 import java.util.List;
 
 import protonova.protobuf.AudioProto.Audio;
@@ -114,6 +118,16 @@ public class ChunkManager {
 		}
 		
 		addChatMessageToChunk(getPlaneChunks(message.getMap()),CoordinateConverter.toChunkCoordinates(position),message);
+	}
+	
+	public void removeAllChatMessages() {
+		for(Entry<Integer, HashMap<Coordinate, Chunk>> map : chunks.entrySet()) {
+			for (Entry<Coordinate, Chunk> entry : map.getValue().entrySet()) {
+				if (entry.getValue().getChatsCount() != 0) {
+					entry.setValue(entry.getValue().toBuilder().clearChats().build());
+				}
+			}
+		}
 	}
 	
 	private void removeEntityFromChunk(HashMap<Coordinate, Chunk> chunkMap, Coordinate coordinate, Entity entity) {

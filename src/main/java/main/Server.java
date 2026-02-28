@@ -152,6 +152,7 @@ public class Server {
 				packetMaker.sendPacket(player);
 			}
 		}
+		chatManager.processChatMessagesToSend();
 		
 		celestialObjectManager.tickCelestialObjects();
 		
