@@ -3,6 +3,8 @@ package chat;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.google.protobuf.UInt64Value;
+
 import entity.ChunkManager;
 import file.ServerLoader;
 import main.Console;
@@ -19,6 +21,7 @@ public class ChatManager {
 	private ChunkManager chunkManager;
 	private Console console;
 	private Server server;
+	private long chatID = 0;
 	
 	public ChatManager(ServerLoader serverLoader,Console console, Server server) {
 		this.serverLoader = serverLoader;
@@ -29,6 +32,8 @@ public class ChatManager {
 	}
 	
 	public void addChatToQueue(ChatMessage message) {
+		message = message.toBuilder().setChatID(chatID).build();
+		chatID++;
 		chatQueue.add(message);
 	}
 	
