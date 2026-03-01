@@ -65,7 +65,6 @@ public class PacketReciver {
 		
 		for (int i=0;i<packet.getChatMessageCount();i++) {
 			chatManager.addChatToQueue(packet.getChatMessage(i));
-			System.out.println("created new chat: " + packet.getChatMessage(i));
 		}
 		
 		// Simulate final velocity
