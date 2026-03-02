@@ -60,7 +60,7 @@ public class PacketReciver {
 		}
 		
 		for (int i=0;i<packet.getSoundsCount();i++) {
-			soundManager.makeNewSound(packet.getSounds(i));
+			soundManager.addSoundToQueue(packet.getSounds(i));
 		}
 		
 		for (int i=0;i<packet.getChatMessageCount();i++) {

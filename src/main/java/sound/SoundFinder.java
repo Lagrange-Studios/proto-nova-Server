@@ -16,10 +16,10 @@ import util.VectorMath;
 
 public class SoundFinder {
 	private HashMap<Integer, Entity> entities;
-	private HashMap<Audio, Long> sounds;
+	private ArrayList<Audio> sounds;
 	private ChunkManager chunkManager;
 	
-	public SoundFinder(HashMap<Integer, Entity> allEntities, HashMap<Audio, Long> allSounds, ChunkManager chunkManager) {
+	public SoundFinder(HashMap<Integer, Entity> allEntities, ArrayList<Audio> allSounds, ChunkManager chunkManager) {
 		sounds = allSounds;
 		this.entities = allEntities;
 		this.chunkManager = chunkManager;

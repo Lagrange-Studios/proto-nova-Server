@@ -1,5 +1,6 @@
 package sound;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import entity.ChunkManager;
@@ -15,48 +16,60 @@ import util.Id;
 
 public class SoundManager {
 
-	private HashMap<Audio, Long> sounds;
+	private ArrayList<Audio> SoundQueue;
+	private ArrayList<Audio> Sounds;
 	private ServerLoader serverLoader;
 	private ChunkManager chunkManager;
 	private Console console;
 	private Server server;
-
+	private long SoundID = 0;
+	
 	public SoundManager(ServerLoader serverLoader,Console console, Server server) {
 		this.serverLoader = serverLoader;
 		this.server = server;
-		sounds = new HashMap();
+		SoundQueue = new ArrayList<Audio>();
+		Sounds = new ArrayList<Audio>();
 		this.console = console;
 	}
 	
-	public Audio makeNewSound(Audio audio) {
+	public void addSoundToQueue(Audio sound) {
+		sound = sound.toBuilder().setAudioID(SoundID).build();
+		SoundID++;
+		SoundQueue.add(sound);
+	}
+	
+	public void processSoundMessagesToSend() {
+		removeAllSoundsFromChuncks();
+		for (Audio message : SoundQueue) {
+			makeNewSound(message);
+		}
+		SoundQueue.clear();
 		
-		sounds.put(audio, server.globalTicks);
+	}
+	
+	private Audio makeNewSound(Audio sound) {
+		
+		Sounds.add(sound);		
 		
 		if (chunkManager != null) {
-			chunkManager.addSound(audio);
+			chunkManager.addSound(sound);
 		}
 		else {
-			console.print("WARNING: created Audio without adding it to the chunk manager");
+			console.print("WARNING: created Sound without adding it to the chunk manager");
 		}
 		
-		return audio;
+		return sound;
 		
 	}
 	
-	public Long getSoundTime(Audio audio) {
-		return (Long) sounds.get(audio);
+	public void removeAllSoundsFromChuncks() {
+		chunkManager.removeAllSounds();
 	}
 	
-	public HashMap<Audio, Long> getAllSounds() {
-		return sounds;
+	public ArrayList<Audio> getAllSounds() {
+		return Sounds;
 	}
 	
-	public void updateSound(Audio audio) {
-		if (sounds.get(audio) + 60 < server.globalTicks) {
-			sounds.remove(audio);
-		}
-	}
-
 	public void setChunkManager(ChunkManager chunkManager) {
 		this.chunkManager = chunkManager;
 	}

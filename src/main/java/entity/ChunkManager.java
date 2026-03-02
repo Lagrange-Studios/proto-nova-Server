@@ -120,11 +120,21 @@ public class ChunkManager {
 		addChatMessageToChunk(getPlaneChunks(message.getMap()),CoordinateConverter.toChunkCoordinates(position),message);
 	}
 	
-	public void removeAllChatMessages() {
+	public synchronized void removeAllChatMessages() {
 		for(Entry<Integer, HashMap<Coordinate, Chunk>> map : chunks.entrySet()) {
 			for (Entry<Coordinate, Chunk> entry : map.getValue().entrySet()) {
 				if (entry.getValue().getChatsCount() != 0) {
 					entry.setValue(entry.getValue().toBuilder().clearChats().build());
+				}
+			}
+		}
+	}
+	
+	public synchronized void removeAllSounds() {
+		for(Entry<Integer, HashMap<Coordinate, Chunk>> map : chunks.entrySet()) {
+			for (Entry<Coordinate, Chunk> entry : map.getValue().entrySet()) {
+				if (entry.getValue().getSoundsCount() != 0) {
+					entry.setValue(entry.getValue().toBuilder().clearSounds().build());
 				}
 			}
 		}
