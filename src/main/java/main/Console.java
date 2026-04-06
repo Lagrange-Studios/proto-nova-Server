@@ -203,8 +203,8 @@ public class Console extends JFrame {
             } else if (input.startsWith("generate planet")) {
             	if (input.length() == 14) {
             		generator.generatePlanet();
-            	} else if (input.length() > 15) {
-                	String generationType = input.substring(15);
+            	} else if (input.length() > 16) {
+                	String generationType = input.substring(16);
             		generator.generatePlanet(generationType);
             	} else {
             		print("Improper arguments");
