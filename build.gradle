@@ -4,8 +4,12 @@ plugins {
     id 'com.google.protobuf' version '0.9.4'
 }
 
-group 'com.protonova'
-version '1.0-SNAPSHOT'
+group = 'com.protonova'
+version = '1.0-SNAPSHOT'
+
+// Java version compatibility
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
 
 repositories {
     mavenCentral()
@@ -13,13 +17,36 @@ repositories {
 }
 
 dependencies {
-	implementation files('../proto-nova-Library/build/libs/proto-nova-Library.jar')
-    implementation 'com.google.code.gson:gson:2.10.1'
+    // Library dependency
+    implementation project(':proto-nova-Library')
+    
+    // Protobuf
     implementation 'com.google.protobuf:protobuf-java:3.25.3'
-    implementation 'org.json:json:20230227'
-    // any other dependencies
+    
+    // JSON and data
+    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'org.json:json:20240303'
+    
+    // Testing
+    testImplementation 'junit:junit:4.13.2'
 }
 
 application {
-    mainClass = 'main.Main'  // <- point to the fully-qualified Main class
+    mainClass = 'main.Main'
+}
+
+// Configure JAR manifest for executable
+jar {
+    manifest {
+        attributes(
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.version,
+            'Implementation-Vendor': 'Proto Nova',
+            'Created-By': System.getProperty('java.version')
+        )
+    }
+}
+
+tasks.compileJava {
+    dependsOn ':proto-nova-Library:build'
 }
