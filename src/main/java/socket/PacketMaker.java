@@ -117,12 +117,17 @@ public class PacketMaker {
 		ArrayList<Entity> foundEntities = entityFinder.getAllEntitiesInRadis(playerEntity, renderDistance);
 		
 		for (Entity entity : foundEntities) {
-			packet.addEntities(entity);
+			if (entity != null) {
+				packet.addEntities(entity);
+			}
 		}
 		
 		// Add inventory
 		for (int id : playerEntity.getInventorySlotsMap().values()) {
-			packet.addEntities(entityManager.getEntity(id));
+			Entity inventoryItem = entityManager.getEntity(id);
+			if (inventoryItem != null) {
+				packet.addEntities(inventoryItem);
+			}
 		}
 
 		ArrayList<Audio> foundSounds = soundFinder.getAllSoundsInRadis(playerEntity, renderDistance);
