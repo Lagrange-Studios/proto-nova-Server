@@ -140,16 +140,19 @@ public class Server {
 	private void tick() throws Exception {
 		ArrayList<Player> playerList = serverSocket.getPlayerList();
 		
-		for (int i=0;i<playerList.size();i++) {
-			Player player = playerList.get(i);
+		// Use iterator to safely remove players during iteration
+		java.util.Iterator<Player> iterator = playerList.iterator();
+		while (iterator.hasNext()) {
+			Player player = iterator.next();
 			
 			if (player.getState() == State.DISCONNECTED) {
-				playerList.remove(i);
+				iterator.remove();
 				console.print("Removed player: " +player.getUsername());
 				serverSaver.savePlayer(player);
 			}
 			else {
 				packetMaker.sendPacket(player);
+				player.shouldReconcile = false; // Reset reconciliation flag after sending
 			}
 		}
 		chatManager.processChatMessagesToSend();

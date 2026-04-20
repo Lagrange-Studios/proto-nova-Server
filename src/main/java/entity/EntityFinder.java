@@ -28,21 +28,19 @@ public class EntityFinder {
 		
 		int radiusInChunks = (int) (Math.round(radius/CoordinateConverter.CHUNK_SIZE) + 1);
 		
-		/*
-		chunkCoordinate = chunkCoordinate.toBuilder()
-				.setX(chunkCoordinate.getX() - radiusInChunks)
-				.setY(chunkCoordinate.getY() - radiusInChunks)
-				.build();*/
-		
 		ArrayList<Entity> foundEntities = new ArrayList<Entity>();
+		double radiusSquared = radius * radius; // Avoid sqrt calculation in loop
+		
+		// Reuse coordinate builder to reduce allocations
+		Coordinate.Builder coordBuilder = Coordinate.newBuilder();
 		
 		for (int x=-radiusInChunks;x<radiusInChunks;x++) {
 			for (int y=-radiusInChunks;y<radiusInChunks;y++) {
 				
-				Coordinate coordinate = Coordinate.newBuilder()
-						.setX(x + chunkCoordinate.getX())
-						.setY(y + chunkCoordinate.getY())
-						.build();
+				// Reuse builder instead of creating new Coordinate every iteration
+				coordBuilder.setX(x + chunkCoordinate.getX());
+				coordBuilder.setY(y + chunkCoordinate.getY());
+				Coordinate coordinate = coordBuilder.build();
 				
 				if (chunkMap.containsKey(coordinate)) {
 					List<Integer> chunkEntities = chunkMap.get(coordinate).getEntityIdsList();
@@ -50,9 +48,10 @@ public class EntityFinder {
 					for (int i=0;i<chunkEntities.size();i++) {
 						Entity selectedEntity = entities.get(chunkEntities.get(i));
 						
-						double distance = VectorMath.distance(start, selectedEntity.getPosition());
+						// Use squared distance to avoid expensive sqrt calculation
+						double distanceSquared = VectorMath.distanceSquared(start, selectedEntity.getPosition());
 						
-						if (distance <= radius) {
+						if (distanceSquared <= radiusSquared) {
 							foundEntities.add(selectedEntity);
 						}
 					}

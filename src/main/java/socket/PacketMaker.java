@@ -34,6 +34,8 @@ public class PacketMaker {
 	private CelestialObjectManager celestialObjectManager;
 	
 	private static final double renderDistance = 40;
+	private static final int TILE_RENDER_X = 30;
+	private static final int TILE_RENDER_Y = 20;
 	
 	public PacketMaker(ServerSocketHandler serverSocket, ServerLoader serverLoader,
 			EntityManager entityManager, EntityFinder entityFinder, SoundFinder soundFinder, ChatFinder chatFinder, PlaneManager planeManager, CelestialObjectManager celestialObjectManager) {
@@ -101,11 +103,18 @@ public class PacketMaker {
 		int startX = Math.round(playerEntity.getPosition().getX());
 		int startY = Math.round(playerEntity.getPosition().getY());
 		
-		for (int x=-30;x<=30;x++) {
-			for (int y=-20;y<=20;y++) {
+		// Use StringBuilder to reduce string allocation overhead
+		StringBuilder keyBuilder = new StringBuilder();
+		
+		for (int x=-TILE_RENDER_X;x<=TILE_RENDER_X;x++) {
+			for (int y=-TILE_RENDER_Y;y<=TILE_RENDER_Y;y++) {
 				int planeX = startX + x;
 				int planeY = startY + y;
-				String key = planeX+","+planeY;
+				
+				// Use StringBuilder to create key efficiently
+				keyBuilder.setLength(0);
+				keyBuilder.append(planeX).append(',').append(planeY);
+				String key = keyBuilder.toString();
 				
 				if (currentPlane.getTilesMap().containsKey(key)) {
 					packet.putTiles(key, currentPlane.getTilesMap().get(key));

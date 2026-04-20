@@ -9,6 +9,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.concurrent.ExecutorService;
 
 import main.Console;
 import protonova.protobuf.ClientToServerPacketProto.ClientToServerPacket;
@@ -89,6 +90,7 @@ public class Player {
 	            disconnect();
 	        }
 	    });
+	    thread.setName("Player-Listener-" + socket.getInetAddress().getHostAddress());
 	    thread.start();
 	}
 
@@ -109,3 +111,4 @@ public class Player {
 	    }
 	}
 }
+
