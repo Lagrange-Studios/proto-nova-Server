@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'application'
     id 'com.google.protobuf' version '0.9.4'
+    id 'distribution'
 }
 
 group = 'com.protonova'
@@ -37,14 +38,19 @@ application {
     mainClass = 'main.Main'
 }
 
-// Configure JAR manifest for executable
+// Create Fat JAR with all dependencies
 jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     manifest {
         attributes(
             'Implementation-Title': project.name,
             'Implementation-Version': project.version,
             'Implementation-Vendor': 'Proto Nova',
-            'Created-By': System.getProperty('java.version')
+            'Created-By': System.getProperty('java.version'),
+            'Main-Class': 'main.Main'
         )
+    }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
 }
