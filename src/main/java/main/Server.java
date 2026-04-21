@@ -71,8 +71,7 @@ public class Server {
 			console = new Console(this, true);
 		} else {
 			SwingUtilities.invokeLater(() -> {
-                console = new Console(this, false);
-                console.setVisible(true);
+                console = new ConsoleGUI(this, false);
             });
 			
 			while (console == null) {
@@ -126,6 +125,10 @@ public class Server {
 		packetMaker = new PacketMaker(serverSocket,serverLoader,entityManager,entityFinder,soundFinder,chatFinder,planeManager,celestialObjectManager);
 		
 		console.setCommandClasses(serverSaver,generator,entityManager);
+		
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+			shutdown();
+		}));
 
 	}
 	
@@ -188,5 +191,16 @@ public class Server {
 	
 	public ArrayList<Player> getPlayers() {
 		return serverSocket!=null?serverSocket.getPlayerList():new ArrayList<Player>();
+	}
+	
+	private void shutdown() {
+		try {
+			console.shutdown();
+			if (serverSocket != null) {
+				serverSocket.close();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }

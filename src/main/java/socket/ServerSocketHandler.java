@@ -17,15 +17,17 @@ public class ServerSocketHandler {
 	private Console console;
 	private ArrayList<Player> playerList;
 	private ExecutorService threadPool;
+	private Thread serverThread;
 	
 	public ServerSocketHandler(Console console, PacketReciver packetReciver) {
 		this.console = console;
 		playerList = new ArrayList<Player>();
 		threadPool = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
 		
-		Thread thread = new Thread(() -> {
+		serverThread = new Thread(() -> {
 			try {
 				serverSocket = new ServerSocket(PORT);
+				serverSocket.setReuseAddress(true);
 	
 				console.print("Hosting on port: " + String.valueOf(PORT));
 				console.print("Hosting on IP: " + String.valueOf(InetAddress.getLocalHost().getHostAddress()));
@@ -44,10 +46,30 @@ public class ServerSocketHandler {
 				console.print(e.getMessage());
 			}
 		});
-		thread.start();
+		serverThread.setDaemon(true);
+		serverThread.start();
 	}
 	
 	public ArrayList<Player> getPlayerList() {
 		return playerList;
+	}
+	
+	public void close() {
+		try {
+			if (serverSocket != null && !serverSocket.isClosed()) {
+				serverSocket.close();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		if (threadPool != null && !threadPool.isShutdown()) {
+			threadPool.shutdown();
+		}
+		
+		for (Player player : playerList) {
+			player.disconnect();
+		}
+		playerList.clear();
 	}
 }
