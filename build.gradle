@@ -8,8 +8,10 @@ group = 'com.protonova'
 version = '1.0-SNAPSHOT'
 
 // Java version compatibility
-sourceCompatibility = JavaVersion.VERSION_11
-targetCompatibility = JavaVersion.VERSION_11
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
 
 repositories {
     mavenCentral()
@@ -18,7 +20,7 @@ repositories {
 
 dependencies {
     // Library dependency
-    implementation project(':proto-nova-Library')
+    implementation 'com.protonova:proto-nova-Library:1.0-SNAPSHOT'
     
     // Protobuf
     implementation 'com.google.protobuf:protobuf-java:3.25.3'
@@ -45,8 +47,4 @@ jar {
             'Created-By': System.getProperty('java.version')
         )
     }
-}
-
-tasks.compileJava {
-    dependsOn ':proto-nova-Library:build'
 }
