@@ -35,11 +35,32 @@ public class Console extends JFrame {
     private final double byteToMegaByteRatio = Math.pow(10, 6);
 	private Generator generator;
 	private EntityManager entityManager;
+	private boolean headless;
 
     public Console(Server server) {
+    	this(server, false);
+    }
+    
+    public Console(Server server, boolean headless) {
     	
     	this.server = server;
+    	this.headless = headless;
     	
+    	if (headless) {
+    		initHeadless();
+    		return;
+    	}
+    	
+    	initGUI();
+    }
+    
+    private void initHeadless() {
+    	printWelcomeMessage();
+    	startHeadlessInputThread();
+    	startUpdateThread();
+    }
+    
+    private void initGUI() {
         setTitle("Proto Nova Server Console");
         setSize(600, 400);
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
@@ -105,6 +126,24 @@ public class Console extends JFrame {
         startUpdateThread();
     }
     
+    private void startHeadlessInputThread() {
+    	Thread inputThread = new Thread(() -> {
+    		try (java.util.Scanner scanner = new java.util.Scanner(System.in)) {
+    			while (true) {
+    				if (scanner.hasNextLine()) {
+    					String input = scanner.nextLine().trim();
+    					if (!input.isEmpty()) {
+    						System.out.println("> " + input);
+    						processInput(input);
+    					}
+    				}
+    			}
+    		}
+    	});
+    	inputThread.setDaemon(true);
+    	inputThread.start();
+    }
+    
     private void startUpdateThread() {
     	try {
 			ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
@@ -129,17 +168,143 @@ public class Console extends JFrame {
     	
     	Runtime runtime = Runtime.getRuntime();
     	
-        infoBar.setText(
-        		"TPS: "+ countedTicks + "  " + 
+    	String infoText = "TPS: "+ countedTicks + "  " + 
         		"Players: " + server.getPlayers().size() + "  " + 
-        		"Memory: " +  Math.round((runtime.totalMemory() - runtime.freeMemory())/byteToMegaByteRatio) + "/" + Math.round(runtime.totalMemory()/byteToMegaByteRatio) + "MB"
-        		);
+        		"Memory: " +  Math.round((runtime.totalMemory() - runtime.freeMemory())/byteToMegaByteRatio) + "/" + Math.round(runtime.totalMemory()/byteToMegaByteRatio) + "MB";
+    	
+    	if (!headless && infoBar != null) {
+    		infoBar.setText(infoText);
+    	}
         countedTicks = 0;
     }
 
     private void printWelcomeMessage() {
-        outputArea.append("Welcome to Proto Nova Server Console 0.0.1\n");
-        outputArea.append("Type 'help' for a list of commands, 'exit' to quit.\n\n");
+        print("Welcome to Proto Nova Server Console 0.0.1");
+        print("Type 'help' for a list of commands, 'exit' to quit.");
+        print("");
+    }
+
+    private void processInput(String input) {
+    	if (input.equalsIgnoreCase("exit")) {
+    		print("Goodbye!");
+    		System.exit(0);
+    	} else if (input.equalsIgnoreCase("help")) {
+    		print("Available commands:");
+    		print(" - help: Show this help message");
+    		print(" - time: Show current system time");
+    		print(" - echo [text]: Repeat the text");
+    		print(" - kick [name]: Kicks the player with the correlated name");
+    		print(" - save: Saves all data to the world root");
+    		print(" - players: Shows all currently connected players");
+    		print(" - generate planet [generation type (optional)]: Generates a new planet optionally passing in a generation type");
+    		print(" - state: shows all the players states");
+    		print("");
+    	} else if (input.equalsIgnoreCase("time")) {
+    		print("Current time: " + LocalTime.now());
+    		print("");
+    	} else if (input.startsWith("echo ")) {
+    		print(input.substring(5));
+    		print("");
+    	} else if (input.startsWith("kick ")) {
+    		String name = input.substring(5);
+    		ArrayList<Player> playerList = server.getPlayers();
+    		boolean found = false;
+    		
+    		for (int i=0;i<playerList.size();i++) {
+    			if (playerList.get(i).getUsername().equals(name)) {
+    				playerList.get(i).disconnect();
+    				playerList.remove(i);
+    				print("Kicked "+name);
+    				found = true;
+    				break;
+    			}
+    		}
+    		
+    		if (!found) {
+    			print("Failed to kick "+name);
+    		}
+    	} else if (input.equalsIgnoreCase("save")) {
+    		if (serverSaver != null) {
+    			print(serverSaver.save());
+    		}
+    		else {
+    			print("No server saver attached to console");
+    		}
+    	} else if (input.equalsIgnoreCase("players")) {
+    		print("Players:");
+    		ArrayList<Player> players = server.getPlayers();
+    		
+        	for (int i=0;i<players.size();i++) {
+        		print(players.get(i).getUsername());
+        	}
+    	} else if (input.startsWith("generate planet")) {
+    		if (input.length() == 14) {
+    			generator.generatePlanet();
+    		} else if (input.length() > 16) {
+        		String generationType = input.substring(16);
+    			generator.generatePlanet(generationType);
+    		} else {
+    			print("Improper arguments");
+    		}
+    	} else if (input.startsWith("tp ")) {
+    		String args = input.substring(3);
+    		
+    		String playerName;
+    		float x;
+    		float y;
+    		int p;
+    		
+    		try {
+    			int index1 = args.indexOf(' ');
+    			playerName = args.substring(0,index1);
+            	
+            	int index2 = args.substring(index1+1).indexOf(' ')+index1+1;
+            	x = Float.valueOf(args.substring(index1+1,index2));
+            	
+            	int index3 = args.substring(index2+1).indexOf(' ')+index2+1;
+            	y = Float.valueOf(args.substring(index2+1,index3));
+            	
+            	p = Integer.valueOf(args.substring(index3+1));
+    		}
+    		catch(Exception argumentError) {
+    			print(argumentError.getMessage());
+    			return;
+    		}
+    		Player selectedPlayer = null;
+    		
+    		for (Player player : server.getPlayers()) {
+    			if (player.getUsername().equals(playerName)) {
+    				selectedPlayer = player;
+    				break;
+    			}
+    		}
+    		
+    		if (selectedPlayer == null) {
+    			print("Couldn't find player: "+playerName);
+    			return;
+    		}
+    		
+    		Entity playerEntity = entityManager.getEntity(selectedPlayer);
+    		
+    		Vector newPosition = Vector.newBuilder()
+    				.setX(x)
+    				.setY(y)
+    				.build();
+    		
+    		playerEntity = playerEntity.toBuilder()
+    				.setPosition(newPosition)
+    				.setMap(p)
+    				.build();
+    		
+    		entityManager.updateEntity(playerEntity);
+    	} else if (input.equalsIgnoreCase("state")) {
+    		for (Player player : server.getPlayers()) {
+    			print(player.getUsername()+": "+player.getState()+" Map: "+entityManager.getEntity(player).getMap());
+    		}
+    	} else {
+    		print("Unknown command. Type 'help' for options.");
+    		print("");
+    	}
     }
 
     private class InputListener implements ActionListener {
@@ -149,129 +314,18 @@ public class Console extends JFrame {
             inputField.setText("");
             outputArea.append("> " + input + "\n");
 
-            if (input.equalsIgnoreCase("exit")) {
-                outputArea.append("Goodbye!\n");
-                System.exit(0);
-            } else if (input.equalsIgnoreCase("help")) {
-                outputArea.append("Available commands:\n");
-                outputArea.append(" - help: Show this help message\n");
-                outputArea.append(" - time: Show current system time\n");
-                outputArea.append(" - echo [text]: Repeat the text\n");
-                outputArea.append(" - kick [name]: Kicks the player with the correlated name\n");
-                outputArea.append(" - save: Saves all data to the world root\n");
-                outputArea.append(" - players: Shows all currently connected players\n");
-                outputArea.append(" - generate planet [generation type (optional)]: Generates a new planet optionally passing in a generation type\n");
-                outputArea.append(" - state: shows all the players states");
-                outputArea.append("\n");
-            } else if (input.equalsIgnoreCase("time")) {
-                outputArea.append("Current time: " + LocalTime.now() + "\n\n");
-            } else if (input.startsWith("echo ")) {
-                outputArea.append(input.substring(5) + "\n\n");
-            } else if (input.startsWith("kick ")) {
-            	String name = input.substring(5);
-            	ArrayList<Player> playerList = server.getPlayers();
-            	boolean found = false;
-            	
-            	for (int i=0;i<playerList.size();i++) {
-            		if (playerList.get(i).getUsername().equals(name)) {
-            			playerList.get(i).disconnect();
-            			playerList.remove(i);
-
-                    	outputArea.append("Kicked "+name+"\n");
-            			found = true;
-            			break;
-            		}
-            	}
-            	
-            	if (!found) {
-                	outputArea.append("Failed to kick "+name+"\n");
-            	}
-            } else if (input.equalsIgnoreCase("save")) {
-            	if (serverSaver != null) {
-            		print(serverSaver.save());
-            	}
-            	else {
-            		print("No server saver attached to console");
-            	}
-            } else if (input.equalsIgnoreCase("players")) {
-            	print("Players:");
-            	ArrayList<Player> players = server.getPlayers();
-            	
-                for (int i=0;i<players.size();i++) {
-                	print(players.get(i).getUsername());
-                }
-            } else if (input.startsWith("generate planet")) {
-            	if (input.length() == 14) {
-            		generator.generatePlanet();
-            	} else if (input.length() > 16) {
-                	String generationType = input.substring(16);
-            		generator.generatePlanet(generationType);
-            	} else {
-            		print("Improper arguments");
-            	}
-            } else if (input.startsWith("tp ")) {
-            	String args = input.substring(3);
-            	
-            	String playerName;
-            	float x;
-            	float y;
-            	int p;
-            	
-            	try {
-            		int index1 = args.indexOf(' ');
-            		playerName = args.substring(0,index1);
-                	
-                	int index2 = args.substring(index1+1).indexOf(' ')+index1+1;
-                	x = Float.valueOf(args.substring(index1+1,index2));
-                	
-                	int index3 = args.substring(index2+1).indexOf(' ')+index2+1;
-                	y = Float.valueOf(args.substring(index2+1,index3));
-                	
-                	p = Integer.valueOf(args.substring(index3+1));
-            	}
-            	catch(Exception argumentError) {
-            		print(argumentError.getMessage());
-            		return;
-            	}
-            	Player selectedPlayer = null;
-            	
-            	for (Player player : server.getPlayers()) {
-            		if (player.getUsername().equals(playerName)) {
-            			selectedPlayer = player;
-            			break;
-            		}
-            	}
-            	
-            	if (selectedPlayer == null) {
-            		print("Couldn't find player: "+playerName);
-            		return;
-            	}
-            	
-            	Entity playerEntity = entityManager.getEntity(selectedPlayer);
-            	
-            	Vector newPosition = Vector.newBuilder()
-            			.setX(x)
-            			.setY(y)
-            			.build();
-            	
-            	playerEntity = playerEntity.toBuilder()
-            			.setPosition(newPosition)
-            			.setMap(p)
-            			.build();
-            	
-            	entityManager.updateEntity(playerEntity);
-            } else if (input.equalsIgnoreCase("state")) {
-            	for (Player player : server.getPlayers()) {
-            		print(player.getUsername()+": "+player.getState()+" Map: "+entityManager.getEntity(player).getMap());
-            	}
-            } else {
-                outputArea.append("Unknown command. Type 'help' for options.\n\n");
+            if (!input.isEmpty()) {
+            	processInput(input);
             }
         }
     }
 
     public void print(String output) {
-    	outputArea.append(output+"\n");
+    	if (headless) {
+    		System.out.println(output);
+    	} else {
+    		outputArea.append(output+"\n");
+    	}
     }
     
     public void print(int output) {

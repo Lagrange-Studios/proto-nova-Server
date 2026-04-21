@@ -53,24 +53,34 @@ public class Server {
 	private Generator generator;
 	private AssetManager assetManager;
 	private ActionHandler actionHandler;
+	private boolean headless;
 	
 	private int saveCounter = 0;
 	private int saveInterval = 15 * 60 * TPS; // Minutes
 	
 	public Server() {
+		this(false);
+	}
+	
+	public Server(boolean headless) {
+		this.headless = headless;
 		
 		
 		// start console
-		SwingUtilities.invokeLater(() -> {
-            console = new Console(this);
-            console.setVisible(true);
-        });
-		
-		while (console == null) {
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+		if (headless) {
+			console = new Console(this, true);
+		} else {
+			SwingUtilities.invokeLater(() -> {
+                console = new Console(this, false);
+                console.setVisible(true);
+            });
+			
+			while (console == null) {
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 		
