@@ -29,17 +29,19 @@ public class Player {
 	public PlayerData data;
 	private PacketReciver packetReciver;
 	public boolean shouldReconcile = false;
+	private ServerSocketHandler serverSocketHandler;
+	private boolean addedToGame = false;
 	
-	public Player(Socket socket, Console console, PacketReciver packetReciver) {
+	public Player(Socket socket, Console console, PacketReciver packetReciver, ServerSocketHandler serverSocketHandler) {
 		this.socket = socket;
 		this.console = console;
 		this.packetReciver = packetReciver;
+		this.serverSocketHandler = serverSocketHandler;
 		
 		try {
 			input = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
 			output = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
 			state = State.AWAITING_CLIENT_PACKET;
-			listen();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -48,6 +50,11 @@ public class Player {
 	public void disconnect() {
 		if (state == State.DISCONNECTED) return;
 		state = State.DISCONNECTED;
+		
+		// Remove from game if added
+		if (addedToGame && serverSocketHandler != null) {
+			serverSocketHandler.removePlayer(this);
+		}
 
 	    try {
 	    	input.close();
@@ -79,6 +86,13 @@ public class Player {
 		                UserData user = UserData.parseFrom(data);
 		                username = user.getUsername();
 		                state = State.AWAITING_SERVER_PACKET;
+		                
+		                // Add to game when handshake complete
+		                if (serverSocketHandler != null) {
+		                	addedToGame = true;
+		                	serverSocketHandler.addPlayerToGame(this);
+		                }
+		                
 		                console.print("Received user: " + user.getUsername());
 	                }
 	                else {
@@ -86,7 +100,10 @@ public class Player {
 	                }
 	            }
 	        } catch (IOException e) {
-	            console.print("Connection closed or error: " + e.getMessage());
+	            // Only log disconnection if player actually joined the game
+	            if (addedToGame && username != null) {
+	            	console.print("Connection closed or error: " + e.getMessage());
+	            }
 	            disconnect();
 	        }
 	    });

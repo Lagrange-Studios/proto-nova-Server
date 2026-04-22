@@ -26,6 +26,7 @@ import socket.PacketMaker;
 import socket.PacketReciver;
 import socket.Player;
 import socket.ServerSocketHandler;
+import socket.ServerStatusHandler;
 import sound.SoundFinder;
 import sound.SoundManager;
 import space.CelestialObjectManager;
@@ -34,6 +35,7 @@ public class Server {
 	
 	public Console console;
 	private ServerSocketHandler serverSocket;
+	private ServerStatusHandler statusHandler;
 	public final int TPS = 60;
 	public Long globalTicks = 0L;
 	private ServerLoader serverLoader;
@@ -118,6 +120,14 @@ public class Server {
 		packetReciver = new PacketReciver(entityManager, soundManager, chatManager, console, actionHandler, entityFinder);
 		
 		serverSocket = new ServerSocketHandler(console, packetReciver);
+		statusHandler = new ServerStatusHandler(serverSocket, console);
+		
+		try {
+			statusHandler.start();
+		} catch (Exception e) {
+			console.print("Failed to start status HTTP server: " + e.getMessage());
+		}
+		
 		serverSaver = new ServerSaver(this, entityManager, planeManager, celestialObjectManager);
 		
 		startThread();
@@ -151,16 +161,13 @@ public class Server {
 	}
 	
 	private void tick() throws Exception {
-		ArrayList<Player> playerList = serverSocket.getPlayerList();
+		// Create a copy to avoid ConcurrentModificationException when players disconnect during iteration
+		ArrayList<Player> playerList = new ArrayList<>(serverSocket.getPlayerList());
 		
-		// Use iterator to safely remove players during iteration
-		java.util.Iterator<Player> iterator = playerList.iterator();
-		while (iterator.hasNext()) {
-			Player player = iterator.next();
-			
+		for (Player player : playerList) {
 			if (player.getState() == State.DISCONNECTED) {
-				iterator.remove();
-				console.print("Removed player: " +player.getUsername());
+				serverSocket.getPlayerList().remove(player);
+				console.print("Removed player: " + (player.getUsername() != null ? player.getUsername() : "unknown"));
 				serverSaver.savePlayer(player);
 			}
 			else {
@@ -196,6 +203,9 @@ public class Server {
 	private void shutdown() {
 		try {
 			console.shutdown();
+			if (statusHandler != null) {
+				statusHandler.stop();
+			}
 			if (serverSocket != null) {
 				serverSocket.close();
 			}
