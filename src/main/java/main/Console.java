@@ -1,109 +1,256 @@
 package main;
 
-import javax.swing.*;
-
+import entity.EntityManager;
+import file.ServerSaver;
+import generation.Generator;
+import protonova.protobuf.EntityProto.Entity;
+import protonova.protobuf.VectorProto.Vector;
 import socket.Player;
 
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
-@SuppressWarnings("serial")
-public class Console extends JFrame {
-    private JTextArea outputArea;
-    private JTextField inputField;
-    private Server server;
+public class Console {
+    protected Server server;
+    protected int countedTicks = 0;
+    protected ServerSaver serverSaver;
+    protected final double byteToGigaByteRatio = Math.pow(10, 9);
+    protected final double byteToMegaByteRatio = Math.pow(10, 6);
+	protected Generator generator;
+	protected EntityManager entityManager;
+	protected boolean headless;
 
     public Console(Server server) {
+    	this(server, true);
+    }
+    
+    public Console(Server server, boolean headless) {
     	
     	this.server = server;
+    	this.headless = headless;
     	
-        setTitle("Proto Nova Server Console");
-        setSize(600, 400);
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setLocationRelativeTo(null);
-
-        // Set dark theme colors
-        Color backgroundColor = new Color(30, 30, 30);
-        Color textColor = new Color(220, 220, 220);
-        Color inputBackground = new Color(45, 45, 45);
-
-        outputArea = new JTextArea();
-        outputArea.setEditable(false);
-        outputArea.setFont(new Font("Consolas", Font.PLAIN, 14));
-        outputArea.setBackground(backgroundColor);
-        outputArea.setForeground(textColor);
-        outputArea.setCaretColor(textColor);
-
-        JScrollPane scrollPane = new JScrollPane(outputArea);
-        scrollPane.getViewport().setBackground(backgroundColor);
-
-        inputField = new JTextField();
-        inputField.setBackground(inputBackground);
-        inputField.setForeground(textColor);
-        inputField.setCaretColor(textColor);
-        inputField.setFont(new Font("Consolas", Font.PLAIN, 14));
-        inputField.addActionListener(new InputListener());
-
-        add(scrollPane, BorderLayout.CENTER);
-        add(inputField, BorderLayout.SOUTH);
-
-        printWelcomeMessage();
+    	if (headless) {
+    		initHeadless();
+    	}
+    }
+    
+    protected void initHeadless() {
+    	printWelcomeMessage();
+    	startHeadlessInputThread();
+    	startUpdateThread();
+    }
+    
+    private void startHeadlessInputThread() {
+    	Thread inputThread = new Thread(() -> {
+    		try (java.util.Scanner scanner = new java.util.Scanner(System.in)) {
+    			while (true) {
+    				if (scanner.hasNextLine()) {
+    					String input = scanner.nextLine().trim();
+    					if (!input.isEmpty()) {
+    						System.out.println("> " + input);
+    						processInput(input);
+    					}
+    				}
+    			}
+    		}
+    	});
+    	inputThread.setDaemon(true);
+    	inputThread.start();
+    }
+    
+    protected void startUpdateThread() {
+    	try {
+			ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+			
+			Runnable task = () -> {
+				try {
+					updateBar();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			};
+			
+			scheduler.scheduleAtFixedRate(task, 1, 1, TimeUnit.SECONDS);
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+    }
+    
+    protected void updateBar() throws Exception {
+    	
+    	if (countedTicks == 0) print("WARNING TPS is 0");
+    	
+    	Runtime runtime = Runtime.getRuntime();
+    	
+    	String infoText = "TPS: "+ countedTicks + "  " + 
+        		"Players: " + server.getPlayers().size() + "  " + 
+        		"Memory: " +  Math.round((runtime.totalMemory() - runtime.freeMemory())/byteToMegaByteRatio) + "/" + Math.round(runtime.totalMemory()/byteToMegaByteRatio) + "MB";
+    	
+    	if (!headless) {
+    		onUpdateBar(infoText);
+    	}
+        countedTicks = 0;
+    }
+    
+    protected void onUpdateBar(String infoText) {
+    	// Override in GUI implementation
     }
 
-    private void printWelcomeMessage() {
-        outputArea.append("Welcome to Proto Nova Server Console 0.0.1\n");
-        outputArea.append("Type 'help' for a list of commands, 'exit' to quit.\n\n");
+    protected void printWelcomeMessage() {
+        print("Welcome to Proto Nova Server Console 0.0.1");
+        print("Type 'help' for a list of commands, 'exit' to quit.");
+        print("");
     }
 
-    private class InputListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            String input = inputField.getText().trim();
-            inputField.setText("");
-            outputArea.append("> " + input + "\n");
-
-            if (input.equalsIgnoreCase("exit")) {
-                outputArea.append("Goodbye!\n");
-                System.exit(0);
-            } else if (input.equalsIgnoreCase("help")) {
-                outputArea.append("Available commands:\n");
-                outputArea.append(" - help: Show this help message\n");
-                outputArea.append(" - time: Show current system time\n");
-                outputArea.append(" - kick [name]: Kicks the player with the correlated name\n");
-                outputArea.append(" - echo [text]: Repeat the text\n\n");
-            } else if (input.equalsIgnoreCase("time")) {
-                outputArea.append("Current time: " + LocalTime.now() + "\n\n");
-            } else if (input.startsWith("echo ")) {
-                outputArea.append(input.substring(5) + "\n\n");
-            } else if (input.startsWith("kick ")) {
-            	String name = input.substring(5);
-            	ArrayList<Player> playerList = server.getPlayers();
-            	boolean found = false;
+    protected void processInput(String input) {
+    	if (input.equalsIgnoreCase("exit")) {
+    		print("Goodbye!");
+    		System.exit(0);
+    	} else if (input.equalsIgnoreCase("help")) {
+    		print("Available commands:");
+    		print(" - help: Show this help message");
+    		print(" - time: Show current system time");
+    		print(" - echo [text]: Repeat the text");
+    		print(" - kick [name]: Kicks the player with the correlated name");
+    		print(" - save: Saves all data to the world root");
+    		print(" - players: Shows all currently connected players");
+    		print(" - generate planet [generation type (optional)]: Generates a new planet optionally passing in a generation type");
+    		print(" - state: shows all the players states");
+    		print("");
+    	} else if (input.equalsIgnoreCase("time")) {
+    		print("Current time: " + LocalTime.now());
+    		print("");
+    	} else if (input.startsWith("echo ")) {
+    		print(input.substring(5));
+    		print("");
+    	} else if (input.startsWith("kick ")) {
+    		String name = input.substring(5);
+    		ArrayList<Player> playerList = server.getPlayers();
+    		boolean found = false;
+    		
+    		for (int i=0;i<playerList.size();i++) {
+    			if (playerList.get(i).getUsername().equals(name)) {
+    				playerList.get(i).disconnect();
+    				playerList.remove(i);
+    				print("Kicked "+name);
+    				found = true;
+    				break;
+    			}
+    		}
+    		
+    		if (!found) {
+    			print("Failed to kick "+name);
+    		}
+    	} else if (input.equalsIgnoreCase("save")) {
+    		if (serverSaver != null) {
+    			print(serverSaver.save());
+    		}
+    		else {
+    			print("No server saver attached to console");
+    		}
+    	} else if (input.equalsIgnoreCase("players")) {
+    		print("Players:");
+    		ArrayList<Player> players = server.getPlayers();
+    		
+        	for (int i=0;i<players.size();i++) {
+        		print(players.get(i).getUsername());
+        	}
+    	} else if (input.startsWith("generate planet")) {
+    		if (input.length() == 14) {
+    			generator.generatePlanet();
+    		} else if (input.length() > 16) {
+        		String generationType = input.substring(16);
+    			generator.generatePlanet(generationType);
+    		} else {
+    			print("Improper arguments");
+    		}
+    	} else if (input.startsWith("tp ")) {
+    		String args = input.substring(3);
+    		
+    		String playerName;
+    		float x;
+    		float y;
+    		int p;
+    		
+    		try {
+    			int index1 = args.indexOf(' ');
+    			playerName = args.substring(0,index1);
             	
-            	for (int i=0;i<playerList.size();i++) {
-            		if (playerList.get(i).getUsername().equals(name)) {
-            			playerList.get(i).disconnect();
-            			playerList.remove(i);
-
-                    	outputArea.append("Kicked "+name+"\n");
-            			found = true;
-            			break;
-            		}
-            	}
+            	int index2 = args.substring(index1+1).indexOf(' ')+index1+1;
+            	x = Float.valueOf(args.substring(index1+1,index2));
             	
-            	if (!found) {
-                	outputArea.append("Failed to kick "+name+"\n");
-            	}
-            } else {
-                outputArea.append("Unknown command. Type 'help' for options.\n\n");
-            }
-        }
+            	int index3 = args.substring(index2+1).indexOf(' ')+index2+1;
+            	y = Float.valueOf(args.substring(index2+1,index3));
+            	
+            	p = Integer.valueOf(args.substring(index3+1));
+    		}
+    		catch(Exception argumentError) {
+    			print(argumentError.getMessage());
+    			return;
+    		}
+    		Player selectedPlayer = null;
+    		
+    		for (Player player : server.getPlayers()) {
+    			if (player.getUsername().equals(playerName)) {
+    				selectedPlayer = player;
+    				break;
+    			}
+    		}
+    		
+    		if (selectedPlayer == null) {
+    			print("Couldn't find player: "+playerName);
+    			return;
+    		}
+    		
+    		Entity playerEntity = entityManager.getEntity(selectedPlayer);
+    		
+    		Vector newPosition = Vector.newBuilder()
+    				.setX(x)
+    				.setY(y)
+    				.build();
+    		
+    		playerEntity = playerEntity.toBuilder()
+    				.setPosition(newPosition)
+    				.setMap(p)
+    				.build();
+    		
+    		entityManager.updateEntity(playerEntity);
+    	} else if (input.equalsIgnoreCase("state")) {
+    		for (Player player : server.getPlayers()) {
+    			print(player.getUsername()+": "+player.getState()+" Map: "+entityManager.getEntity(player).getMap());
+    		}
+    	} else {
+    		print("Unknown command. Type 'help' for options.");
+    		print("");
+    	}
     }
 
     public void print(String output) {
-    	outputArea.append(output+"\n");
+    	System.out.println(output);
     }
+    
+    public void print(int output) {
+    	print(String.valueOf(output));
+    }
+    
+    public void print(double output) {
+    	print(String.valueOf(output));
+    }
+
+	public void addTick() {
+		countedTicks++;		
+	}
+	
+	public void setCommandClasses(ServerSaver serverSaver, Generator generator, EntityManager entityManager) {
+		this.serverSaver = serverSaver;
+		this.generator = generator;
+		this.entityManager = entityManager;
+	}
+	
+	public void shutdown() {
+		print("Server shutting down...");
+	}
 }

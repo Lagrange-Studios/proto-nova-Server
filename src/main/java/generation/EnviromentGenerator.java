@@ -1,0 +1,123 @@
+package generation;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import collision.EntityCollision;
+import entity.EntityFinder;
+import entity.EntityManager;
+import file.AssetManager;
+import main.Console;
+import protonova.protobuf.EntityProto.Entity;
+import protonova.protobuf.PlaneProto.Plane;
+import protonova.protobuf.TileProto.Tile;
+import protonova.protobuf.VectorProto.Vector;
+import util.CoordinateConverter;
+import util.FileReader;
+import util.VectorMath;
+
+public class EnviromentGenerator {
+
+	private Console console;
+	private EntityManager entityManager;
+	private AssetManager assetManager;
+	private EntityFinder entityFinder;
+	
+	public EnviromentGenerator(AssetManager assetManager, EntityManager entityManager, Console console, EntityFinder entityFinder) {
+		this.assetManager = assetManager;
+		this.entityManager = entityManager;
+		this.console = console;
+		this.entityFinder = entityFinder;
+	}
+	
+	private HashMap<String, ArrayList<Tile>> countTiles(Plane plane) {
+		
+		HashMap<String,ArrayList<Tile>> tiles = new HashMap<>();
+		
+		for (Tile tile : plane.getTilesMap().values()) {
+			if (tiles.containsKey(tile.getName())) {
+				tiles.get(tile.getName()).add(tile);
+			}
+			else {
+				ArrayList<Tile> list = new ArrayList<>();
+				list.add(tile);
+				tiles.put(tile.getName(), list);
+			}
+		}
+		
+		return tiles;
+	}
+
+	public void generateEnviroment(Plane plane, String type) {
+		
+		HashMap<String, ArrayList<Tile>> planeTiles = countTiles(plane);
+		
+		File enviromentFolder = new File("assets/generation/enviroment/"+type);
+		
+		if (!enviromentFolder.exists()) return;
+		
+		File[] enviromentDataFiles = enviromentFolder.listFiles();
+		
+		for (int i=0;i<enviromentDataFiles.length;i++) {
+			
+			JSONObject generationData = new JSONObject(FileReader.readJSONFile(enviromentDataFiles[i].getPath()));
+			
+			if (!assetManager.containsEntity(generationData.getString("name"))) continue; // Check if we even have the entity
+			
+			
+			JSONArray tilesArray = generationData.getJSONArray("tiles");
+			ArrayList<Tile> validTiles = new ArrayList<>();
+			
+			// Gather all the valid tiles
+			for (Object tileName : tilesArray) {
+				
+				if (planeTiles.containsKey(tileName)) {
+					validTiles.addAll(planeTiles.get(tileName));
+				}
+			}
+			
+			// divide the size by density and then add entities randomly
+			for (int u=0;u<Math.floor(validTiles.size()/generationData.getDouble("tileDensity"));u++) {
+				int randomIndex = (int) Math.round(Math.random()*(validTiles.size()-1));
+				
+				Entity clone = assetManager.getEntity(generationData.getString("name"), plane.getId());
+				
+				Vector newPosition = CoordinateConverter.toVector(validTiles.get(randomIndex).getCoordinate());
+				
+				newPosition = newPosition.toBuilder()
+						.setX(newPosition.getX()-(clone.getSize().getX()-1)/2)
+						.setY(newPosition.getY()+(clone.getSize().getY()-1)/2)
+						.build();
+				
+				if (!generationData.getBoolean("grid")) {
+					newPosition = newPosition.toBuilder()
+							.setX((float) (newPosition.getX()+Math.random()/2))
+							.setY((float) (newPosition.getY()+Math.random()/2))
+							.build();
+				}
+				
+				clone = clone.toBuilder()
+					.setPosition(newPosition)
+					.setDirectionValue((int) (Math.random()*3))
+					.build();
+				
+				boolean foundCollision = false;
+				for (Entity entity : entityFinder.getAllEntitiesInRadis(clone, 3)) {
+					if (EntityCollision.checkCollision(entity, clone)) {
+						foundCollision = true;
+						break;
+					};
+				}
+				
+				if (!foundCollision) {
+					entityManager.updateEntity(clone);
+				}
+				
+			}
+		}
+	}
+}

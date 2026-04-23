@@ -1,8 +1,10 @@
 package file;
 
 import java.io.File;
+import java.util.HashMap;
 
 import main.Console;
+import protonova.protobuf.PlaneProto.Plane;
 
 public class Validater {
 
@@ -12,7 +14,9 @@ public class Validater {
 		this.console = console;
 	}
 	
-	public void validateWorldFiles() {
+	public boolean validateWorldFiles() {
+		
+		boolean shouldGenerate = false;
 		
 		File root = new File("worldRoot");
 		if (!root.exists()) {
@@ -25,11 +29,10 @@ public class Validater {
 		if (!planes.exists()) {
 			planes.mkdir();
 			
-			File map1 = new File("worldRoot/planes/map1");
-			map1.mkdir();
-			
-			Creator.createEmptyPlane(map1, 1);
+			shouldGenerate = true;
 		}
+		
+		
 		
 		File playerData = new File("worldRoot/playerData");
 		if (!playerData.exists()) {
@@ -37,12 +40,23 @@ public class Validater {
 			playerData.mkdir();
 		}
 		
-		File entities = new File("worldRoot/entities");
+		File entities = new File("worldRoot/entities.data");
 		if (!entities.exists()) {
 			console.print("WARNING: no entity data found");
-			entities.mkdir();
+		}
+		
+		File celestialObjects = new File("worldRoot/celestialObjects");
+		if (!celestialObjects.exists()) {
+			console.print("WARNING: no celestial objects data found");
+			celestialObjects.mkdir();
+		}
+		
+		// if there's no planes then we should generate one
+		if (!shouldGenerate) {
+			shouldGenerate = celestialObjects.listFiles().length == 0;
 		}
 		
 		console.print("Validated world files");
+		return shouldGenerate;
 	}
 }

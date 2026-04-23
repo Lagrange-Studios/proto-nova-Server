@@ -11,27 +11,25 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 
 import main.Console;
+import protonova.protobuf.CelestialObjectProto.CelestialObject;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.PlaneProto;
 import protonova.protobuf.PlaneProto.Plane;
 import protonova.protobuf.PlayerDataProto.PlayerData;
+import protonova.protobuf.EntityDataProto.EntityData;
 
 public class ServerLoader {
 
 	private Console console;
-	private Validater validater;
 	
 	public ServerLoader(Console console) {
 		this.console = console;
-		validater = new Validater(console);
 	}
 	
-	private Plane loadPlane(File directory) {
-		
-		File plane = new File(directory.getPath() + "/plane.data");
+	private Plane loadPlane(File planeFile) {
 		
 		try {
-			byte[] array = Files.readAllBytes(Paths.get(plane.getPath()));
+			byte[] array = Files.readAllBytes(Paths.get(planeFile.getPath()));
 			
 			Plane planeObject = PlaneProto.Plane.parseFrom(array);
 			
@@ -39,7 +37,7 @@ public class ServerLoader {
 			
 		} catch (IOException e) {
 			e.printStackTrace();
-			console.print("ERROR: " + plane.getPath() + " not found");
+			console.print("ERROR: " + planeFile.getPath() + " not found");
 		}
 		
 		return null;
@@ -48,14 +46,12 @@ public class ServerLoader {
 	
 	public HashMap<Integer, Plane> loadWorld() {
 		
-		validater.validateWorldFiles();
-		
 		HashMap<Integer, Plane> planes = new HashMap<Integer,Plane>();
 		
-		File[] planesDirectories = new File("worldRoot/planes").listFiles();
+		File[] planesFiles = new File("worldRoot/planes").listFiles();
 		
-		for (int i=0;i<planesDirectories.length;i++) {
-			Plane newPlane = loadPlane(planesDirectories[i]);
+		for (int i=0;i<planesFiles.length;i++) {
+			Plane newPlane = loadPlane(planesFiles[i]);
 			planes.put(newPlane.getId(), newPlane);
 		}
 		
@@ -71,36 +67,74 @@ public class ServerLoader {
 				PlayerData playerData = PlayerData.parseFrom(Files.readAllBytes(Path.of(data[i].getPath())));
 				
 				if (playerData.getUsername().equals(username)) {
+					console.print("Succesfully loaded: "+username);
 					return playerData;
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
-		
+
+		console.print("Unuccesfully loaded: "+username);
 		// TODO: get the real entity id;
-		return Creator.createNewPlayer(username, 0);
+		return PlayerData.newBuilder()
+				.setEntityId(0)
+				.setUsername(username)
+				.build();
 	}
 
 	public HashMap<Integer, Entity> loadEntities() {
 		
 		HashMap<Integer, Entity> allEntities = new HashMap<Integer, Entity>();
 		
-		File[] entities = new File("worldRoot/entities").listFiles();
+		File entities = new File("worldRoot/entities.data");
 		
-		for (int i=0;i<entities.length;i++) {
-	
+		if (entities.exists()) {
 			try {
-				byte[] entityBytes = Files.readAllBytes(Paths.get(entities[i].getPath()));
+				EntityData entityData = EntityData.parseFrom(Files.readAllBytes(Path.of(entities.getPath())));
 				
-				Entity entity = Entity.parseFrom(entityBytes);
-				allEntities.put(entity.getId(), entity);
-				
+				for (Entity entity : entityData.getDataMap().values()) allEntities.put(entity.getId(), entity);
 			} catch (IOException e) {
 				e.printStackTrace();
-			}	
-		}
+				console.print("Something went wrong loading entities: "+e.getMessage());
+			}
+		}		
 		
 		return allEntities;
+	}
+
+	public HashMap<Integer, CelestialObject> loadCelestialObjects() {
+		HashMap<Integer, CelestialObject> celestialObjects = new HashMap<Integer,CelestialObject>();
+		
+		File[] celestialObjectFiles = new File("worldRoot/celestialObjects").listFiles();
+		
+		for (int i=0;i<celestialObjectFiles.length;i++) {
+			try {
+				CelestialObject newObject = CelestialObject.parseFrom(Files.readAllBytes(Path.of(celestialObjectFiles[i].getPath())));
+				celestialObjects.put(newObject.getId(), newObject);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return celestialObjects;
+	}
+
+	public HashMap<String, Entity> loadEntityAssets() {
+		HashMap<String, Entity> entityAssets = new HashMap<String,Entity>();
+		
+		File[] entityAssetFiles = new File("assets/entities").listFiles();
+		
+		for (int i=0;i<entityAssetFiles.length;i++) {
+			try {
+				String fileName = entityAssetFiles[i].getName();
+				Entity newObject = Entity.parseFrom(Files.readAllBytes(Path.of(entityAssetFiles[i].getPath())));
+				entityAssets.put(fileName.substring(0,fileName.lastIndexOf('.')), newObject);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return entityAssets;
 	}
 }

@@ -1,0 +1,6 @@
+{
+	"name": "campfire",
+	"tiles": ["grass"],
+	"tileDensity": 100,
+	"grid": true
+}

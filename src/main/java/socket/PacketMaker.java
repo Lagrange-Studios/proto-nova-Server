@@ -1,28 +1,55 @@
 package socket;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 
+import chat.ChatFinder;
+import chat.ChatManager;
+import entity.ChunkManager;
+import entity.EntityFinder;
 import entity.EntityManager;
 import enums.Player.State;
 import file.ServerLoader;
+import plane.PlaneManager;
+import protonova.protobuf.AudioProto.Audio;
+import protonova.protobuf.ChatProto.ChatMessage;
 import protonova.protobuf.EntityProto.Entity;
-import protonova.protobuf.ServerToClientPacketProto;
+import protonova.protobuf.PlaneProto.Plane;
 import protonova.protobuf.ServerToClientPacketProto.ServerToClientPacket;
+import protonova.protobuf.ServerToClientPacketProto.ServerToClientPacket.Builder;
+import protonova.protobuf.TileProto.Tile;
+import sound.SoundFinder;
+import space.CelestialObjectManager;
 
 public class PacketMaker {
 
 	private ServerSocketHandler serverSocket;
 	private ServerLoader serverLoader;
 	private EntityManager entityManager;
+	private EntityFinder entityFinder;
+	private SoundFinder soundFinder;
+	private ChatFinder chatFinder;
+	private PlaneManager planeManager;
+	private CelestialObjectManager celestialObjectManager;
 	
-	public PacketMaker(ServerSocketHandler serverSocket, ServerLoader serverLoader, EntityManager entityManager) {
+	private static final double renderDistance = 40;
+	private static final int TILE_RENDER_X = 30;
+	private static final int TILE_RENDER_Y = 20;
+	
+	public PacketMaker(ServerSocketHandler serverSocket, ServerLoader serverLoader,
+			EntityManager entityManager, EntityFinder entityFinder, SoundFinder soundFinder, ChatFinder chatFinder, PlaneManager planeManager, CelestialObjectManager celestialObjectManager) {
 		this.serverSocket = serverSocket;
 		this.serverLoader = serverLoader;
 		this.entityManager = entityManager;
+		this.entityFinder = entityFinder;
+		this.soundFinder = soundFinder;
+		this.chatFinder = chatFinder;
+		this.planeManager = planeManager;
+		this.celestialObjectManager = celestialObjectManager;
 	}
 	
 	public void sendPacket(Player player) {
-		
 		switch(player.getState()) {
 			case AWAITING_SERVER_PACKET:
 				
@@ -40,20 +67,22 @@ public class PacketMaker {
 				if (player.getState() != State.DISCONNECTED) {
 					player.data = serverLoader.getPlayerData(player.getUsername());
 					
-					if (player.data.getEntityId() == 0) {
+					if (player.data.getEntityId() == 0 || entityManager.getEntity(player.data.getEntityId()) == null) {
 						Entity newEntity = entityManager.makeNewEntity("human");
 						
-						player.data.toBuilder()
+						player.data = player.data.toBuilder()
 							.setEntityId(newEntity.getId())
 							.build();
 						
-						sendNormalPacket(player);
-						player.setState(State.PLAYING);
 					}
 					
-					//TODO: send the player their entity
+					sendNormalPacket(player);
+					player.setState(State.PLAYING);
+					
 				}
 				
+				break;
+			case AWAITING_CLIENT_PACKET:
 				break;
 		default:
 			sendNormalPacket(player);
@@ -63,10 +92,69 @@ public class PacketMaker {
 	}
 	
 	private void sendNormalPacket(Player player) {
-		ServerToClientPacket packet = ServerToClientPacket.newBuilder()
-				.setPlayerEntity(entityManager.getEntity(player.data.getEntityId()))
-				.build();
 		
-		player.send(packet.toByteArray());
+		Entity playerEntity = entityManager.getEntity(player.data.getEntityId());
+		
+		Plane currentPlane = planeManager.getPlane(playerEntity);
+		
+		Builder packet = ServerToClientPacket.newBuilder()
+				.setMindId(player.data.getEntityId());
+		
+		int startX = Math.round(playerEntity.getPosition().getX());
+		int startY = Math.round(playerEntity.getPosition().getY());
+		
+		// Use StringBuilder to reduce string allocation overhead
+		StringBuilder keyBuilder = new StringBuilder();
+		
+		for (int x=-TILE_RENDER_X;x<=TILE_RENDER_X;x++) {
+			for (int y=-TILE_RENDER_Y;y<=TILE_RENDER_Y;y++) {
+				int planeX = startX + x;
+				int planeY = startY + y;
+				
+				// Use StringBuilder to create key efficiently
+				keyBuilder.setLength(0);
+				keyBuilder.append(planeX).append(',').append(planeY);
+				String key = keyBuilder.toString();
+				
+				if (currentPlane.getTilesMap().containsKey(key)) {
+					packet.putTiles(key, currentPlane.getTilesMap().get(key));
+				}
+			}
+		}
+		
+		// add nearby entities
+		ArrayList<Entity> foundEntities = entityFinder.getAllEntitiesInRadis(playerEntity, renderDistance);
+		
+		for (Entity entity : foundEntities) {
+			if (entity != null) {
+				packet.addEntities(entity);
+			}
+		}
+		
+		// Add inventory
+		for (int id : playerEntity.getInventorySlotsMap().values()) {
+			Entity inventoryItem = entityManager.getEntity(id);
+			if (inventoryItem != null) {
+				packet.addEntities(inventoryItem);
+			}
+		}
+
+		ArrayList<Audio> foundSounds = soundFinder.getAllSoundsInRadis(playerEntity, renderDistance);
+		
+		for (int i=0;i<foundSounds.size();i++) {
+			packet.addSounds(foundSounds.get(i));
+		}
+		
+		ArrayList<ChatMessage> foundChats = chatFinder.getAllChatsInRadis(playerEntity, renderDistance);
+		
+		for (int i=0;i<foundChats.size();i++) {
+			packet.addChatMessage(foundChats.get(i));
+		}
+		
+		packet.setCurrentCelestialObject(celestialObjectManager.getCelestialObjectFromPlane(currentPlane));
+		
+		packet.setReconcile(player.shouldReconcile);
+		
+		player.send(packet.build().toByteArray());
 	}
 }

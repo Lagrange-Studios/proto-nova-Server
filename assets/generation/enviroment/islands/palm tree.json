@@ -1,0 +1,6 @@
+{
+	"name": "palm tree",
+	"tiles": ["sand"],
+	"tileDensity": 35,
+	"grid": true
+}

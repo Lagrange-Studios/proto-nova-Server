@@ -8,46 +8,59 @@ import java.io.BufferedOutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
+import java.util.concurrent.ExecutorService;
 
 import main.Console;
+import protonova.protobuf.ClientToServerPacketProto.ClientToServerPacket;
 import protonova.protobuf.PlayerDataProto.PlayerData;
 import protonova.protobuf.UserDataProto;
 import protonova.protobuf.UserDataProto.UserData;
 import enums.Player.State;
 
 public class Player {
-	private Socket socket;
+	public Socket socket;
 	private String username;
 	
 	private DataInputStream input;
 	private DataOutputStream output;
-	private State state = State.DISCONNECTED;
+	private volatile State state = State.DISCONNECTED;
 	private Console console;
 	public PlayerData data;
+	private PacketReciver packetReciver;
+	public boolean shouldReconcile = false;
+	private ServerSocketHandler serverSocketHandler;
+	private boolean addedToGame = false;
 	
-	public Player(Socket socket, Console console) {
+	public Player(Socket socket, Console console, PacketReciver packetReciver, ServerSocketHandler serverSocketHandler) {
 		this.socket = socket;
 		this.console = console;
+		this.packetReciver = packetReciver;
+		this.serverSocketHandler = serverSocketHandler;
 		
 		try {
 			input = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
 			output = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
 			state = State.AWAITING_CLIENT_PACKET;
-			listen();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 	
 	public void disconnect() {
-		try {
-			input.close();
+		if (state == State.DISCONNECTED) return;
+		state = State.DISCONNECTED;
+		
+		// Remove from game if added
+		if (addedToGame && serverSocketHandler != null) {
+			serverSocketHandler.removePlayer(this);
+		}
+
+	    try {
+	    	input.close();
 			output.close();
 			socket.close();
-			state = State.DISCONNECTED;
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	    } catch (IOException ignored) {}
 	}
 	
 	public State getState() {
@@ -72,17 +85,29 @@ public class Player {
 	                if (username == null ) {
 		                UserData user = UserData.parseFrom(data);
 		                username = user.getUsername();
+		                state = State.AWAITING_SERVER_PACKET;
+		                
+		                // Add to game when handshake complete
+		                if (serverSocketHandler != null) {
+		                	addedToGame = true;
+		                	serverSocketHandler.addPlayerToGame(this);
+		                }
+		                
 		                console.print("Received user: " + user.getUsername());
 	                }
 	                else {
-	                	
+	                	packetReciver.recivePacket(this, ClientToServerPacket.parseFrom(data));
 	                }
 	            }
 	        } catch (IOException e) {
-	            console.print("Connection closed or error: " + e.getMessage());
+	            // Only log disconnection if player actually joined the game
+	            if (addedToGame && username != null) {
+	            	console.print("Connection closed or error: " + e.getMessage());
+	            }
 	            disconnect();
 	        }
 	    });
+	    thread.setName("Player-Listener-" + socket.getInetAddress().getHostAddress());
 	    thread.start();
 	}
 
@@ -94,12 +119,13 @@ public class Player {
 		
 		try {
 			output.writeInt(bytes.length);
-			
 			output.write(bytes);
 			output.flush();
-			console.print("Sent Packet");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		} catch (SocketException e) {
+	        disconnect(); // client is gone
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	    }
 	}
 }
+

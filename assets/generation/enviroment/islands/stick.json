@@ -1,0 +1,6 @@
+{
+	"name": "stick",
+	"tiles": ["grass"],
+	"tileDensity": 40,
+	"grid": false
+}
