@@ -8,10 +8,14 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+
+import org.json.JSONObject;
 
 import main.Console;
 import protonova.protobuf.CelestialObjectProto.CelestialObject;
+import protonova.protobuf.CraftingRecipeProto.CraftingRecipe;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.PlaneProto;
 import protonova.protobuf.PlaneProto.Plane;
@@ -136,5 +140,36 @@ public class ServerLoader {
 		}
 		
 		return entityAssets;
+	}
+	
+	public ArrayList<CraftingRecipe> loadCraftingRecipes() {
+		ArrayList<CraftingRecipe> recipeList = new ArrayList<>();
+		
+		File[] craftingRecipes = new File("assets/crafting").listFiles();
+		
+		for (File file : craftingRecipes) {
+			try {
+				JSONObject jsonRecipe = new JSONObject(Files.readString(Path.of(file.getPath())));
+				
+				JSONObject item1 = jsonRecipe.getJSONObject("item1");
+				JSONObject item2 = jsonRecipe.getJSONObject("item2");
+				
+				CraftingRecipe newRecipe = CraftingRecipe.newBuilder()
+						.setItem1Consumed(item1.getBoolean("consumed"))
+						.setItem1MustBeHeld(item1.getBoolean("mustBeHeld"))
+						.setItem1Name(item1.getString("name"))
+						.setItem2Consumed(item2.getBoolean("consumed"))
+						.setItem2Name(item2.getString("name"))
+						.setResult(jsonRecipe.getString("result"))
+						.build();
+				
+				recipeList.add(newRecipe);
+				
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return recipeList;
 	}
 }

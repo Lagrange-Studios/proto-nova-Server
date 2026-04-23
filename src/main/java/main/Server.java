@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.SwingUtilities;
 
 import action.ActionHandler;
+import action.CraftingManager;
 import chat.ChatFinder;
 import chat.ChatManager;
 import entity.ChunkManager;
@@ -55,6 +56,7 @@ public class Server {
 	private Generator generator;
 	private AssetManager assetManager;
 	private ActionHandler actionHandler;
+	private CraftingManager craftingManager;
 	private boolean headless;
 	
 	private int saveCounter = 0;
@@ -110,6 +112,8 @@ public class Server {
 		celestialObjectManager = new CelestialObjectManager(serverLoader, console, this);
 		
 		generator = new Generator(console, planeManager, entityManager, assetManager, entityFinder, celestialObjectManager);
+		
+		craftingManager = new CraftingManager(entityManager, serverLoader.loadCraftingRecipes(), console);
 		
 		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager);
 		
