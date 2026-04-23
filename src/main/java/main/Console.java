@@ -3,6 +3,7 @@ package main;
 import entity.EntityManager;
 import file.ServerSaver;
 import generation.Generator;
+import plane.PlaneManager;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.VectorProto.Vector;
 import socket.Player;
@@ -22,6 +23,7 @@ public class Console {
 	protected Generator generator;
 	protected EntityManager entityManager;
 	protected boolean headless;
+	private PlaneManager planeManager;
 
     public Console(Server server) {
     	this(server, true);
@@ -186,6 +188,8 @@ public class Console {
             	y = Float.valueOf(args.substring(index2+1,index3));
             	
             	p = Integer.valueOf(args.substring(index3+1));
+            	
+            	if (!planeManager.getPlanes().containsKey(p)) throw new Exception("Plane Id: "+p+" does not exist");
     		}
     		catch(Exception argumentError) {
     			print(argumentError.getMessage());
@@ -244,10 +248,11 @@ public class Console {
 		countedTicks++;		
 	}
 	
-	public void setCommandClasses(ServerSaver serverSaver, Generator generator, EntityManager entityManager) {
+	public void setCommandClasses(ServerSaver serverSaver, Generator generator, EntityManager entityManager, PlaneManager planeManager) {
 		this.serverSaver = serverSaver;
 		this.generator = generator;
 		this.entityManager = entityManager;
+		this.planeManager = planeManager;
 	}
 	
 	public void shutdown() {
