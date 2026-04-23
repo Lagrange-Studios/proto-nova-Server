@@ -6,6 +6,7 @@ import java.util.HashMap;
 import entity.EntityManager;
 import main.Console;
 import protonova.protobuf.CraftingRecipeProto.CraftingRecipe;
+import protonova.protobuf.EntityProto.Entity;
 
 public class CraftingManager {
 	private HashMap<String, CraftingRecipe> itemsToRecipes;
@@ -21,7 +22,19 @@ public class CraftingManager {
 		loadRecipes(loadedRecipes);
 	}
 	
+	public CraftingRecipe getRecipe(String item1Name, String item2Name) {
+		if (itemsToRecipes.containsKey(item1Name+item2Name)) return itemsToRecipes.get(item1Name+item2Name);
+		else if (itemsToRecipes.containsKey(item2Name+item1Name)) return itemsToRecipes.get(item2Name+item1Name);
+		return null;
+	}
+	
+	public CraftingRecipe getrecipe(Entity entity1, Entity entity2) {
+		return getRecipe(entity1.getName(),entity2.getName());
+	}
+	
 	private void loadRecipes(ArrayList<CraftingRecipe> loadedRecipes) {
+		itemsToRecipes = new HashMap<>();
+		
 		for (CraftingRecipe recipe : loadedRecipes) {
 			attemptToAddRecipe(recipe.getItem1Name()+recipe.getItem2Name(),recipe);
 			
@@ -43,4 +56,5 @@ public class CraftingManager {
 		}
 		else itemsToRecipes.put(key, value);
 	}
+	
 }
