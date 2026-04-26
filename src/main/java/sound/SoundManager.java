@@ -24,7 +24,7 @@ public class SoundManager {
 	private Console console;
 	private Server server;
 	private long SoundID = 0;
-	private final int SOUND_LIFETIME_TICKS = 120; // ~2 seconds at 60 TPS
+	private final int SOUND_LIFETIME_TICKS = 1200; // ~20 seconds at 60 TPS
 	
 	public SoundManager(ServerLoader serverLoader,Console console, Server server) {
 		this.serverLoader = serverLoader;
