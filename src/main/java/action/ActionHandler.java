@@ -19,25 +19,24 @@ public class ActionHandler {
 	private EntityManager entityManager;
 	private EntityFinder entityFinder;
 	private PlaneManager planeManager;
+	private CraftingManager craftingManager;
 
-	public ActionHandler(Console console, EntityManager entityManager, EntityFinder entityFinder, PlaneManager planeManager) {
+	public ActionHandler(Console console, EntityManager entityManager, EntityFinder entityFinder, PlaneManager planeManager, CraftingManager craftingManager) {
 		this.console = console;
 		this.entityManager = entityManager;
 		this.entityFinder = entityFinder;
 		this.planeManager = planeManager;
+		this.craftingManager = craftingManager;
 	}
 
 	public Entity executeAction(Player player, Action action) {
 		Entity playerEntity = entityManager.getEntity(player);
 		
 		if (action.getActionType() != ActionType.Interact) return playerEntity;
+		Entity interactingEntity = entityManager.getEntity(action.getInteractingEntityId());
 		
 		switch(action.getInteractionType().getNumber()) {
 			case(InteractionType.PickUp_VALUE):
-				
-				if (action.getInteractingEntityId() == 0) break;
-				
-				Entity interactingEntity = entityManager.getEntity(action.getInteractingEntityId());
 				
 				if (interactingEntity == null) {
 					console.print("Warning: Null interaction entity");
@@ -101,6 +100,9 @@ public class ActionHandler {
 					.removeInventorySlots(playerEntity.getSelectedSlot())
 					.build();
 				
+				break;
+			case(InteractionType.Craft_VALUE):
+				playerEntity = craftingManager.attemptCraftingRecipe(playerEntity, interactingEntity);
 				break;
 		}
 		

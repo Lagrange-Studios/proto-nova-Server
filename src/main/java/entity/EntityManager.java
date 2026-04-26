@@ -97,6 +97,10 @@ public class EntityManager {
 		entities.put(entity.getId(), entity);
 	}
 	
+	public Entity decrementAmount(Entity entity) {
+		return entity;
+	}
+	
 	/**
 	 * Force fully updates the entity list with the new value and DOES NOT update the chunk manager
 	 * @param entity

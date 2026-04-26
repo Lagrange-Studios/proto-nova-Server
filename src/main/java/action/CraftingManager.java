@@ -32,6 +32,30 @@ public class CraftingManager {
 		return getRecipe(entity1.getName(),entity2.getName());
 	}
 	
+	/*
+	 * Attempts to craft based on a entitys selected item and another entity
+	 * @return returns the updated form of the crafting entity
+	 */
+	public Entity attemptCraftingRecipe(Entity craftingEntity, Entity component) {
+		
+		Entity heldComponent = entityManager.getEntity(craftingEntity.getInventorySlotsMap().get(craftingEntity.getSelectedSlot()));
+		
+		// null check
+		if (heldComponent != null) {
+			CraftingRecipe recipe = getrecipe(heldComponent,component);
+			
+			if (recipe != null) {
+				
+				if (recipe.getItem1Consumed()) {
+					
+				}
+				
+			}
+		}
+		
+		return craftingEntity;
+	}
+	
 	private void loadRecipes(ArrayList<CraftingRecipe> loadedRecipes) {
 		itemsToRecipes = new HashMap<>();
 		

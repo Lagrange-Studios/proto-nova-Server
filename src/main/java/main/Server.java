@@ -112,10 +112,9 @@ public class Server {
 		celestialObjectManager = new CelestialObjectManager(serverLoader, console, this);
 		
 		generator = new Generator(console, planeManager, entityManager, assetManager, entityFinder, celestialObjectManager);
-		
+
 		craftingManager = new CraftingManager(entityManager, serverLoader.loadCraftingRecipes(), console);
-		
-		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager);
+		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager, craftingManager);
 		
 		if (shouldGenerate) {
 			generator.generatePlanet("continents");
