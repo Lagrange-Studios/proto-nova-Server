@@ -138,7 +138,7 @@ public class Server {
 		
 		startThread();
 		
-		packetMaker = new PacketMaker(serverSocket,serverLoader,entityManager,entityFinder,soundFinder,chatFinder,planeManager,celestialObjectManager);
+		packetMaker = new PacketMaker(serverSocket,serverLoader,serverSaver,entityManager,entityFinder,soundFinder,chatFinder,planeManager,celestialObjectManager);
 		
 		console.setCommandClasses(serverSaver,generator,entityManager,planeManager);
 		

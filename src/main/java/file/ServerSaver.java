@@ -91,13 +91,23 @@ public class ServerSaver {
 	}
 	
 	public void savePlayer(Player player) {
-		if (player.data != null) {
-			Path path = Paths.get("worldRoot/playerData/"+player.getUsername()+".data");
-			byte[] data = player.data.toByteArray();
-			
+		if (player.data != null && player.getUsername() != null) {
 			try {
+				// Ensure playerData directory exists
+				Path playerDataDir = Paths.get("worldRoot/playerData");
+				if (!Files.exists(playerDataDir)) {
+					Files.createDirectories(playerDataDir);
+					System.out.println("[ServerSaver] Created playerData directory");
+				}
+				
+				Path path = playerDataDir.resolve(player.getUsername() + ".data");
+				byte[] data = player.data.toByteArray();
+				
 				Files.write(path, data);
+				System.out.println("[ServerSaver] ✓ Saved player: " + player.getUsername() + 
+					" (entityId: " + player.data.getEntityId() + ") to " + path);
 			} catch (IOException e) {
+				System.err.println("[ServerSaver] ✗ ERROR saving player " + player.getUsername());
 				e.printStackTrace();
 			}
 		}

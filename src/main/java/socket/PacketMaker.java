@@ -11,6 +11,7 @@ import entity.EntityFinder;
 import entity.EntityManager;
 import enums.Player.State;
 import file.ServerLoader;
+import file.ServerSaver;
 import plane.PlaneManager;
 import protonova.protobuf.AudioProto.Audio;
 import protonova.protobuf.ChatProto.ChatMessage;
@@ -26,6 +27,7 @@ public class PacketMaker {
 
 	private ServerSocketHandler serverSocket;
 	private ServerLoader serverLoader;
+	private ServerSaver serverSaver;
 	private EntityManager entityManager;
 	private EntityFinder entityFinder;
 	private SoundFinder soundFinder;
@@ -37,10 +39,11 @@ public class PacketMaker {
 	private static final int TILE_RENDER_X = 30;
 	private static final int TILE_RENDER_Y = 20;
 	
-	public PacketMaker(ServerSocketHandler serverSocket, ServerLoader serverLoader,
+	public PacketMaker(ServerSocketHandler serverSocket, ServerLoader serverLoader, ServerSaver serverSaver,
 			EntityManager entityManager, EntityFinder entityFinder, SoundFinder soundFinder, ChatFinder chatFinder, PlaneManager planeManager, CelestialObjectManager celestialObjectManager) {
 		this.serverSocket = serverSocket;
 		this.serverLoader = serverLoader;
+		this.serverSaver = serverSaver;
 		this.entityManager = entityManager;
 		this.entityFinder = entityFinder;
 		this.soundFinder = soundFinder;
@@ -65,15 +68,42 @@ public class PacketMaker {
 				}
 				
 				if (player.getState() != State.DISCONNECTED) {
-					player.data = serverLoader.getPlayerData(player.getUsername());
-					
-					if (player.data.getEntityId() == 0 || entityManager.getEntity(player.data.getEntityId()) == null) {
-						Entity newEntity = entityManager.makeNewEntity("human");
+					// Only load and initialize player data once on first connection
+					if (player.data == null) {
+						player.data = serverLoader.getPlayerData(player.getUsername());
+						boolean isNewPlayer = player.data.getEntityId() == 0;
 						
-						player.data = player.data.toBuilder()
-							.setEntityId(newEntity.getId())
-							.build();
+						System.out.println("[PacketMaker] Player: " + player.getUsername() + 
+							" | isNewPlayer: " + isNewPlayer + 
+							" | savedEntityId: " + player.data.getEntityId());
 						
+						// If player data was loaded and has a valid entity ID, check if entity still exists
+						if (!isNewPlayer && entityManager.getEntity(player.data.getEntityId()) == null) {
+							// Entity doesn't exist but player data exists - recreate the entity
+							// This handles the case where entities were cleared but player data persists
+							System.out.println("[PacketMaker] Recreating lost entity for " + player.getUsername());
+							Entity newEntity = entityManager.makeNewEntity("human");
+							player.data = player.data.toBuilder()
+								.setEntityId(newEntity.getId())
+								.build();
+						} else if (isNewPlayer) {
+							// This is a new player, create their first character
+							System.out.println("[PacketMaker] Creating new character for " + player.getUsername());
+							Entity newEntity = entityManager.makeNewEntity("human");
+							player.data = player.data.toBuilder()
+								.setEntityId(newEntity.getId())
+								.build();
+						} else {
+							// Player is reconnecting with existing entity
+							System.out.println("[PacketMaker] Restoring existing entity #" + player.data.getEntityId() + 
+								" for returning player " + player.getUsername());
+						}
+						// If player data exists and entity exists, just reuse it (player is reconnecting)
+						
+						// Save player data after initialization
+						if (serverSaver != null) {
+							serverSaver.savePlayer(player);
+						}
 					}
 					
 					sendNormalPacket(player);

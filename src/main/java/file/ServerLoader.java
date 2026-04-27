@@ -64,23 +64,26 @@ public class ServerLoader {
 	
 	public PlayerData getPlayerData(String username) {
 		
-		File[] data = new File("worldRoot/playerData").listFiles();
+		// Try to load directly from username file first
+		Path playerFilePath = Paths.get("worldRoot/playerData/" + username + ".data");
 		
-		for (int i=0;i<data.length;i++) {
+		if (Files.exists(playerFilePath)) {
 			try {
-				PlayerData playerData = PlayerData.parseFrom(Files.readAllBytes(Path.of(data[i].getPath())));
+				PlayerData playerData = PlayerData.parseFrom(Files.readAllBytes(playerFilePath));
 				
+				// Verify the username matches (sanity check)
 				if (playerData.getUsername().equals(username)) {
-					console.print("Succesfully loaded: "+username);
+					console.print("✓ Successfully loaded player: " + username + " (entityId: " + playerData.getEntityId() + ")");
 					return playerData;
 				}
 			} catch (IOException e) {
+				console.print("ERROR: Failed to load player data for " + username);
 				e.printStackTrace();
 			}
 		}
-
-		console.print("Unuccesfully loaded: "+username);
-		// TODO: get the real entity id;
+		
+		// File doesn't exist - new player
+		console.print("✓ New player detected: " + username);
 		return PlayerData.newBuilder()
 				.setEntityId(0)
 				.setUsername(username)
