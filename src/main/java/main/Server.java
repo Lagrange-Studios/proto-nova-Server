@@ -57,6 +57,7 @@ public class Server {
 	private AssetManager assetManager;
 	private ActionHandler actionHandler;
 	private CraftingManager craftingManager;
+	private socket.TokenManager tokenManager;
 	private boolean headless;
 	
 	private int saveCounter = 0;
@@ -122,8 +123,10 @@ public class Server {
 
 		packetReciver = new PacketReciver(entityManager, soundManager, chatManager, console, actionHandler, entityFinder);
 		
-		serverSocket = new ServerSocketHandler(console, packetReciver);
-		statusHandler = new ServerStatusHandler(serverSocket, console);
+		// Create TokenManager and pass it to ServerSocketHandler
+		tokenManager = new socket.TokenManager(console);
+		serverSocket = new ServerSocketHandler(console, packetReciver, tokenManager);
+		statusHandler = new ServerStatusHandler(serverSocket, console, tokenManager);
 		
 		try {
 			statusHandler.start();

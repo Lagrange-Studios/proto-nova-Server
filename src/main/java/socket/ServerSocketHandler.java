@@ -21,9 +21,15 @@ public class ServerSocketHandler {
 	private ExecutorService threadPool;
 	private Thread serverThread;
 	private PacketMaker packetMaker;
+	private socket.TokenManager tokenManager;
 	
 	public ServerSocketHandler(Console console, PacketReciver packetReciver) {
+		this(console, packetReciver, null);
+	}
+	
+	public ServerSocketHandler(Console console, PacketReciver packetReciver, socket.TokenManager tokenManager) {
 		this.console = console;
+		this.tokenManager = tokenManager;
 		playerList = new ArrayList<Player>();
 		threadPool = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
 		
@@ -35,7 +41,8 @@ public class ServerSocketHandler {
 				// Initialize SSL context for secure connections
 				SSLContext sslContext = SSLContextProvider.getServerSSLContext();
 				SSLServerSocketFactory ssf = sslContext.getServerSocketFactory();
-				serverSocket = (SSLServerSocket) ssf.createServerSocket(PORT);
+				// Bind to 0.0.0.0 to allow connections from any network interface (NOT just localhost)
+				serverSocket = (SSLServerSocket) ssf.createServerSocket(PORT, 50, InetAddress.getByName("0.0.0.0"));
 				serverSocket.setReuseAddress(true);
 				
 				// Optional: Configure cipher suites and protocols for enhanced security
@@ -43,8 +50,8 @@ public class ServerSocketHandler {
 				serverSocket.setEnabledProtocols(enabledProtocols);
 	
 				console.print("Hosting on port: " + String.valueOf(PORT) + " (SSL/TLS Enabled)");
-				console.print("Hosting on IP: " + String.valueOf(InetAddress.getLocalHost().getHostAddress()));
-				console.print("NOTICE: Unless you're using a port forward or SSH tunnel.\n Only users on your network can connect");
+				console.print("Hosting on 0.0.0.0 (all network interfaces)");
+				console.print("Server is reachable from any connected network");
 	
 				while (!serverSocket.isClosed()) {
 					Socket clientSocket = serverSocket.accept();
@@ -83,6 +90,10 @@ public class ServerSocketHandler {
 	
 	public ArrayList<Player> getPlayerList() {
 		return playerList;
+	}
+	
+	public socket.TokenManager getTokenManager() {
+		return tokenManager;
 	}
 	
 	public void close() {
