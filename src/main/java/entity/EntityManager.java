@@ -98,6 +98,9 @@ public class EntityManager {
 	}
 	
 	public Entity decrementAmount(Entity entity) {
+		
+		
+		
 		return entity;
 	}
 	

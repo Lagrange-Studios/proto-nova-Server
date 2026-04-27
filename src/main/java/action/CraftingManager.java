@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import entity.EntityManager;
+import file.AssetManager;
 import main.Console;
 import protonova.protobuf.CraftingRecipeProto.CraftingRecipe;
 import protonova.protobuf.EntityProto.Entity;
@@ -13,10 +14,12 @@ public class CraftingManager {
 	private HashMap<String, CraftingRecipe> RecipeNames; // TODO: add implementation later when needed
 	private EntityManager entityManager;
 	private Console console;
+	private AssetManager assetManager;
 	
-	public CraftingManager(EntityManager entityManager,ArrayList<CraftingRecipe> loadedRecipes, Console console) {
+	public CraftingManager(EntityManager entityManager,ArrayList<CraftingRecipe> loadedRecipes, Console console, AssetManager assetManager) {
 		this.entityManager = entityManager;
 		this.console = console;
+		this.assetManager = assetManager;
 		
 		// make the recipes accesible based on crafting components
 		loadRecipes(loadedRecipes);
@@ -38,7 +41,8 @@ public class CraftingManager {
 	 */
 	public Entity attemptCraftingRecipe(Entity craftingEntity, Entity component) {
 		
-		Entity heldComponent = entityManager.getEntity(craftingEntity.getInventorySlotsMap().get(craftingEntity.getSelectedSlot()));
+		String selectedSlot = craftingEntity.getSelectedSlot();
+		Entity heldComponent = entityManager.getEntity(craftingEntity.getInventorySlotsMap().get(selectedSlot));
 		
 		// null check
 		if (heldComponent != null) {
@@ -73,11 +77,15 @@ public class CraftingManager {
 	 * Checks the recipe list to see if there is another recipe with this value
 	 */
 	private void attemptToAddRecipe(String key, CraftingRecipe value) {
+		
 		if (itemsToRecipes.containsKey(key)) {
 			String warningMessage = "Warning: Could not add recipe for "+value.getResult()+" becuase it conflicts with the recipe for "+ itemsToRecipes.get(key).getResult();
 			console.print(warningMessage);
 			System.err.print(warningMessage);
 		}
+		else if (!assetManager.containsEntity(value.getItem1Name())) console.print("Warning: Could not add recipe for "+value.getResult()+" becuase the asset manager is missing: "+value.getItem1Name());
+		else if (!assetManager.containsEntity(value.getItem2Name())) console.print("Warning: Could not add recipe for "+value.getResult()+" becuase the asset manager is missing: "+value.getItem2Name());
+		else if (!assetManager.containsEntity(value.getResult())) console.print("Warning: Could not add recipe for "+value.getResult()+" becuase the asset manager is missing: "+value.getResult());
 		else itemsToRecipes.put(key, value);
 	}
 	

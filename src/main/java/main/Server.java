@@ -113,7 +113,7 @@ public class Server {
 		
 		generator = new Generator(console, planeManager, entityManager, assetManager, entityFinder, celestialObjectManager);
 
-		craftingManager = new CraftingManager(entityManager, serverLoader.loadCraftingRecipes(), console);
+		craftingManager = new CraftingManager(entityManager, serverLoader.loadCraftingRecipes(), console, assetManager);
 		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager, craftingManager);
 		
 		if (shouldGenerate) {
