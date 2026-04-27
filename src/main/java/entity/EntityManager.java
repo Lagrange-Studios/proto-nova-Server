@@ -97,9 +97,44 @@ public class EntityManager {
 		entities.put(entity.getId(), entity);
 	}
 	
+	/**
+	 * Decrements the amount of a entity
+	 * Also force updates the entity with the new amount
+	 * @param entity to decrement
+	 */
 	public Entity decrementAmount(Entity entity) {
 		
+		if (entity.getStackable()) {
+			entity = entity.toBuilder()
+					.setAmount(entity.getAmount()-1)
+					.build();
+			
+			if (entity.getAmount() == 0) removeEntity(entity);
+			else forceUpdateEntity(entity);
+		}
+		else removeEntity(entity);
 		
+		return entity;
+	}
+	
+	/**
+	 * 
+	 * @return the entity with decremented item slot (it could be removed)
+	 */
+	public Entity decrementSlot(Entity entity, String slot) {
+		
+		Entity item = getEntity(entity.getInventorySlotsMap().get(slot));
+		
+		if (item != null) {
+			item = decrementAmount(item);
+			
+			if (isEntityRemoved(item)) {
+				entity = entity.toBuilder()
+						.removeInventorySlots(slot)
+						.build();
+			}
+		}
+		else System.err.print("Error: Could not find item in slot "+slot);
 		
 		return entity;
 	}
@@ -129,6 +164,14 @@ public class EntityManager {
 			chunkManager.removeEntityFromChunk(entity.toBuilder().setMap(removedEntities.get(id)).build());
 		}
 		removedEntities.clear();
+	}
+	
+	public boolean isEntityRemoved(int id) {
+		return removedEntities.containsKey(id);
+	}
+	
+	public boolean isEntityRemoved(Entity entity) {
+		return isEntityRemoved(entity.getId());
 	}
 
 	public void setChunkManager(ChunkManager chunkManager) {

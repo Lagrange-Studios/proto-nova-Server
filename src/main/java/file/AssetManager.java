@@ -37,6 +37,7 @@ public class AssetManager {
 			
 			return clone;
 		}
+		else System.err.print("Error: Could not find asset: "+name);
 		return null;
 	}
 	

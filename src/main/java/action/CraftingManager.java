@@ -35,13 +35,15 @@ public class CraftingManager {
 		return getRecipe(entity1.getName(),entity2.getName());
 	}
 	
-	/*
+	/**
 	 * Attempts to craft based on a entitys selected item and another entity
 	 * @return returns the updated form of the crafting entity
 	 */
 	public Entity attemptCraftingRecipe(Entity craftingEntity, Entity component) {
-		
+
 		String selectedSlot = craftingEntity.getSelectedSlot();
+		if (!craftingEntity.getInventorySlotsMap().containsKey(selectedSlot)) return craftingEntity;
+		
 		Entity heldComponent = entityManager.getEntity(craftingEntity.getInventorySlotsMap().get(selectedSlot));
 		
 		// null check
@@ -51,8 +53,16 @@ public class CraftingManager {
 			if (recipe != null) {
 				
 				if (recipe.getItem1Consumed()) {
-					
+					craftingEntity = entityManager.decrementSlot(craftingEntity, selectedSlot);
 				}
+				
+				if (recipe.getItem2Consumed()) {
+					component = entityManager.decrementAmount(component);
+				}
+				
+				Entity result = assetManager.getEntity(recipe.getResult(), component.getMap());
+				result = result.toBuilder().setPosition(component.getPosition()).build();
+				entityManager.updateEntity(result);
 				
 			}
 		}
@@ -73,7 +83,7 @@ public class CraftingManager {
 		}
 	}
 	
-	/*
+	/**
 	 * Checks the recipe list to see if there is another recipe with this value
 	 */
 	private void attemptToAddRecipe(String key, CraftingRecipe value) {
