@@ -1,6 +1,6 @@
 {
-	"name": "campfire",
+	"name": "berry bush",
 	"tiles": ["grass"],
-	"tileDensity": 100,
+	"tileDensity": 40,
 	"grid": true
 }

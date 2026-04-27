@@ -1,6 +1,0 @@
-{
-	"name": "berry bush",
-	"tiles": ["grass"],
-	"tileDensity": 40,
-	"grid": true
-}
