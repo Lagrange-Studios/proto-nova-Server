@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
+import jdk.dynalink.StandardOperation;
 import protonova.protobuf.EntityProto.Direction;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.VectorProto.Vector;
@@ -33,18 +35,20 @@ public class AssetMaker {
     			.build();
     	
     	Entity entity = Entity.newBuilder()
-    			.setDirection(Direction.Down)
-    			.setName("tree")
+    			//.setDirection(Direction.Down)
+    			.setName("flint blade")
     			.setPosition(zero)
-    			.setSize(one)
-    			.setIsItem(false)
-    			.setCanCollide(true)
-    			.setAnchored(true)
-    			.setCastShadow(true)
+    			.setSize(pointFive)
+    			.setIsItem(true)
+    			.setCanCollide(false)
+    			.setAnchored(false)
+    			.setCastShadow(false)
+    			.setStackable(false)
+    			//.setAmount(1)
     			.build();
     	
     	try {
-			Files.write(Path.of("assets/bin/"+entity.getName()+".data"), entity.toByteArray());
+			Files.write(Path.of("bin/"+entity.getName()+".data"), entity.toByteArray(), StandardOpenOption.CREATE_NEW);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

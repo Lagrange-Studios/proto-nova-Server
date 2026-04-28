@@ -122,7 +122,7 @@ public class PacketReciver {
 		for (Entity entity : closeEntities) {
 			if (entity.getId() != originalEntity.getId()) {
 				//if (EntityCollision.checkCollision(updatedEntity, entity)) System.out.println(true);
-				if (EntityCollision.checkCollision(updatedEntity, entity)) return originalEntity;
+				if (entity.getCanCollide() && EntityCollision.checkCollision(updatedEntity, entity)) return originalEntity;
 			}
 		}
 		
