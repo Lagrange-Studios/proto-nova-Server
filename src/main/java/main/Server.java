@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import javax.swing.SwingUtilities;
@@ -62,6 +63,14 @@ public class Server {
 	
 	private int saveCounter = 0;
 	private int saveInterval = 15 * 60 * TPS; // Minutes
+	
+	// TPS pause/resume functionality
+	private ScheduledExecutorService scheduler;
+	private ScheduledFuture<?> tickTask;
+	private boolean tpsPaused = false;
+	private long lastPlayerLeaveTime = 0;
+	private static final long IDLE_TIMEOUT_MS = 60 * 1000; // 1 minute in milliseconds
+	private ScheduledFuture<?> idleCheckTask;
 	
 	public Server() {
 		this(false);
@@ -150,7 +159,7 @@ public class Server {
 	
 	private void startThread() {
 		try {
-			ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+			scheduler = Executors.newScheduledThreadPool(2); // 2 threads: one for ticks, one for idle check
 			
 			Runnable task = () -> {
 				try {
@@ -160,9 +169,79 @@ public class Server {
 				}
 			};
 			
-			scheduler.scheduleAtFixedRate(task, 1, Math.round(1000/TPS), TimeUnit.MILLISECONDS);
+			// Schedule the main tick task (will be controlled by pause/resume logic)
+			tickTask = scheduler.scheduleAtFixedRate(task, 1, Math.round(1000/TPS), TimeUnit.MILLISECONDS);
+			
+			// Schedule idle check task to run every 5 seconds
+			Runnable idleCheck = () -> {
+				try {
+					checkPlayerIdleStatus();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			};
+			idleCheckTask = scheduler.scheduleAtFixedRate(idleCheck, 5, 5, TimeUnit.SECONDS);
+			
 		} catch(Exception e) {
 			e.printStackTrace();
+		}
+	}
+	
+	private void checkPlayerIdleStatus() {
+		ArrayList<Player> playerList = getPlayers();
+		
+		if (playerList.isEmpty()) {
+			// No players online
+			if (!tpsPaused) {
+				// Mark the time when players left
+				if (lastPlayerLeaveTime == 0) {
+					lastPlayerLeaveTime = System.currentTimeMillis();
+				}
+				
+				// Check if idle timeout has been reached
+				long idleTime = System.currentTimeMillis() - lastPlayerLeaveTime;
+				if (idleTime >= IDLE_TIMEOUT_MS) {
+					pauseTPS();
+				}
+			}
+		} else {
+			// Players are online
+			if (tpsPaused) {
+				// Resume TPS if it was paused
+				resumeTPS();
+			}
+			// Reset idle timer
+			lastPlayerLeaveTime = 0;
+		}
+	}
+	
+	private void pauseTPS() {
+		if (!tpsPaused && tickTask != null) {
+			console.print("No players online for 1 minute. Pausing TPS...");
+			tpsPaused = true;
+			tickTask.cancel(false);
+		}
+	}
+	
+	private void resumeTPS() {
+		if (tpsPaused) {
+			console.print("Player joined. Resuming TPS...");
+			tpsPaused = false;
+			lastPlayerLeaveTime = 0;
+			
+			try {
+				Runnable task = () -> {
+					try {
+						tick();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				};
+				// Reschedule the tick task
+				tickTask = scheduler.scheduleAtFixedRate(task, 1, Math.round(1000/TPS), TimeUnit.MILLISECONDS);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	
@@ -214,6 +293,13 @@ public class Server {
 			}
 			if (serverSocket != null) {
 				serverSocket.close();
+			}
+			// Shutdown scheduler
+			if (scheduler != null && !scheduler.isShutdown()) {
+				scheduler.shutdown();
+				if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+					scheduler.shutdownNow();
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
