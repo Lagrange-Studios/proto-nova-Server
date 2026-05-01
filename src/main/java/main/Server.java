@@ -32,6 +32,7 @@ import socket.ServerStatusHandler;
 import sound.SoundFinder;
 import sound.SoundManager;
 import space.CelestialObjectManager;
+import tag.TagHandler;
 
 public class Server {
 	
@@ -59,6 +60,7 @@ public class Server {
 	private ActionHandler actionHandler;
 	private CraftingManager craftingManager;
 	private socket.TokenManager tokenManager;
+	private TagHandler tagHandler;
 	private boolean headless;
 	
 	private int saveCounter = 0;
@@ -125,6 +127,8 @@ public class Server {
 
 		craftingManager = new CraftingManager(entityManager, serverLoader.loadCraftingRecipes(), console, assetManager);
 		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager, craftingManager);
+		
+		tagHandler = new TagHandler(this, entityManager);
 		
 		if (shouldGenerate) {
 			generator.generatePlanet("continents");

@@ -32,6 +32,9 @@ dependencies {
     
     // Testing
     testImplementation 'junit:junit:4.13.2'
+    
+    // Class Graph
+    implementation 'io.github.classgraph:classgraph:4.8.180'
 }
 
 application {
