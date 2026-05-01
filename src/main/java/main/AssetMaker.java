@@ -33,17 +33,21 @@ public class AssetMaker {
     			.setX(.5f)
     			.setY(.5f)
     			.build();
+    	Vector pointSevenFive = Vector.newBuilder()
+    			.setX(.75f)
+    			.setY(.75f)
+    			.build();
     	
     	Entity entity = Entity.newBuilder()
     			//.setDirection(Direction.Down)
-    			.setName("flint blade")
+    			.setName("hemp plant")
     			.setPosition(zero)
-    			.setSize(pointFive)
-    			.setIsItem(true)
+    			.setSize(pointSevenFive)
+    			.setIsItem(false)
     			.setCanCollide(false)
-    			.setAnchored(false)
+    			.setAnchored(true)
     			.setCastShadow(false)
-    			.setStackable(false)
+    			//.setStackable(false)
     			//.setAmount(1)
     			.build();
     	

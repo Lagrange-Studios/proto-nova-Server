@@ -47,7 +47,7 @@ public class CraftingManager {
 		Entity heldComponent = entityManager.getEntity(craftingEntity.getInventorySlotsMap().get(selectedSlot));
 		
 		// null check
-		if (heldComponent != null) {
+		if (heldComponent != null && component != null) {
 			CraftingRecipe recipe = getrecipe(heldComponent,component);
 			
 			if (recipe != null) {
