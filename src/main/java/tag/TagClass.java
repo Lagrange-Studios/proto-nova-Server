@@ -4,7 +4,8 @@ import protonova.protobuf.EntityProto.Entity;
 
 public class TagClass {
 
-	
+
+	public static final String tag = "null";
 	/**
 	 * occurs once per tick
 	 */

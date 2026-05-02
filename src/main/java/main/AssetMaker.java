@@ -40,13 +40,14 @@ public class AssetMaker {
     	
     	Entity entity = Entity.newBuilder()
     			//.setDirection(Direction.Down)
-    			.setName("hemp plant")
+    			.setName("berry bush")
     			.setPosition(zero)
-    			.setSize(pointSevenFive)
+    			.setSize(one)
     			.setIsItem(false)
     			.setCanCollide(false)
     			.setAnchored(true)
     			.setCastShadow(false)
+    			.addTags("berryBush")
     			//.setStackable(false)
     			//.setAmount(1)
     			.build();

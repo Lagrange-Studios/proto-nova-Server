@@ -128,11 +128,12 @@ public class Server {
 		craftingManager = new CraftingManager(entityManager, serverLoader.loadCraftingRecipes(), console, assetManager);
 		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager, craftingManager);
 		
-		tagHandler = new TagHandler(this, entityManager);
 		
 		if (shouldGenerate) {
 			generator.generatePlanet("continents");
 		}
+		
+		tagHandler = new TagHandler(this, entityManager);
 
 		packetReciver = new PacketReciver(entityManager, soundManager, chatManager, console, actionHandler, entityFinder);
 		
@@ -267,6 +268,7 @@ public class Server {
 		chatManager.processChatMessagesToSend();
 		
 		celestialObjectManager.tickCelestialObjects();
+		//tagHandler.tick();
 		
 		console.addTick();
 		globalTicks++;

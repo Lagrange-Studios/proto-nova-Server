@@ -1,5 +1,7 @@
 package tag;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -14,7 +16,7 @@ public class TagHandler {
 	
 	private EntityManager entityManager;
 	private HashMap<String, ArrayList<Integer>> tagToEntities;
-	private HashMap<String, Class> tagToClass;
+	private HashMap<String, Class<?>> tagToClass;
 	private Server server; 
 	private int tickCount = 0;
 
@@ -45,7 +47,22 @@ public class TagHandler {
 		}
 		else tickCount++;
 		
-		
+		for (String tag : tagToEntities.keySet()) {
+			for (int entityId : tagToEntities.get(tag)) {
+				Entity entity = entityManager.getEntity(entityId);
+				
+				if (entity != null) {
+					try {
+						Class<?> tagClass = tagToClass.get(tag);
+						tagClass.getDeclaredMethod("tick", Entity.class).invoke(tagClass, this, entity);
+						//if (secondTick) tagClass.getMethod("secondTick", Entity.class);
+					} catch (NoSuchMethodException | SecurityException | IllegalAccessException | InvocationTargetException e) {
+						e.printStackTrace();
+					}
+				}
+				else tagToEntities.get(tag).remove(entityId);
+			}
+		}
 	}
 	
 	/**
@@ -70,7 +87,17 @@ public class TagHandler {
 		        .acceptPackages("tag")
 		        .scan()) {
 		    for (ClassInfo classInfo : scanResult.getAllClasses()) {
-		    	tagToClass.put(classInfo.getName(), classInfo.getClass());
+		    	Class<?> staticClass = classInfo.loadClass();
+		    	
+		    	if (staticClass.getName().equals("tag.TagHandler") || staticClass.getName().equals("tag.Class")) continue;
+		    		
+		    	try {
+					tagToClass.put((String) staticClass.getField("tag").get(classInfo), staticClass);
+				} catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException
+						| SecurityException e) {
+					System.err.println("Error for class: "+staticClass.getName());
+					e.printStackTrace();
+				}
 		    }
 		}
 	}
