@@ -117,8 +117,8 @@ public class Console {
     		print("Available commands:");
     		print(" - help: Show this help message");
     		print(" - time: Show current system time");
-    		print(" - time set day: Sets all celestial objects to day (rotation 0.0)");
-    		print(" - time set night: Sets all celestial objects to night (rotation 0.5)");
+    		print(" - time set day: Sets all celestial objects to day (rotation 0.5)");
+    		print(" - time set night: Sets all celestial objects to night (rotation 0.0)");
     		print(" - echo [text]: Repeat the text");
     		print(" - kick [name]: Kicks the player with the correlated name");
     		print(" - save: Saves all data to the world root");
@@ -273,9 +273,9 @@ public class Console {
 		double rotation;
 		
 		if (timeType.equals("day")) {
-			rotation = 0.0;
-		} else if (timeType.equals("night")) {
 			rotation = 0.5;
+		} else if (timeType.equals("night")) {
+			rotation = 0.0;
 		} else {
 			print("Unknown time: " + timeType);
 			print("Use 'time set day' or 'time set night'");
