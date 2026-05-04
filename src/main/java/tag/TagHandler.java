@@ -25,13 +25,20 @@ public class TagHandler {
 		this.entityManager = entityManager;
 		tagToEntities = new HashMap<>();
 		tagToClass = new HashMap<>();
-		loadAllTagEntities();
 		loadAllTagClasses();
+		loadAllTagEntities();
 	}
 	
 	public void addEntity(Entity entity) {
 		if (entity.getTagsCount() > 0) {
 			for (String tag : entity.getTagsList()) {
+				if (!tagToClass.containsKey(tag)) {
+					String errorMessage = "Error: entity named "+entity.getName()+" has a tag called "+tag+" without a matching class";
+					System.err.print(errorMessage);
+					server.console.print(errorMessage);
+					continue;
+				}
+				
 				if (!tagToEntities.containsKey(tag)) tagToEntities.put(tag, new ArrayList<>());
 				 tagToEntities.get(tag).add(entity.getId());
 			}
@@ -54,8 +61,8 @@ public class TagHandler {
 				if (entity != null) {
 					try {
 						Class<?> tagClass = tagToClass.get(tag);
-						tagClass.getDeclaredMethod("tick", Entity.class).invoke(tagClass, this, entity);
-						//if (secondTick) tagClass.getMethod("secondTick", Entity.class);
+						tagClass.getDeclaredMethod("tick",TagHandler.class, Entity.class).invoke(tagClass, this, entity);
+						if (secondTick) tagClass.getMethod("secondTick", Entity.class);
 					} catch (NoSuchMethodException | SecurityException | IllegalAccessException | InvocationTargetException e) {
 						e.printStackTrace();
 					}
@@ -88,11 +95,14 @@ public class TagHandler {
 		        .scan()) {
 		    for (ClassInfo classInfo : scanResult.getAllClasses()) {
 		    	Class<?> staticClass = classInfo.loadClass();
+		    	String className = staticClass.getName();
+		    	className = className.substring(className.indexOf('.')+1);
 		    	
-		    	if (staticClass.getName().equals("tag.TagHandler") || staticClass.getName().equals("tag.Class")) continue;
+		    	if (className.equals("TagHandler") || className.equals("TagClass")) continue;
 		    		
 		    	try {
 					tagToClass.put((String) staticClass.getField("tag").get(classInfo), staticClass);
+					System.out.println(staticClass.getField("tag").get(classInfo));
 				} catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException
 						| SecurityException e) {
 					System.err.println("Error for class: "+staticClass.getName());

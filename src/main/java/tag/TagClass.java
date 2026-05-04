@@ -2,7 +2,7 @@ package tag;
 
 import protonova.protobuf.EntityProto.Entity;
 
-public class TagClass {
+public interface TagClass {
 
 
 	public static final String tag = "null";

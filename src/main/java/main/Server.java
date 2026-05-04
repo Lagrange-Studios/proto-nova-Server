@@ -268,7 +268,7 @@ public class Server {
 		chatManager.processChatMessagesToSend();
 		
 		celestialObjectManager.tickCelestialObjects();
-		//tagHandler.tick();
+		tagHandler.tick();
 		
 		console.addTick();
 		globalTicks++;
