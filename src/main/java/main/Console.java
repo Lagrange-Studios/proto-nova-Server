@@ -6,6 +6,7 @@ import generation.Generator;
 import plane.PlaneManager;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.VectorProto.Vector;
+import space.CelestialObjectManager;
 import socket.Player;
 
 import java.time.LocalTime;
@@ -24,6 +25,7 @@ public class Console {
 	protected EntityManager entityManager;
 	protected boolean headless;
 	private PlaneManager planeManager;
+	protected space.CelestialObjectManager celestialObjectManager;
 
     public Console(Server server) {
     	this(server, true);
@@ -115,6 +117,8 @@ public class Console {
     		print("Available commands:");
     		print(" - help: Show this help message");
     		print(" - time: Show current system time");
+    		print(" - time set day: Sets all celestial objects to day (rotation 0.0)");
+    		print(" - time set night: Sets all celestial objects to night (rotation 0.5)");
     		print(" - echo [text]: Repeat the text");
     		print(" - kick [name]: Kicks the player with the correlated name");
     		print(" - save: Saves all data to the world root");
@@ -125,6 +129,9 @@ public class Console {
     	} else if (input.equalsIgnoreCase("time")) {
     		print("Current time: " + LocalTime.now());
     		print("");
+    	} else if (input.startsWith("time set ")) {
+    		String timeType = input.substring(9).toLowerCase();
+    		setGameTime(timeType);
     	} else if (input.startsWith("echo ")) {
     		print(input.substring(5));
     		print("");
@@ -248,11 +255,44 @@ public class Console {
 		countedTicks++;		
 	}
 	
-	public void setCommandClasses(ServerSaver serverSaver, Generator generator, EntityManager entityManager, PlaneManager planeManager) {
+	public void setCommandClasses(ServerSaver serverSaver, Generator generator, EntityManager entityManager, PlaneManager planeManager, CelestialObjectManager celestialObjectManager) {
 		this.serverSaver = serverSaver;
 		this.generator = generator;
 		this.entityManager = entityManager;
 		this.planeManager = planeManager;
+		this.celestialObjectManager = celestialObjectManager;
+	}
+	
+	private void setGameTime(String timeType) {
+		if (celestialObjectManager == null) {
+			print("Celestial object manager not initialized");
+			print("");
+			return;
+		}
+		
+		double rotation;
+		
+		if (timeType.equals("day")) {
+			rotation = 0.0;
+		} else if (timeType.equals("night")) {
+			rotation = 0.5;
+		} else {
+			print("Unknown time: " + timeType);
+			print("Use 'time set day' or 'time set night'");
+			print("");
+			return;
+		}
+		
+		// Update all celestial objects to the specified time
+		for (protonova.protobuf.CelestialObjectProto.CelestialObject object : celestialObjectManager.getCelestialObjects().values()) {
+			object = object.toBuilder()
+					.setCurrentRotation(rotation)
+					.build();
+			celestialObjectManager.updateCelestialObject(object);
+		}
+		
+		print("Set game time to " + timeType + " (rotation: " + rotation + ")");
+		print("");
 	}
 	
 	public void shutdown() {

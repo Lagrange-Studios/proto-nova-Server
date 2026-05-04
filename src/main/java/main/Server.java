@@ -154,7 +154,7 @@ public class Server {
 		
 		packetMaker = new PacketMaker(serverSocket,serverLoader,serverSaver,entityManager,entityFinder,soundFinder,chatFinder,planeManager,celestialObjectManager);
 		
-		console.setCommandClasses(serverSaver,generator,entityManager,planeManager);
+		console.setCommandClasses(serverSaver,generator,entityManager,planeManager,celestialObjectManager);
 		
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 			shutdown();
