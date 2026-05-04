@@ -254,6 +254,10 @@ public class Server {
 		// Create a copy to avoid ConcurrentModificationException when players disconnect during iteration
 		ArrayList<Player> playerList = new ArrayList<>(serverSocket.getPlayerList());
 		
+		// Process player movements and generate walking sounds
+		soundManager.processPlayerMovement(entityManager.getAllEntities());
+		soundManager.processSoundMessagesToSend();
+		
 		for (Player player : playerList) {
 			if (player.getState() == State.DISCONNECTED) {
 				serverSocket.getPlayerList().remove(player);
