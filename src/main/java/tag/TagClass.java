@@ -2,21 +2,26 @@ package tag;
 
 import protonova.protobuf.EntityProto.Entity;
 
-public interface TagClass {
+public class TagClass {
 
-
-	public static final String tag = "null";
+	/**
+	 * @return The tag of this specific class that should be on entities
+	 */
+	public String getTag() {
+		return "null";
+	}
+	
 	/**
 	 * occurs once per tick
 	 */
-	public static void tick(TagHandler tagHandler, Entity entity) {
+	public void tick(TagHandler tagHandler, Entity entity) {
 		
 	}
 	
 	/**
 	 * occurs once per second
 	 */
-	public static void secondTick(TagHandler tagHandler, Entity entity) {
+	public void secondTick(TagHandler tagHandler, Entity entity) {
 		
 	}
 	
@@ -26,7 +31,7 @@ public interface TagClass {
 	 * @param thisEntity the entity with the tag
 	 * @return the new version of the interacting entity
 	 */
-	public static Entity interact(TagHandler tagHandler, Entity interactingEntity, Entity thisEntity) {
+	public Entity interact(TagHandler tagHandler, Entity interactingEntity, Entity thisEntity) {
 		
 		return interactingEntity;
 	}

@@ -126,14 +126,14 @@ public class Server {
 		generator = new Generator(console, planeManager, entityManager, assetManager, entityFinder, celestialObjectManager);
 
 		craftingManager = new CraftingManager(entityManager, serverLoader.loadCraftingRecipes(), console, assetManager);
-		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager, craftingManager);
 		
 		
 		if (shouldGenerate) {
 			generator.generatePlanet("continents");
 		}
 		
-		tagHandler = new TagHandler(this, entityManager);
+		tagHandler = new TagHandler(this, entityManager, assetManager);
+		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager, craftingManager, tagHandler);
 
 		packetReciver = new PacketReciver(entityManager, soundManager, chatManager, console, actionHandler, entityFinder);
 		

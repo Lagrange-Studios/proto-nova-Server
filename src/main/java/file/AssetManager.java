@@ -41,6 +41,10 @@ public class AssetManager {
 		return null;
 	}
 	
+	public Entity getReadOnlyEntity(String name) {
+		return entityAssets.get(name);
+	}
+	
 	public boolean containsEntity(String name) {
 		return entityAssets.containsKey(name);
 	}

@@ -40,16 +40,17 @@ public class AssetMaker {
     	
     	Entity entity = Entity.newBuilder()
     			//.setDirection(Direction.Down)
-    			.setName("berry bush")
+    			.setName("berries")
     			.setPosition(zero)
-    			.setSize(one)
-    			.setIsItem(false)
+    			.setSize(pointFive)
+    			.setIsItem(true)
     			.setCanCollide(false)
-    			.setAnchored(true)
+    			.setAnchored(false)
     			.setCastShadow(false)
-    			.addTags("berryBush")
-    			//.setStackable(false)
-    			//.setAmount(1)
+    			//.addTags("harvestable")
+    			//.setSelectedSlot("berries")
+    			.setStackable(true)
+    			.setAmount(1)
     			.build();
     	
     	try {

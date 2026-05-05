@@ -6,9 +6,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import entity.EntityManager;
+import file.AssetManager;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ScanResult;
+import main.Console;
 import main.Server;
 import protonova.protobuf.EntityProto.Entity;
 
@@ -16,13 +18,15 @@ public class TagHandler {
 	
 	private EntityManager entityManager;
 	private HashMap<String, ArrayList<Integer>> tagToEntities;
-	private HashMap<String, Class<?>> tagToClass;
+	private HashMap<String, TagClass> tagToClass;
 	private Server server; 
 	private int tickCount = 0;
+	private AssetManager assetManager;
 
-	public TagHandler(Server server, EntityManager entityManager) {
+	public TagHandler(Server server, EntityManager entityManager, AssetManager assetManager) {
 		this.server = server;
 		this.entityManager = entityManager;
+		this.assetManager = assetManager;
 		tagToEntities = new HashMap<>();
 		tagToClass = new HashMap<>();
 		loadAllTagClasses();
@@ -59,28 +63,41 @@ public class TagHandler {
 				Entity entity = entityManager.getEntity(entityId);
 				
 				if (entity != null) {
-					try {
-						Class<?> tagClass = tagToClass.get(tag);
-						tagClass.getDeclaredMethod("tick",TagHandler.class, Entity.class).invoke(tagClass, this, entity);
-						if (secondTick) tagClass.getMethod("secondTick", Entity.class);
-					} catch (NoSuchMethodException | SecurityException | IllegalAccessException | InvocationTargetException e) {
-						e.printStackTrace();
-					}
+					TagClass tagClass = tagToClass.get(tag);
+					tagClass.tick(this,entity);
+					if (secondTick) tagClass.secondTick(this, entity);
 				}
 				else tagToEntities.get(tag).remove(entityId);
 			}
 		}
 	}
 	
+	public Entity interact(Entity interactingEntity, Entity tagEntity) {
+		
+		for (String tag : tagEntity.getTagsList()) {
+			interactingEntity = tagToClass.get(tag).interact(this, interactingEntity, tagEntity);
+		}
+		
+		return interactingEntity;
+	}
+	
 	/**
 	 * Shorthand for update entity
 	 */
-	protected void updateEntity(Entity entity) {
+	public void updateEntity(Entity entity) {
 		entityManager.updateEntity(entity);
 	}
 	
-	protected EntityManager getEntityManager() {
+	public AssetManager getAssetManager() {
+		return assetManager;
+	}
+	
+	public EntityManager getEntityManager() {
 		return entityManager;
+	}
+	
+	public Console getConsole() {
+		return server.console;
 	}
 	
 	private void loadAllTagEntities() {
@@ -101,10 +118,12 @@ public class TagHandler {
 		    	if (className.equals("TagHandler") || className.equals("TagClass")) continue;
 		    		
 		    	try {
-					tagToClass.put((String) staticClass.getField("tag").get(classInfo), staticClass);
-					System.out.println(staticClass.getField("tag").get(classInfo));
-				} catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException
-						| SecurityException e) {
+			    	TagClass newTagClass = (TagClass) staticClass.getDeclaredConstructor().newInstance();
+			    	
+					tagToClass.put(newTagClass.getTag(), newTagClass);
+					//System.out.println(className);
+					//System.out.println(newTagClass.getTag());
+				} catch (IllegalArgumentException | IllegalAccessException | SecurityException | InstantiationException | InvocationTargetException | NoSuchMethodException e) {
 					System.err.println("Error for class: "+staticClass.getName());
 					e.printStackTrace();
 				}

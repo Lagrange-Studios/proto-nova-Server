@@ -12,6 +12,7 @@ import protonova.protobuf.ActionProto.InteractionType;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.PlaneProto.Plane;
 import socket.Player;
+import tag.TagHandler;
 
 public class ActionHandler {
 
@@ -20,13 +21,15 @@ public class ActionHandler {
 	private EntityFinder entityFinder;
 	private PlaneManager planeManager;
 	private CraftingManager craftingManager;
+	private TagHandler tagHandler;
 
-	public ActionHandler(Console console, EntityManager entityManager, EntityFinder entityFinder, PlaneManager planeManager, CraftingManager craftingManager) {
+	public ActionHandler(Console console, EntityManager entityManager, EntityFinder entityFinder, PlaneManager planeManager, CraftingManager craftingManager, TagHandler tagHandler) {
 		this.console = console;
 		this.entityManager = entityManager;
 		this.entityFinder = entityFinder;
 		this.planeManager = planeManager;
 		this.craftingManager = craftingManager;
+		this.tagHandler = tagHandler;
 	}
 
 	public Entity executeAction(Player player, Action action) {
@@ -103,6 +106,9 @@ public class ActionHandler {
 				break;
 			case(InteractionType.Craft_VALUE):
 				playerEntity = craftingManager.attemptCraftingRecipe(playerEntity, interactingEntity);
+				break;
+			case(InteractionType.Standard_VALUE):
+				playerEntity = tagHandler.interact(playerEntity, interactingEntity);
 				break;
 		}
 		
