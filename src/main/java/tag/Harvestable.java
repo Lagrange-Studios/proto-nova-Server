@@ -58,12 +58,12 @@ public class Harvestable extends TagClass {
 			
 			tagHandler.updateEntity(thisEntity);
 			
-			/*Entity harvest = tagHandler.getAssetManager().getEntity(thisEntity.getSelectedSlot(), thisEntity.getMap());
+			Entity harvest = tagHandler.getAssetManager().getEntity(thisEntity.getSelectedSlot(), thisEntity.getMap());
 			harvest = harvest.toBuilder()
 					.setPosition(thisEntity.getPosition())
 					.build();
 			
-			tagHandler.updateEntity(harvest);*/
+			tagHandler.updateEntity(harvest);
 		}
 		
 		return interactingEntity;
