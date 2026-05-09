@@ -62,7 +62,9 @@ public class TagHandler {
 		else tickCount++;
 		
 		for (String tag : tagToEntities.keySet()) {
-			for (int entityId : tagToEntities.get(tag)) {
+			// Create a copy to avoid ConcurrentModificationException when removing entities
+			ArrayList<Integer> entityIdsCopy = new ArrayList<>(tagToEntities.get(tag));
+			for (int entityId : entityIdsCopy) {
 				Entity entity = entityManager.getEntity(entityId);
 				
 				if (entity != null) {
@@ -70,7 +72,7 @@ public class TagHandler {
 					tagClass.tick(this,entity);
 					if (secondTick) tagClass.secondTick(this, entity);
 				}
-				else tagToEntities.get(tag).remove(entityId);
+				else tagToEntities.get(tag).remove((Integer) entityId);
 			}
 		}
 	}
