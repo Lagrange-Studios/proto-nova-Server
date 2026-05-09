@@ -1,0 +1,13 @@
+{
+  "item1": {
+    "mustBeHeld": true,
+    "name":"flint",
+    "consumed": false
+  },
+  "item2": {
+    "name":"flint blade",
+    "consumed": true
+  },
+
+  "result":"flint axe head"
+}

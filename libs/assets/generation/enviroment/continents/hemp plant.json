@@ -1,0 +1,6 @@
+{
+	"name": "hemp plant",
+	"tiles": ["grass"],
+	"tileDensity": 75,
+	"grid": true
+}

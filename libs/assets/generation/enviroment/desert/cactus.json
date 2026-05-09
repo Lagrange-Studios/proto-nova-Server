@@ -1,0 +1,6 @@
+{
+	"name": "cactus",
+	"tiles": ["sand"],
+	"tileDensity": 25,
+	"grid": true
+}

@@ -168,9 +168,7 @@ public class ChunkManager {
 				}
 			}
 		}
-		else {
-			System.out.println("[ChunkManager] Tried to remove entity from chunk that dosent exist");
-		}
+		// Silent fail - chunk doesn't exist (expected in some edge cases)
 	}
 	
 	private void groupEntity(Entity entity) {

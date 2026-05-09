@@ -154,6 +154,14 @@ public class Server {
 			console.print("Failed to start status HTTP server: " + e.getMessage());
 		}
 		
+		// Start certificate server for remote client connections
+		try {
+			socket.CertificateServer certServer = new socket.CertificateServer(console);
+			certServer.start();
+		} catch (Exception e) {
+			console.print("Failed to start certificate server: " + e.getMessage());
+		}
+		
 		serverSaver = new ServerSaver(this, entityManager, planeManager, celestialObjectManager);
 		
 		startThread();
