@@ -169,7 +169,7 @@ public class ChunkManager {
 			}
 		}
 		else {
-			System.out.println("Tried to remove entity from chunk that dosent exist");
+			System.out.println("[ChunkManager] Tried to remove entity from chunk that dosent exist");
 		}
 	}
 	

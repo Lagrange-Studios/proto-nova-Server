@@ -35,4 +35,17 @@ public class TagClass {
 		
 		return interactingEntity;
 	}
+	
+	/**
+	 * 
+	 * @param entity The entity that you are reading a value from
+	 * @param slotName The name of slot your are accessing
+	 * @param defualtValue A fall back value in case there is not slot with that name
+	 * @return Either the slot value or the defualtValue
+	 */
+	@SuppressWarnings("unused")
+	public int getSlot(Entity entity, String slotName, int defualtValue) {
+		if (entity.containsInventorySlots(slotName)) return entity.getInventorySlotsMap().get(slotName);
+		else return defualtValue;
+	}
 }

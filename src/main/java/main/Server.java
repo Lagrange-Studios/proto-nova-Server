@@ -1,7 +1,6 @@
 package main;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -23,7 +22,8 @@ import file.ServerSaver;
 import file.Validater;
 import generation.Generator;
 import plane.PlaneManager;
-import protonova.protobuf.PlaneProto.Plane;
+import protonova.protobuf.EntityProto.Entity;
+import protonova.protobuf.VectorProto.Vector;
 import socket.PacketMaker;
 import socket.PacketReciver;
 import socket.Player;
@@ -130,9 +130,15 @@ public class Server {
 		
 		if (shouldGenerate) {
 			generator.generatePlanet("continents");
+			
+			// remove any entities at 0,0
+			for (Entity entity : entityFinder.getAllEntitiesInRadius(Vector.newBuilder().setX(0).setY(0).build(),1,2)) {
+				entityManager.removeEntity(entity);
+			}
+			
 		}
 		
-		tagHandler = new TagHandler(this, entityManager, assetManager);
+		tagHandler = new TagHandler(this, entityManager, assetManager, entityFinder);
 		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager, craftingManager, tagHandler);
 
 		packetReciver = new PacketReciver(entityManager, soundManager, chatManager, console, actionHandler, entityFinder);

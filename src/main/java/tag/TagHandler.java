@@ -5,6 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import entity.EntityFinder;
 import entity.EntityManager;
 import file.AssetManager;
 import io.github.classgraph.ClassGraph;
@@ -22,11 +23,13 @@ public class TagHandler {
 	private Server server; 
 	private int tickCount = 0;
 	private AssetManager assetManager;
+	private EntityFinder entityFinder;
 
-	public TagHandler(Server server, EntityManager entityManager, AssetManager assetManager) {
+	public TagHandler(Server server, EntityManager entityManager, AssetManager assetManager, EntityFinder entityFinder) {
 		this.server = server;
 		this.entityManager = entityManager;
 		this.assetManager = assetManager;
+		this.entityFinder = entityFinder;
 		tagToEntities = new HashMap<>();
 		tagToClass = new HashMap<>();
 		loadAllTagClasses();
@@ -94,6 +97,10 @@ public class TagHandler {
 	
 	public EntityManager getEntityManager() {
 		return entityManager;
+	}
+	
+	public EntityFinder getEntityFinder() {
+		return entityFinder;
 	}
 	
 	public Console getConsole() {

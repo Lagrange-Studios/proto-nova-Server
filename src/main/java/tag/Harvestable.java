@@ -19,13 +19,12 @@ public class Harvestable extends TagClass {
 	
 	public void secondTick(TagHandler tagHandler, Entity entity) {
 		
-		int harvestTimer;
-		if (!entity.containsInventorySlots("harvestTimer")) harvestTimer = 0;
-		else harvestTimer = entity.getInventorySlotsMap().get("harvestTimer");
+		int harvestTimer = getSlot(entity, "harvestTimer", 60);
 		
 		
 		harvestTimer--;
-		if (harvestTimer <= 0) {
+		// also check to see if the plants still growing
+		if (harvestTimer <= 0 && !entity.containsInventorySlots("currentPlantAge")) {
 			tagHandler.updateEntity(
 					entity.toBuilder()
 					.putInventorySlots("harvestTimer", harvestTimer)
@@ -36,19 +35,16 @@ public class Harvestable extends TagClass {
 		else tagHandler.updateEntity(
 				entity.toBuilder()
 				.putInventorySlots("harvestTimer", harvestTimer)
+				.setDisplayTexture("empty "+entity.getName())
 				.build()
 				);
 	}
 	
 	public Entity interact(TagHandler tagHandler, Entity interactingEntity, Entity thisEntity) {
-		int harvestTimer;
-		if (!thisEntity.containsInventorySlots("harvestTimer")) harvestTimer = 0;
-		else harvestTimer = thisEntity.getInventorySlotsMap().get("harvestTimer");
+		int harvestTimer = getSlot(thisEntity, "harvestTimer", 60);
 		
 		if (harvestTimer <= 0) {
-			int harvestInterval;
-			if (!thisEntity.containsInventorySlots("harvestInterval")) harvestInterval = 60;
-			else harvestInterval = thisEntity.getInventorySlotsMap().get("harvestInterval");
+			int harvestInterval = getSlot(thisEntity, "harvestInterval", 60);
 			
 			harvestTimer = harvestInterval;
 			thisEntity = thisEntity.toBuilder()

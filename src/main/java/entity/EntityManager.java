@@ -177,4 +177,15 @@ public class EntityManager {
 	public void setChunkManager(ChunkManager chunkManager) {
 		this.chunkManager = chunkManager;
 	}
+	
+	/**
+	 * Reserves a new entity id. Be cautious when using this to not make a ton of empty entities
+	 * @return A entity ID that has been newly reserved
+	 */
+	public int reserveNewEntityId() {
+		int newId = Id.getNewId(entities.keySet());
+		entities.put(newId, Entity.newBuilder().build());
+		
+		return newId;
+	}
 }
