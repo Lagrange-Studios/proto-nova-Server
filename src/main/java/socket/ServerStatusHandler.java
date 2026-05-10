@@ -16,7 +16,7 @@ import org.json.JSONObject;
  */
 public class ServerStatusHandler {
     
-    private static final int HTTP_PORT = 7674;
+    private int HTTP_PORT;
     private ServerSocketHandler socketHandler;
     private Console console;
     private long startTime;
@@ -28,6 +28,7 @@ public class ServerStatusHandler {
         this.console = console;
         this.startTime = System.currentTimeMillis();
         this.tokenManager = tokenManager;
+        this.HTTP_PORT = main.ServerConfig.getInstance().getStatusHttpPort();
     }
     
     /**

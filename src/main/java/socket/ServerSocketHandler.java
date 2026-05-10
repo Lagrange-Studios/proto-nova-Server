@@ -13,8 +13,8 @@ import main.Console;
 
 public class ServerSocketHandler {
 
-	private static final int PORT = 7675;
-	private static final int THREAD_POOL_SIZE = 50; // Max concurrent player listener threads
+	private static final int PORT = main.ServerConfig.getInstance().getGameSocketPort();
+	private static final int THREAD_POOL_SIZE = main.ServerConfig.getInstance().getThreadPoolSize();
 	private SSLServerSocket serverSocket;
 	private Console console;
 	private ArrayList<Player> playerList;

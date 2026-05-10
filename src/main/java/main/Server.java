@@ -1,9 +1,13 @@
 package main;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
+import com.sun.management.OperatingSystemMXBean;
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import javax.swing.SwingUtilities;
@@ -39,7 +43,7 @@ public class Server {
 	public Console console;
 	private ServerSocketHandler serverSocket;
 	private ServerStatusHandler statusHandler;
-	public final int TPS = 60;
+	public int TPS;
 	public Long globalTicks = 0L;
 	private ServerLoader serverLoader;
 	private ServerSaver serverSaver;
@@ -64,7 +68,16 @@ public class Server {
 	private boolean headless;
 	
 	private int saveCounter = 0;
-	private int saveInterval = 15 * 60 * TPS; // Minutes
+	private long saveInterval = 15 * 60 * 1000; // 15 minutes in milliseconds (real time, not TPS-dependent)
+	private long lastSaveTime = 0;
+	
+	// Resource limit monitoring
+	private OperatingSystemMXBean osBean;
+	private ThreadMXBean threadBean;
+	private int processorLimit;
+	private long ramLimit;
+	private int workerThreadLimit;
+	private ScheduledFuture<?> resourceCheckTask;
 	
 	// TPS pause/resume functionality
 	private ScheduledExecutorService scheduler;
@@ -97,6 +110,16 @@ public class Server {
 					e.printStackTrace();
 				}
 			}
+		}
+		
+		// Initialize configuration (read properties file once at startup)
+		try {
+			ServerConfig.initialize(console);
+			this.TPS = ServerConfig.getInstance().getTicksPerSecond();
+		} catch (Exception e) {
+			console.print("✗ Failed to load configuration: " + e.getMessage());
+			e.printStackTrace();
+			System.exit(1);
 		}
 		
 		validater = new Validater(console);
@@ -178,7 +201,17 @@ public class Server {
 	
 	private void startThread() {
 		try {
-			scheduler = Executors.newScheduledThreadPool(2); // 2 threads: one for ticks, one for idle check
+			// Initialize resource monitoring
+			java.lang.management.OperatingSystemMXBean osBeamBase = ManagementFactory.getOperatingSystemMXBean();
+			if (osBeamBase instanceof com.sun.management.OperatingSystemMXBean) {
+				osBean = (com.sun.management.OperatingSystemMXBean) osBeamBase;
+			}
+			threadBean = ManagementFactory.getThreadMXBean();
+			processorLimit = ServerConfig.getInstance().getProcessorLimit();
+			ramLimit = (long) ServerConfig.getInstance().getRamLimit() * 1024 * 1024; // Convert MB to bytes
+			workerThreadLimit = ServerConfig.getInstance().getWorkerThreadLimit();
+			
+			scheduler = Executors.newScheduledThreadPool(3); // 3 threads: tick, idle check, resource check
 			
 			Runnable task = () -> {
 				try {
@@ -200,6 +233,16 @@ public class Server {
 				}
 			};
 			idleCheckTask = scheduler.scheduleAtFixedRate(idleCheck, 5, 5, TimeUnit.SECONDS);
+			
+			// Schedule resource check task to run every 10 seconds
+			Runnable resourceCheck = () -> {
+				try {
+					checkResourceLimits();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			};
+			resourceCheckTask = scheduler.scheduleAtFixedRate(resourceCheck, 10, 10, TimeUnit.SECONDS);
 			
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -296,11 +339,51 @@ public class Server {
 		entityManager.clearRemovedEntities();
 	}
 	
-	private void saveCheck() {
-		saveCounter++;
+	private void checkResourceLimits() {
+		// Check processor usage
+		if (processorLimit > 0) {
+			double processorLoad = osBean.getProcessCpuLoad();
+			int availableProcessors = osBean.getAvailableProcessors();
+			int effectiveLimit = Math.min(processorLimit, availableProcessors);
+			double limitedLoad = (double) effectiveLimit / availableProcessors;
+			
+			if (processorLoad > limitedLoad) {
+				console.print("⚠ Processor usage exceeds limit: " + String.format("%.2f%%", processorLoad * 100) + 
+					" (Limit: " + effectiveLimit + "/" + availableProcessors + " cores)");
+			}
+		}
 		
-		if (saveCounter > saveInterval) {
-			saveCounter = 0;
+		// Check memory usage
+		if (ramLimit > 0) {
+			Runtime runtime = Runtime.getRuntime();
+			long usedMemory = runtime.totalMemory() - runtime.freeMemory();
+			
+			if (usedMemory > ramLimit) {
+				console.print("⚠ RAM usage exceeds limit: " + (usedMemory / (1024 * 1024)) + " MB (Limit: " + (ramLimit / (1024 * 1024)) + " MB)");
+				System.gc();
+				console.print("✓ Garbage collection triggered");
+			}
+		}
+		
+		// Check thread count
+		if (workerThreadLimit > 0) {
+			long threadCount = threadBean.getThreadCount();
+			
+			if (threadCount > workerThreadLimit) {
+				console.print("⚠ Thread count exceeds limit: " + threadCount + " (Limit: " + workerThreadLimit + ")");
+			}
+		}
+	}
+	
+	private void saveCheck() {
+		long currentTime = System.currentTimeMillis();
+		
+		if (lastSaveTime == 0) {
+			lastSaveTime = currentTime;
+		}
+		
+		if (currentTime - lastSaveTime > saveInterval) {
+			lastSaveTime = currentTime;
 			console.print(serverSaver.save());
 		}
 	}
@@ -320,6 +403,15 @@ public class Server {
 			}
 			// Shutdown scheduler
 			if (scheduler != null && !scheduler.isShutdown()) {
+				if (resourceCheckTask != null) {
+					resourceCheckTask.cancel(false);
+				}
+				if (idleCheckTask != null) {
+					idleCheckTask.cancel(false);
+				}
+				if (tickTask != null) {
+					tickTask.cancel(false);
+				}
 				scheduler.shutdown();
 				if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
 					scheduler.shutdownNow();

@@ -11,10 +11,10 @@ import main.Console;
  */
 public class KeystoreGenerator {
     
-    private static final String KEYSTORE_PATH = "keystore.jks";
-    private static final String KEYSTORE_PASSWORD = "proto-nova-secure";
-    private static final String CERT_ALIAS = "proto-nova-server";
-    private static final int VALIDITY_DAYS = 365;
+    private static String KEYSTORE_PATH;
+    private static String KEYSTORE_PASSWORD;
+    private static String CERT_ALIAS = "proto-nova-server";
+    private static int VALIDITY_DAYS;
     
     private static Console console;
     
@@ -24,6 +24,12 @@ public class KeystoreGenerator {
      */
     public static void ensureKeystoreExists(Console console) throws Exception {
         KeystoreGenerator.console = console;
+        
+        // Load config values (read from memory, not file)
+        KEYSTORE_PATH = main.ServerConfig.getInstance().getKeystorePath();
+        KEYSTORE_PASSWORD = main.ServerConfig.getInstance().getKeystorePassword();
+        VALIDITY_DAYS = main.ServerConfig.getInstance().getKeystoreValidityDays();
+        
         File keystoreFile = new File(KEYSTORE_PATH);
         
         if (keystoreFile.exists()) {

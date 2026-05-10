@@ -13,8 +13,8 @@ import java.util.Enumeration;
  */
 public class CertificateExtractor {
     
-    private static final String KEYSTORE_PATH = "keystore.jks";
-    private static final String KEYSTORE_PASSWORD = "proto-nova-secure";
+    private static String KEYSTORE_PATH;
+    private static String KEYSTORE_PASSWORD;
     private static final String KEYSTORE_ALGORITHM = "PKCS12";
     private static final String CERT_ALIAS = "proto-nova";
     private static final String CERT_FILE_PATH = "proto-nova-cert.cer";
@@ -24,6 +24,10 @@ public class CertificateExtractor {
      * This certificate can be served to clients for download.
      */
     public static void ensureCertificateExists() throws Exception {
+        // Load config values
+        KEYSTORE_PATH = main.ServerConfig.getInstance().getKeystorePath();
+        KEYSTORE_PASSWORD = main.ServerConfig.getInstance().getKeystorePassword();
+        
         File certFile = new File(CERT_FILE_PATH);
         if (certFile.exists()) {
             return; // Certificate already exported

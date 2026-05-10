@@ -17,12 +17,13 @@ import main.Console;
  */
 public class CertificateServer {
     
-    private static final int CERT_SERVER_PORT = 7673;
+    private int CERT_SERVER_PORT;
     private HttpServer httpServer;
     private Console console;
     
     public CertificateServer(Console console) {
         this.console = console;
+        this.CERT_SERVER_PORT = main.ServerConfig.getInstance().getCertificateServerPort();
     }
     
     /**

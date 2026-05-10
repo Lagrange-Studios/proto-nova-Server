@@ -26,8 +26,8 @@ public class SoundManager {
 	private Console console;
 	private Server server;
 	private long SoundID = 0;
-	private final int SOUND_LIFETIME_TICKS = 1200;
-	private final int WALKING_SOUND_COOLDOWN_TICKS = 30;
+	private final long SOUND_LIFETIME_MS = 20000; // 20 seconds in milliseconds
+	private final long WALKING_SOUND_COOLDOWN_MS = 500; // 500ms cooldown in milliseconds
 	
 	public SoundManager(ServerLoader serverLoader,Console console, Server server) {
 		this.serverLoader = serverLoader;
@@ -63,7 +63,7 @@ public class SoundManager {
 	private Audio makeNewSound(Audio sound) {
 		
 		Sounds.add(sound);
-		soundCreationTime.put(sound.getAudioID(), server.globalTicks);
+		soundCreationTime.put(sound.getAudioID(), System.currentTimeMillis());
 		
 		if (chunkManager != null) {
 			chunkManager.addSound(sound);
@@ -77,11 +77,11 @@ public class SoundManager {
 	}
 	
 	private void cleanupOldSounds() {
-		long currentTick = server.globalTicks;
+		long currentTime = System.currentTimeMillis();
 		ArrayList<Long> keysToRemove = new ArrayList<>();
 		
 		for (Long soundID : soundCreationTime.keySet()) {
-			if (currentTick - soundCreationTime.get(soundID) > SOUND_LIFETIME_TICKS) {
+			if (currentTime - soundCreationTime.get(soundID) > SOUND_LIFETIME_MS) {
 				keysToRemove.add(soundID);
 			}
 		}

@@ -17,13 +17,13 @@ public class ChatManager {
 	
 	private ArrayList<ChatMessage> chatQueue;
 	private ArrayList<ChatMessage> chats;
-	private HashMap<Long, Long> chatCreationTime; // chatID -> creation time in ticks
+	private HashMap<Long, Long> chatCreationTime;
 	private ServerLoader serverLoader;
 	private ChunkManager chunkManager;
 	private Console console;
 	private Server server;
 	private long chatID = 0;
-	private final int CHAT_LIFETIME_TICKS = 6000; // ~100 seconds at 60 TPS
+	private final long CHAT_LIFETIME_MS = 100000; // 100 seconds in milliseconds
 	
 	public ChatManager(ServerLoader serverLoader,Console console, Server server) {
 		this.serverLoader = serverLoader;
@@ -54,7 +54,7 @@ public class ChatManager {
 	private ChatMessage makeNewChat(ChatMessage message) {
 		
 		chats.add(message);
-		chatCreationTime.put(message.getChatID(), server.globalTicks);
+		chatCreationTime.put(message.getChatID(), System.currentTimeMillis());
 		
 		if (chunkManager != null) {
 			chunkManager.addChatMessage(message);
@@ -67,15 +67,13 @@ public class ChatManager {
 		
 	}
 	
-	/**
-	 * Removes chat messages older than CHAT_LIFETIME_TICKS
-	 */
+	// Removes chat messages older than CHAT_LIFETIME_MS
 	private void cleanupOldChats() {
-		long currentTick = server.globalTicks;
+		long currentTime = System.currentTimeMillis();
 		ArrayList<Long> keysToRemove = new ArrayList<>();
 		
 		for (Long chatID : chatCreationTime.keySet()) {
-			if (currentTick - chatCreationTime.get(chatID) > CHAT_LIFETIME_TICKS) {
+			if (currentTime - chatCreationTime.get(chatID) > CHAT_LIFETIME_MS) {
 				keysToRemove.add(chatID);
 			}
 		}
