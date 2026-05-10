@@ -26,6 +26,10 @@ gradle-app.setting
 keystore.jks
 keystore.p12
 credentials.json
+*.cer
+proto-nova-cert.cer
+proto-nova-truststore.jks
+proto-nova.properties
 
 # Generated files
 /extracted-include-protos/

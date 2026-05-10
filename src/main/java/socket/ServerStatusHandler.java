@@ -142,7 +142,7 @@ public class ServerStatusHandler {
                 // Create JSON response
                 JSONObject response = new JSONObject();
                 response.put("token", clientToken);
-                response.put("expiresIn", 300); // Token expires in 5 minutes
+                response.put("expiresIn", 604800); // Token expires in 7 days (604800 seconds)
                 
                 String jsonResponse = response.toString();
                 

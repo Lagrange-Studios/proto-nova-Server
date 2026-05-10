@@ -78,41 +78,39 @@ public class Player {
 	        try {
 	            while (state != State.DISCONNECTED) {
 	            	
-	                int length = input.readInt(); // length of incoming message
+	                int length = input.readInt();
 	                
 	                byte[] data = new byte[length];
-	                input.readFully(data); // read exactly 'length' bytes
+	                input.readFully(data);
 
-	                // First message should contain token for authentication
 	                if (!tokenValidated) {
-	                    // Read token as string
 	                    String receivedToken = new String(data, "UTF-8");
 	                    
-	                    // Validate token
 	                    if (serverSocketHandler != null && serverSocketHandler.getTokenManager() != null) {
 	                        if (serverSocketHandler.getTokenManager().validateClientToken(receivedToken)) {
 	                            tokenValidated = true;
 	                            clientToken = receivedToken;
-	                            // Revoke token after use
-	                            serverSocketHandler.getTokenManager().revokeClientToken(receivedToken);
-	                            console.print("✓ Client authenticated successfully");
+	                            
+	                            String newToken = serverSocketHandler.getTokenManager().generateRenewedToken(receivedToken);
+	                            if (newToken != null) {
+	                                console.print("✓ Client authenticated successfully - Token renewed for 30 days");
+	                            } else {
+	                                console.print("✓ Client authenticated successfully");
+	                            }
 	                        } else {
 	                            console.print("✗ Invalid token received, disconnecting client");
 	                            disconnect();
 	                            return;
 	                        }
 	                    } else {
-	                        // No token manager, allow connection (backward compatibility)
 	                        tokenValidated = true;
 	                    }
 	                }
-	                // Second message should contain username
 	                else if (username == null) {
 	                    UserData user = UserData.parseFrom(data);
 	                    username = user.getUsername();
 	                    state = State.AWAITING_SERVER_PACKET;
 	                    
-	                    // Add to game when handshake complete
 	                    if (serverSocketHandler != null) {
 	                        addedToGame = true;
 	                        serverSocketHandler.addPlayerToGame(this);
@@ -125,7 +123,6 @@ public class Player {
 	                }
 	            }
 	        } catch (IOException e) {
-	            // Only log disconnection if player actually joined the game
 	            if (addedToGame && username != null) {
 	                console.print("Connection closed or error: " + e.getMessage());
 	            }
