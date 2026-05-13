@@ -14,6 +14,7 @@ import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ScanResult;
 import main.Console;
 import main.Server;
+import plane.PlaneManager;
 import protonova.protobuf.EntityProto.Entity;
 
 public class TagHandler {
@@ -25,12 +26,14 @@ public class TagHandler {
 	private int tickCount = 0;
 	private AssetManager assetManager;
 	private EntityFinder entityFinder;
+	private PlaneManager planeManager;
 
-	public TagHandler(Server server, EntityManager entityManager, AssetManager assetManager, EntityFinder entityFinder) {
+	public TagHandler(Server server, EntityManager entityManager, AssetManager assetManager, EntityFinder entityFinder, PlaneManager planeManager) {
 		this.server = server;
 		this.entityManager = entityManager;
 		this.assetManager = assetManager;
 		this.entityFinder = entityFinder;
+		this.planeManager = planeManager;
 		tagToEntities = new HashMap<>();
 		tagToClass = new HashMap<>();
 		loadAllTagClasses();
@@ -100,6 +103,10 @@ public class TagHandler {
 	 */
 	public void updateEntity(Entity entity) {
 		entityManager.updateEntity(entity);
+	}
+	
+	public PlaneManager getPlaneManager() {
+		return planeManager;
 	}
 	
 	public AssetManager getAssetManager() {

@@ -149,7 +149,7 @@ public class Server {
 
 		craftingManager = new CraftingManager(entityManager, serverLoader.loadCraftingRecipes(), console, assetManager);
 
-		tagHandler = new TagHandler(this, entityManager, assetManager, entityFinder);
+		tagHandler = new TagHandler(this, entityManager, assetManager, entityFinder, planeManager);
 		entityManager.setClasses(chunkManager,tagHandler);
 		
 		if (shouldGenerate) {

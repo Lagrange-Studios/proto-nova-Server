@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.EntityProto.Entity.Builder;
+import protonova.protobuf.TileProto.Tile;
 import protonova.protobuf.VectorProto.Vector;
 
 public class Plant extends TagClass {
@@ -78,6 +79,11 @@ public class Plant extends TagClass {
 				ArrayList<Entity> foundEntities = tagHandler.getEntityFinder().getAllEntitiesInRadius(spawnVector, entity.getMap(), Math.hypot(entity.getSize().getX(), entity.getSize().getY()));
 
 				if (foundEntities.size() > 0) return;
+				
+				Tile originalTile = tagHandler.getPlaneManager().getTileAt(entity.getPosition(), entity.getMap());
+				Tile newTile = tagHandler.getPlaneManager().getTileAt(spawnVector, entity.getMap());
+				
+				if (newTile == null || originalTile == null || !newTile.getName().equals(originalTile.getName())) return;
 				
 				Vector entitySize = entity.getSize();
 				float spawnSizeRatio = (float) 1/totalPlantGrowTime;
