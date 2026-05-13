@@ -1,9 +1,10 @@
-package tag;
+ package tag;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import entity.EntityFinder;
 import entity.EntityManager;
@@ -18,7 +19,7 @@ import protonova.protobuf.EntityProto.Entity;
 public class TagHandler {
 	
 	private EntityManager entityManager;
-	private HashMap<String, ArrayList<Integer>> tagToEntities;
+	private HashMap<String, HashSet<Integer>> tagToEntities;
 	private HashMap<String, TagClass> tagToClass;
 	private Server server; 
 	private int tickCount = 0;
@@ -33,7 +34,6 @@ public class TagHandler {
 		tagToEntities = new HashMap<>();
 		tagToClass = new HashMap<>();
 		loadAllTagClasses();
-		loadAllTagEntities();
 	}
 	
 	public void addEntity(Entity entity) {
@@ -46,10 +46,19 @@ public class TagHandler {
 					continue;
 				}
 				
-				if (!tagToEntities.containsKey(tag)) tagToEntities.put(tag, new ArrayList<>());
+				if (!tagToEntities.containsKey(tag)) tagToEntities.put(tag, new HashSet<>());
 				 tagToEntities.get(tag).add(entity.getId());
 			}
 		}
+	}
+	
+	public void updateEntity(Entity oldEntity, Entity newEntity) {
+		if (oldEntity.getTagsCount() > 0) {
+			for (String oldTag : oldEntity.getTagsList()) {
+				if (tagToEntities.containsKey(oldTag) && tagToEntities.get(oldTag).contains(oldEntity.getId())) tagToEntities.get(oldTag).remove(oldEntity.getId());
+			}
+		}
+		addEntity(newEntity);
 	}
 
 	public void tick() {
@@ -109,7 +118,7 @@ public class TagHandler {
 		return server.console;
 	}
 	
-	private void loadAllTagEntities() {
+	public void loadAllTagEntities() {
 		for (Entity entity : entityManager.getAllEntities().values()) {
 			addEntity(entity);
 		}

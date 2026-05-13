@@ -36,15 +36,18 @@ public class Plant extends TagClass {
 			float sizeX = entity.getSize().getX();
 			float sizeY = entity.getSize().getY();
 			
-			float grownSizeX = (float)  ((totalPlantGrowTime * sizeX) / currentPlantAge);
-			float grownSizeY = (float)  ((totalPlantGrowTime * sizeY) / currentPlantAge);
+			float grownSizeX = (float) ((totalPlantGrowTime * sizeX) / currentPlantAge);
+			float grownSizeY = (float) ((totalPlantGrowTime * sizeY) / currentPlantAge);
 			
 			currentPlantAge++;
 			
-			float updatedSizeX = (float) ((grownSizeX * currentPlantAge) / totalPlantGrowTime);
-			float updatedSizeY = (float) ((grownSizeY * currentPlantAge) / totalPlantGrowTime);
+			float newRatio =  ((float) currentPlantAge / (float) totalPlantGrowTime);
+			
+			float updatedSizeX =  grownSizeX * newRatio;
+			float updatedSizeY = grownSizeY * newRatio;
 			
 			Builder entityBuilder = entity.toBuilder()
+					.putInventorySlots("currentPlantAge", currentPlantAge)
 					.setSize(Vector.newBuilder()
 							.setX(updatedSizeX)
 							.setY(updatedSizeY)
@@ -64,8 +67,8 @@ public class Plant extends TagClass {
 			
 			// chance check
 			if (Math.round(Math.random()*randomSproutChance) == 1) {
-				int offsetX = (int) Math.round(Math.random()*5-5);
-				int offsetY = (int) Math.round(Math.random()*5-5);
+				int offsetX = (int) (Math.round(Math.random()*10)-5);
+				int offsetY = (int) (Math.round(Math.random()*10)-5);
 				
 				Vector spawnVector = entity.getPosition().toBuilder()
 						.setX(entity.getPosition().getX()+offsetX)
@@ -77,7 +80,7 @@ public class Plant extends TagClass {
 				if (foundEntities.size() > 0) return;
 				
 				Vector entitySize = entity.getSize();
-				float spawnSizeRatio = 1/totalPlantGrowTime;
+				float spawnSizeRatio = (float) 1/totalPlantGrowTime;
 				
 				Entity sprout = entity.toBuilder()
 						.setPosition(spawnVector)
@@ -87,6 +90,7 @@ public class Plant extends TagClass {
 								.setY(entitySize.getY()*spawnSizeRatio)
 								.build())
 						.putInventorySlots("currentPlantAge", 1)
+						.putInventorySlots("totalPlantGrowTime", totalPlantGrowTime)
 						.setId(tagHandler.getEntityManager().reserveNewEntityId())
 						.build();
 				
@@ -95,7 +99,6 @@ public class Plant extends TagClass {
 							.setDisplayTexture("empty "+sprout.getName())
 							.build();
 				}
-						
 				
 				tagHandler.updateEntity(sprout);
 						

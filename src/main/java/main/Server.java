@@ -136,7 +136,6 @@ public class Server {
 		
 		chunkManager = new ChunkManager(entityManager.getAllEntities());
 		chunkManager.groupAllEntites();
-		entityManager.setChunkManager(chunkManager);
 		soundManager.setChunkManager(chunkManager);
 		chatManager.setChunkManager(chunkManager);
 		
@@ -149,7 +148,9 @@ public class Server {
 		generator = new Generator(console, planeManager, entityManager, assetManager, entityFinder, celestialObjectManager);
 
 		craftingManager = new CraftingManager(entityManager, serverLoader.loadCraftingRecipes(), console, assetManager);
-		
+
+		tagHandler = new TagHandler(this, entityManager, assetManager, entityFinder);
+		entityManager.setClasses(chunkManager,tagHandler);
 		
 		if (shouldGenerate) {
 			generator.generatePlanet("continents");
@@ -161,7 +162,6 @@ public class Server {
 			
 		}
 		
-		tagHandler = new TagHandler(this, entityManager, assetManager, entityFinder);
 		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager, craftingManager, tagHandler);
 
 		packetReciver = new PacketReciver(entityManager, soundManager, chatManager, console, actionHandler, entityFinder);
@@ -170,6 +170,8 @@ public class Server {
 		tokenManager = new socket.TokenManager(console);
 		serverSocket = new ServerSocketHandler(console, packetReciver, tokenManager);
 		statusHandler = new ServerStatusHandler(serverSocket, console, tokenManager);
+		
+		tagHandler.loadAllTagEntities();
 		
 		try {
 			statusHandler.start();

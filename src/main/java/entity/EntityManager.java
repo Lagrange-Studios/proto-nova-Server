@@ -9,6 +9,7 @@ import protonova.protobuf.EntityProto.Direction;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.VectorProto.Vector;
 import socket.Player;
+import tag.TagHandler;
 import util.Id;
 
 public class EntityManager {
@@ -18,6 +19,7 @@ public class EntityManager {
 	private ChunkManager chunkManager;
 	private Console console;
 	private final HashMap<Integer, Integer> removedEntities = new HashMap<>(); // Entity ids to old maps
+	private TagHandler tagHandler;
 
 	public EntityManager(ServerLoader serverLoader,Console console) {
 		this.serverLoader = serverLoader;
@@ -90,9 +92,12 @@ public class EntityManager {
 			if (!oldEntity.getPosition().equals(entity.getPosition()) || oldEntity.getMap() != entity.getMap()) {
 				chunkManager.updateEntityChunck(oldEntity, entity);
 			}
+			
+			tagHandler.updateEntity(oldEntity, entity);
 		}
 		else {
 			chunkManager.addEntity(entity);
+			tagHandler.addEntity(entity);
 		}
 		entities.put(entity.getId(), entity);
 	}
@@ -174,8 +179,9 @@ public class EntityManager {
 		return isEntityRemoved(entity.getId());
 	}
 
-	public void setChunkManager(ChunkManager chunkManager) {
+	public void setClasses(ChunkManager chunkManager, TagHandler tagHandler) {
 		this.chunkManager = chunkManager;
+		this.tagHandler = tagHandler;
 	}
 	
 	/**
