@@ -40,7 +40,7 @@ public class AssetMaker {
     	
     	Entity entity = Entity.newBuilder()
     			.setDirection(Direction.Down)
-    			.setName("handle")
+    			.setName("lit torch")
     			.setPosition(zero)
     			.setSize(pointFive)
     			.setIsItem(true)
@@ -50,8 +50,10 @@ public class AssetMaker {
     			//.addTags("harvestable")
     			//.addTags("plant")
     			//.setSelectedSlot("berries")
-    			.setStackable(true)
-    			.setAmount(1)
+    			.setStackable(false)
+    			//.setAmount(1)
+    			.setHexColor("FF0000")
+    			.setLightRange(5)
     			.build();
     	
     	try {
