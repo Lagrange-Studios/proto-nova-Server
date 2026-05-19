@@ -25,6 +25,7 @@ import file.ServerLoader;
 import file.ServerSaver;
 import file.Validater;
 import generation.Generator;
+import health.CombatManager;
 import plane.PlaneManager;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.VectorProto.Vector;
@@ -65,6 +66,7 @@ public class Server {
 	private CraftingManager craftingManager;
 	private socket.TokenManager tokenManager;
 	private TagHandler tagHandler;
+	private CombatManager combatManager;
 	private boolean headless;
 	
 	private int saveCounter = 0;
@@ -136,9 +138,10 @@ public class Server {
 		
 		chunkManager = new ChunkManager(entityManager.getAllEntities());
 		chunkManager.groupAllEntites();
-		entityManager.setChunkManager(chunkManager);
 		soundManager.setChunkManager(chunkManager);
 		chatManager.setChunkManager(chunkManager);
+		
+		combatManager = new CombatManager(entityManager);
 		
 		entityFinder = new EntityFinder(entityManager.getAllEntities(),chunkManager);
 		soundFinder = new SoundFinder(entityManager.getAllEntities(),soundManager.getAllSounds(),chunkManager);
@@ -149,7 +152,9 @@ public class Server {
 		generator = new Generator(console, planeManager, entityManager, assetManager, entityFinder, celestialObjectManager);
 
 		craftingManager = new CraftingManager(entityManager, serverLoader.loadCraftingRecipes(), console, assetManager);
-		
+
+		tagHandler = new TagHandler(this, entityManager, assetManager, entityFinder, planeManager);
+		entityManager.setClasses(chunkManager,tagHandler);
 		
 		if (shouldGenerate) {
 			generator.generatePlanet("continents");
@@ -161,8 +166,7 @@ public class Server {
 			
 		}
 		
-		tagHandler = new TagHandler(this, entityManager, assetManager, entityFinder);
-		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager, craftingManager, tagHandler);
+		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager, craftingManager, tagHandler, combatManager);
 
 		packetReciver = new PacketReciver(entityManager, soundManager, chatManager, console, actionHandler, entityFinder);
 		
@@ -170,6 +174,8 @@ public class Server {
 		tokenManager = new socket.TokenManager(console);
 		serverSocket = new ServerSocketHandler(console, packetReciver, tokenManager);
 		statusHandler = new ServerStatusHandler(serverSocket, console, tokenManager);
+		
+		tagHandler.loadAllTagEntities();
 		
 		try {
 			statusHandler.start();

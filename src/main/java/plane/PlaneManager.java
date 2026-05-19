@@ -4,6 +4,9 @@ import java.util.HashMap;
 
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.PlaneProto.Plane;
+import protonova.protobuf.TileProto.Tile;
+import protonova.protobuf.VectorProto.Vector;
+import util.CoordinateConverter;
 
 public class PlaneManager {
 
@@ -31,5 +34,9 @@ public class PlaneManager {
 	
 	public void updatePlane(Plane plane) {
 		planes.put(plane.getId(), plane);
+	}
+	
+	public Tile getTileAt(Vector coordinate, int id) {
+		return planes.get(id).getTilesMap().get(CoordinateConverter.convert(coordinate));
 	}
 }
