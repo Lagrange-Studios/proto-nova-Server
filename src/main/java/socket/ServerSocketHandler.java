@@ -35,11 +35,9 @@ public class ServerSocketHandler {
 		
 		serverThread = new Thread(() -> {
 			try {
-				// Ensure keystore exists (generate if needed)
-				KeystoreGenerator.ensureKeystoreExists(console);
-				
 				// Initialize SSL context for secure connections
-				SSLContext sslContext = SSLContextProvider.getServerSSLContext();
+				// Uses embedded keystore from resources - no file system dependency
+				SSLContext sslContext = EmbeddedSSLProvider.getServerSSLContext();
 				SSLServerSocketFactory ssf = sslContext.getServerSocketFactory();
 				// Bind to 0.0.0.0 to allow connections from any network interface (NOT just localhost)
 				serverSocket = (SSLServerSocket) ssf.createServerSocket(PORT, 50, InetAddress.getByName("0.0.0.0"));
