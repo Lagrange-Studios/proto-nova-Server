@@ -1,7 +1,7 @@
 package entity;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import file.ServerLoader;
 import main.Console;
@@ -14,20 +14,19 @@ import util.Id;
 public class EntityManager {
 
 	private HashMap<Integer, Entity> entities;
-	private ServerLoader serverLoader;
 	private ChunkManager chunkManager;
 	private Console console;
-	private final HashMap<Integer, Integer> removedEntities = new HashMap<>(); // Entity ids to old maps
+	private final HashSet<Integer> updatedEntities = new HashSet<>();
+	private final HashSet<Integer> removedEntities = new HashSet<>();
 
 	public EntityManager(ServerLoader serverLoader,Console console) {
-		this.serverLoader = serverLoader;
 		entities = serverLoader.loadEntities();
 		this.console = console;
 	}
 	
 	public Entity makeNewEntity(String name,int mapId) {
 		
-		int currentId = Id.getNewId(entities.keySet());
+		int currentId = Id.getNewId(entities.keySet(), removedEntities);
 		
 		Vector vector = Vector.newBuilder()
 				.setX(0)
@@ -94,6 +93,7 @@ public class EntityManager {
 		else {
 			chunkManager.addEntity(entity);
 		}
+		updatedEntities.add(entity.getId());
 		entities.put(entity.getId(), entity);
 	}
 	
@@ -144,6 +144,7 @@ public class EntityManager {
 	 * @param entity
 	 */
 	private void forceUpdateEntity(Entity entity) {
+		updatedEntities.add(entity.getId());
 		entities.put(entity.getId(), entity);
 	}
 	
@@ -152,26 +153,30 @@ public class EntityManager {
 	 * @param entity
 	 */
 	public void removeEntity(Entity entity) {
-		removedEntities.put(entity.getId(),entity.getMap());
-		forceUpdateEntity(entity.toBuilder().setMap(0).build());
+		removedEntities.add(entity.getId());
+		chunkManager.removeEntityFromChunk(entity);
+		entities.remove(entity.getId());
 	}
 	
-	public void clearRemovedEntities() {
-		
-		for (int id : removedEntities.keySet()) {
-			Entity entity = entities.get(id);
-			if (entity != null) entities.remove(id);
-			chunkManager.removeEntityFromChunk(entity.toBuilder().setMap(removedEntities.get(id)).build());
-		}
+	public void clearHashSets() {
 		removedEntities.clear();
+		updatedEntities.clear();
 	}
 	
 	public boolean isEntityRemoved(int id) {
-		return removedEntities.containsKey(id);
+		return removedEntities.contains(id);
 	}
 	
 	public boolean isEntityRemoved(Entity entity) {
 		return isEntityRemoved(entity.getId());
+	}
+	
+	public boolean isEntityUpdated(int id) {
+		return updatedEntities.contains(id);
+	}
+	
+	public boolean isEntityUpdated(Entity entity) {
+		return isEntityUpdated(entity.getId());
 	}
 
 	public void setChunkManager(ChunkManager chunkManager) {

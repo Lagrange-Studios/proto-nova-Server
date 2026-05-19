@@ -9,6 +9,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.HashSet;
 import java.util.concurrent.ExecutorService;
 
 import main.Console;
@@ -33,6 +34,7 @@ public class Player {
 	private ServerSocketHandler serverSocketHandler;
 	private boolean addedToGame = false;
 	private boolean tokenValidated = false; // Track if client has been authenticated
+	public final HashSet<Integer> lastEntitiesSent = new HashSet<>();
 	
 	public Player(Socket socket, Console console, PacketReciver packetReciver, ServerSocketHandler serverSocketHandler) {
 		this.socket = socket;

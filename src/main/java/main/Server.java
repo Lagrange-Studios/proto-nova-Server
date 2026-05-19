@@ -336,7 +336,8 @@ public class Server {
 		
 		saveCheck();
 		
-		entityManager.clearRemovedEntities();
+		// this needs to be done once a tick
+		entityManager.clearHashSets();
 	}
 	
 	private void checkResourceLimits() {
