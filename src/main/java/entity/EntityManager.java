@@ -5,6 +5,9 @@ import java.util.HashMap;
 
 import file.ServerLoader;
 import main.Console;
+import protonova.protobuf.DamageProto.Damage;
+import protonova.protobuf.DamageProto.DamageMultiplier;
+import protonova.protobuf.DamageProto.HitDamage;
 import protonova.protobuf.EntityProto.Direction;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.VectorProto.Vector;
@@ -39,6 +42,34 @@ public class EntityManager {
 				.setX(0.8f)
 				.setY(0.8f)
 				.build();
+		DamageMultiplier damageMult = DamageMultiplier.newBuilder()
+			    .setBrute(1)
+			    .setAsphyxiation(1)
+			    .setBurn(1)
+			    .setToxin(1)
+			    .setGenetic(1)
+			    .setStructural(1)
+			    .setBleeding(1)
+			    .build();
+		HitDamage hitDamage = HitDamage.newBuilder()
+			    .setBruteDamage(1)
+			    .setAsphyxiationDamage(0)
+			    .setBurnDamage(0)
+			    .setToxinDamage(0)
+			    .setGeneticDamage(0)
+			    .setStructuralDamage(0)
+			    .setBleedingPerTick(0)
+			    .build();
+		Damage damage = Damage.newBuilder()
+				.setBruteDamage(0)
+				.setAsphyxiationDamage(0)
+				.setBurnDamage(0)
+				.setToxinDamage(0)
+				.setGeneticDamage(0)
+				.setStructuralDamage(0)
+				.setBleedingPerTick(0)
+				.setDamageMultiplier(damageMult)
+				.build();
 		
 		Entity entity = Entity.newBuilder()
 				.setName(name)
@@ -50,6 +81,9 @@ public class EntityManager {
 				.setVelocity(vector.toBuilder().build())
 				.setDirection(Direction.Down)
 				.setSelectedSlot("leftHand")
+				.setDamage(damage)
+				.setHitDamage(hitDamage)
+				.setReach(1.5)
 				.build();
 		
 		entities.put(currentId, entity);
