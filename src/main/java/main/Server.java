@@ -24,6 +24,7 @@ import file.AssetManager;
 import file.ServerLoader;
 import file.ServerSaver;
 import file.Validater;
+import gamemode.GamemodeManager;
 import generation.Generator;
 import plane.PlaneManager;
 import protonova.protobuf.EntityProto.Entity;
@@ -65,6 +66,7 @@ public class Server {
 	private CraftingManager craftingManager;
 	private socket.TokenManager tokenManager;
 	private TagHandler tagHandler;
+	private GamemodeManager gamemodeManager;
 	private boolean headless;
 	
 	private int saveCounter = 0;
@@ -162,6 +164,8 @@ public class Server {
 			
 		}
 		
+		gamemodeManager = new GamemodeManager(console, entityManager, entityFinder, planeManager, serverLoader.getGamemode());
+		
 		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager, craftingManager, tagHandler);
 
 		packetReciver = new PacketReciver(entityManager, soundManager, chatManager, console, actionHandler, entityFinder);
@@ -187,13 +191,13 @@ public class Server {
 			console.print("Failed to start certificate server: " + e.getMessage());
 		}
 		
-		serverSaver = new ServerSaver(this, entityManager, planeManager, celestialObjectManager);
+		serverSaver = new ServerSaver(this, entityManager, planeManager, celestialObjectManager, gamemodeManager);
 		
 		startThread();
 		
 		packetMaker = new PacketMaker(serverSocket,serverLoader,serverSaver,entityManager,entityFinder,soundFinder,chatFinder,planeManager,celestialObjectManager);
 		
-		console.setCommandClasses(serverSaver,generator,entityManager,planeManager,celestialObjectManager);
+		console.setCommandClasses(serverSaver,generator,entityManager,planeManager,celestialObjectManager, gamemodeManager);
 		
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 			shutdown();
