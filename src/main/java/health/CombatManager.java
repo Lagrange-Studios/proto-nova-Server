@@ -2,6 +2,7 @@ package health;
 
 import entity.EntityManager;
 import protonova.protobuf.DamageProto.Damage;
+import protonova.protobuf.DamageProto.DamageMultiplier;
 import protonova.protobuf.DamageProto.HitDamage;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.EntityProto.Entity.Builder;
@@ -15,7 +16,7 @@ public class CombatManager {
 		this.entityManager = entityManager;
 	}
 	
-	public boolean atemptToDamage(Entity attacker, Entity defender) {
+	public boolean attemptToDamage(Entity attacker, Entity defender) {
 		if (attacker.getReach() >= VectorMath.distance(attacker.getPosition(), defender.getPosition())) {
 			damage(attacker, defender);
 			return true;
@@ -26,39 +27,153 @@ public class CombatManager {
 	}
 	
 	private void damage(Entity attacker, Entity defender) {
+		defender = entityManager.getEntity(defender.getId());
+		attacker = entityManager.getEntity(attacker.getId());
+		checkDamageMults(defender);
+		
 		HitDamage hitDamage = attacker.getHitDamage();
-		Entity.Builder defenderBuilder = defender.toBuilder();
 		if (attacker.getInventorySlotsMap().containsKey(attacker.getSelectedSlot())) {
 			hitDamage = attacker.getHitDamage();
 		}
 		
-		Damage.Builder entityDamage = defender.getDamage().toBuilder();
+		defender = entityManager.getEntity(defender.getId());
+		DamageMultiplier damageMultipliers = defender.getDamage().getDamageMultiplier();
+		Damage currentDefenderDamage = defender.getDamage();
+		Entity.Builder defenderBuilder = defender.toBuilder();
+		
+		Damage.Builder entityDamage = currentDefenderDamage.toBuilder();
 		
 		if (hitDamage.hasBruteDamage()) {
-			entityDamage.setBruteDamage(defender.getDamage().getBruteDamage() + hitDamage.getBruteDamage());
+			
+			float damage = (hitDamage.getBruteDamage() * damageMultipliers.getBrute());
+			
+			entityDamage.setBruteDamage(currentDefenderDamage.getBruteDamage() + damage);
 		}
 		if (hitDamage.hasBurnDamage()) {
-			entityDamage.setBurnDamage(defender.getDamage().getBurnDamage() + hitDamage.getBurnDamage());
+			
+			float damage = (hitDamage.getBurnDamage() * damageMultipliers.getBurn());
+			
+			entityDamage.setBurnDamage(currentDefenderDamage.getBurnDamage() + damage);
 		}
 		if (hitDamage.hasToxinDamage()) {
-			entityDamage.setToxinDamage(defender.getDamage().getToxinDamage() + hitDamage.getToxinDamage());
+			
+			float damage = (hitDamage.getToxinDamage() * damageMultipliers.getToxin());
+			
+			entityDamage.setToxinDamage(currentDefenderDamage.getToxinDamage() + damage);
 		}
 		if (hitDamage.hasAsphyxiationDamage()) {
-			entityDamage.setAsphyxiationDamage(defender.getDamage().getAsphyxiationDamage() + hitDamage.getAsphyxiationDamage());
+			
+			float damage = (hitDamage.getAsphyxiationDamage() * damageMultipliers.getAsphyxiation());
+			
+			entityDamage.setAsphyxiationDamage(currentDefenderDamage.getAsphyxiationDamage() + damage);
 		}
 		if (hitDamage.hasGeneticDamage()) {
-			entityDamage.setGeneticDamage(defender.getDamage().getGeneticDamage() + hitDamage.getGeneticDamage());
+			
+			float damage = (hitDamage.getGeneticDamage() * damageMultipliers.getGenetic());
+			
+			entityDamage.setGeneticDamage(currentDefenderDamage.getGeneticDamage() + damage);
 		}
 		if (hitDamage.hasStructuralDamage()) {
-			entityDamage.setStructuralDamage(defender.getDamage().getStructuralDamage() + hitDamage.getStructuralDamage());
+			
+			float damage = (hitDamage.getStructuralDamage() * damageMultipliers.getStructural());
+			
+			entityDamage.setStructuralDamage(currentDefenderDamage.getStructuralDamage() + damage);
 		}
 		if (hitDamage.hasBleedingPerTick()) {
-			entityDamage.setBleedingPerTick(defender.getDamage().getBleedingPerTick() + hitDamage.getBleedingPerTick());
+			
+			float damage = (hitDamage.getBleedingPerTick() * damageMultipliers.getBleeding());
+			
+			entityDamage.setBleedingPerTick(currentDefenderDamage.getBleedingPerTick() + damage);
 		}
 		
 		Entity defenderFinal = defenderBuilder.setDamage(entityDamage.build()).build();
-		
 		entityManager.updateEntity(defenderFinal);
 		
 	}
+	
+	private void checkDamageMults(Entity entity) {
+		if (!entity.getDamage().getDamageMultiplier().hasBrute()) {
+			DamageMultiplier.Builder damageMultBuilder = entity.getDamage().getDamageMultiplier().toBuilder();
+			damageMultBuilder.setBrute(1);
+			entity = entity.toBuilder()
+					.setDamage(entity.getDamage().toBuilder()
+							.setDamageMultiplier(damageMultBuilder.build())
+							.build())
+					.build();
+			entityManager.updateEntity(entity);
+		}
+		 if (!entity.getDamage().getDamageMultiplier().hasBurn()) {
+			DamageMultiplier.Builder damageMultBuilder = entity.getDamage().getDamageMultiplier().toBuilder();
+			damageMultBuilder.setBurn(1);
+			entity = entity.toBuilder()
+					.setDamage(entity.getDamage().toBuilder()
+							.setDamageMultiplier(damageMultBuilder.build())
+							.build())
+					.build();
+			entityManager.updateEntity(entity);
+		}
+		 if (!entity.getDamage().getDamageMultiplier().hasToxin()) {
+			DamageMultiplier.Builder damageMultBuilder = entity.getDamage().getDamageMultiplier().toBuilder();
+			damageMultBuilder.setToxin(1);
+			entity = entity.toBuilder()
+					.setDamage(entity.getDamage().toBuilder()
+							.setDamageMultiplier(damageMultBuilder.build())
+							.build())
+					.build();
+			entityManager.updateEntity(entity);
+		}
+		 if (!entity.getDamage().getDamageMultiplier().hasAsphyxiation()) {
+			DamageMultiplier.Builder damageMultBuilder = entity.getDamage().getDamageMultiplier().toBuilder();
+			damageMultBuilder.setAsphyxiation(1);
+			entity = entity.toBuilder()
+					.setDamage(entity.getDamage().toBuilder()
+							.setDamageMultiplier(damageMultBuilder.build())
+							.build())
+					.build();
+			entityManager.updateEntity(entity);
+		}
+		 if (!entity.getDamage().getDamageMultiplier().hasGenetic()) {
+			DamageMultiplier.Builder damageMultBuilder = entity.getDamage().getDamageMultiplier().toBuilder();
+			damageMultBuilder.setGenetic(1);
+			entity = entity.toBuilder()
+					.setDamage(entity.getDamage().toBuilder()
+							.setDamageMultiplier(damageMultBuilder.build())
+							.build())
+					.build();
+			entityManager.updateEntity(entity);
+		}
+		 if (!entity.getDamage().getDamageMultiplier().hasStructural()) {
+			DamageMultiplier.Builder damageMultBuilder = entity.getDamage().getDamageMultiplier().toBuilder();
+			damageMultBuilder.setStructural(1);
+			entity = entity.toBuilder()
+					.setDamage(entity.getDamage().toBuilder()
+							.setDamageMultiplier(damageMultBuilder.build())
+							.build())
+					.build();
+			entityManager.updateEntity(entity);
+		}
+		 if (!entity.getDamage().getDamageMultiplier().hasBleeding()) {
+				DamageMultiplier.Builder damageMultBuilder = entity.getDamage().getDamageMultiplier().toBuilder();
+				damageMultBuilder.setBleeding(1);
+				entity = entity.toBuilder()
+						.setDamage(entity.getDamage().toBuilder()
+								.setDamageMultiplier(damageMultBuilder.build())
+								.build())
+						.build();
+				entityManager.updateEntity(entity);
+		 }
+	}
+	
+	public double getDamage(Entity entity) {
+		float brute = entity.getDamage().getBruteDamage();
+		float burn = entity.getDamage().getBurnDamage();
+		float toxin = entity.getDamage().getToxinDamage();
+		float asphyxiation = entity.getDamage().getAsphyxiationDamage();
+		float genetic = entity.getDamage().getGeneticDamage();
+		float structural = entity.getDamage().getStructuralDamage();
+		double totalDamage = brute + burn + toxin + asphyxiation + genetic + structural;
+		return totalDamage;
+		
+	}
+	
 }

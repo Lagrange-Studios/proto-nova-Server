@@ -111,7 +111,9 @@ public class ActionHandler {
 				playerEntity = craftingManager.attemptCraftingRecipe(playerEntity, interactingEntity);
 				break;
 			case(InteractionType.Hit_VALUE):
-				combatManager.atemptToDamage(playerEntity, interactingEntity);
+				combatManager.attemptToDamage(playerEntity, interactingEntity);
+				playerEntity = entityManager.getEntity(playerEntity.getId());
+				interactingEntity = entityManager.getEntity(interactingEntity.getId());
 				break;
 			case(InteractionType.Standard_VALUE):
 				playerEntity = tagHandler.interact(playerEntity, interactingEntity);
