@@ -114,6 +114,7 @@ public class ActionHandler {
 				combatManager.attemptToDamage(playerEntity, interactingEntity);
 				playerEntity = entityManager.getEntity(playerEntity.getId());
 				interactingEntity = entityManager.getEntity(interactingEntity.getId());
+				console.print(interactingEntity.getName()+" health: "+interactingEntity.getDamage().getBruteDamage());
 				break;
 			case(InteractionType.Standard_VALUE):
 				playerEntity = tagHandler.interact(playerEntity, interactingEntity);
