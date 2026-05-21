@@ -4,6 +4,7 @@ import java.util.HashMap;
 
 import entity.EntityFinder;
 import entity.EntityManager;
+import health.CombatManager;
 import main.Console;
 import plane.PlaneManager;
 import protonova.protobuf.ActionProto.Action;
@@ -22,14 +23,16 @@ public class ActionHandler {
 	private PlaneManager planeManager;
 	private CraftingManager craftingManager;
 	private TagHandler tagHandler;
+	private CombatManager combatManager;
 
-	public ActionHandler(Console console, EntityManager entityManager, EntityFinder entityFinder, PlaneManager planeManager, CraftingManager craftingManager, TagHandler tagHandler) {
+	public ActionHandler(Console console, EntityManager entityManager, EntityFinder entityFinder, PlaneManager planeManager, CraftingManager craftingManager, TagHandler tagHandler, CombatManager combatManager) {
 		this.console = console;
 		this.entityManager = entityManager;
 		this.entityFinder = entityFinder;
 		this.planeManager = planeManager;
 		this.craftingManager = craftingManager;
 		this.tagHandler = tagHandler;
+		this.combatManager = combatManager;
 	}
 
 	public Entity executeAction(Player player, Action action) {
@@ -106,6 +109,12 @@ public class ActionHandler {
 				break;
 			case(InteractionType.Craft_VALUE):
 				playerEntity = craftingManager.attemptCraftingRecipe(playerEntity, interactingEntity);
+				break;
+			case(InteractionType.Hit_VALUE):
+				combatManager.attemptToDamage(playerEntity, interactingEntity);
+				playerEntity = entityManager.getEntity(playerEntity.getId());
+				interactingEntity = entityManager.getEntity(interactingEntity.getId());
+				console.print(interactingEntity.getName()+" health: "+interactingEntity.getDamage().getBruteDamage());
 				break;
 			case(InteractionType.Standard_VALUE):
 				playerEntity = tagHandler.interact(playerEntity, interactingEntity);
