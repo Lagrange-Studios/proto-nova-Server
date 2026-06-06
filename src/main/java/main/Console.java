@@ -252,6 +252,10 @@ public class Console {
     	System.out.println(output);
     }
     
+    public void print(Boolean output) {
+    	System.out.println(output);
+    }
+    
     public void print(int output) {
     	print(String.valueOf(output));
     }

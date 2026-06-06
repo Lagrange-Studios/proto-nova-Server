@@ -26,6 +26,7 @@ import file.ServerSaver;
 import file.Validater;
 import gamemode.GamemodeManager;
 import generation.Generator;
+import health.CombatManager;
 import plane.PlaneManager;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.VectorProto.Vector;
@@ -67,6 +68,7 @@ public class Server {
 	private socket.TokenManager tokenManager;
 	private TagHandler tagHandler;
 	private GamemodeManager gamemodeManager;
+	private CombatManager combatManager;
 	private boolean headless;
 	
 	private int saveCounter = 0;
@@ -141,6 +143,8 @@ public class Server {
 		soundManager.setChunkManager(chunkManager);
 		chatManager.setChunkManager(chunkManager);
 		
+		combatManager = new CombatManager(entityManager);
+		
 		entityFinder = new EntityFinder(entityManager.getAllEntities(),chunkManager);
 		soundFinder = new SoundFinder(entityManager.getAllEntities(),soundManager.getAllSounds(),chunkManager);
 		chatFinder = new ChatFinder(entityManager.getAllEntities(), chatManager.getAllChats(), chunkManager);
@@ -166,7 +170,7 @@ public class Server {
 		
 		gamemodeManager = new GamemodeManager(console, entityManager, entityFinder, planeManager, serverLoader.getGamemode());
 		
-		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager, craftingManager, tagHandler);
+		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager, craftingManager, tagHandler, combatManager);
 
 		packetReciver = new PacketReciver(entityManager, soundManager, chatManager, console, actionHandler, entityFinder);
 		
@@ -342,7 +346,8 @@ public class Server {
 		
 		saveCheck();
 		
-		entityManager.clearRemovedEntities();
+		// this needs to be done once a tick
+		entityManager.clearHashSets();
 	}
 	
 	private void checkResourceLimits() {

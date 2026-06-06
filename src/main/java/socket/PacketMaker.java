@@ -3,6 +3,7 @@ package socket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import chat.ChatFinder;
 import chat.ChatManager;
@@ -152,21 +153,36 @@ public class PacketMaker {
 			}
 		}
 		
+		HashSet<Integer> lastEntitiesSent = player.lastEntitiesSent;
+		
+		HashSet<Integer> entitiesSentThisPacket = new HashSet<>();
+		
 		// add nearby entities
 		ArrayList<Entity> foundEntities = entityFinder.getAllEntitiesInRadis(playerEntity, renderDistance);
 		
 		for (Entity entity : foundEntities) {
-			if (entity != null) {
+			if (entity != null && !lastEntitiesSent.contains(entity.getId())) {
 				packet.addEntities(entity);
+				entitiesSentThisPacket.add(entity.getId());
 			}
 		}
 		
 		// Add inventory
 		for (int id : playerEntity.getInventorySlotsMap().values()) {
 			Entity inventoryItem = entityManager.getEntity(id);
-			if (inventoryItem != null) {
+			if (inventoryItem != null && !lastEntitiesSent.contains(inventoryItem.getId())) {
 				packet.addEntities(inventoryItem);
+				entitiesSentThisPacket.add(inventoryItem.getId());
 			}
+		}
+		
+		//check for updates
+		for (int lastId : lastEntitiesSent) {
+			if (entityManager.isEntityUpdated(lastId)) {
+				packet.addEntities(entityManager.getEntity(lastId));
+				entitiesSentThisPacket.add(lastId);
+			}
+			else if (entityManager.isEntityRemoved(lastId)) packet.addRemovedEntities(lastId);
 		}
 
 		ArrayList<Audio> foundSounds = soundFinder.getAllSoundsInRadis(playerEntity, renderDistance);
@@ -186,5 +202,8 @@ public class PacketMaker {
 		packet.setReconcile(player.shouldReconcile);
 		
 		player.send(packet.build().toByteArray());
+		
+		// Add all entities sent this packet to lastEntitiesSent so updates are tracked next tick
+		lastEntitiesSent.addAll(entitiesSentThisPacket);
 	}
 }

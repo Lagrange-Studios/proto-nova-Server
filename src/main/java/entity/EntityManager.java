@@ -1,10 +1,13 @@
 package entity;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import file.ServerLoader;
 import main.Console;
+import protonova.protobuf.DamageProto.Damage;
+import protonova.protobuf.DamageProto.DamageMultiplier;
+import protonova.protobuf.DamageProto.HitDamage;
 import protonova.protobuf.EntityProto.Direction;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.VectorProto.Vector;
@@ -15,21 +18,20 @@ import util.Id;
 public class EntityManager {
 
 	private HashMap<Integer, Entity> entities;
-	private ServerLoader serverLoader;
 	private ChunkManager chunkManager;
 	private Console console;
-	private final HashMap<Integer, Integer> removedEntities = new HashMap<>(); // Entity ids to old maps
+	private final HashSet<Integer> updatedEntities = new HashSet<>();
+	private final HashSet<Integer> removedEntities = new HashSet<>();
 	private TagHandler tagHandler;
 
 	public EntityManager(ServerLoader serverLoader,Console console) {
-		this.serverLoader = serverLoader;
 		entities = serverLoader.loadEntities();
 		this.console = console;
 	}
 	
 	public Entity makeNewEntity(String name,int mapId) {
 		
-		int currentId = Id.getNewId(entities.keySet());
+		int currentId = Id.getNewId(entities.keySet(), removedEntities);
 		
 		Vector vector = Vector.newBuilder()
 				.setX(0)
@@ -38,6 +40,34 @@ public class EntityManager {
 		Vector one = Vector.newBuilder()
 				.setX(0.8f)
 				.setY(0.8f)
+				.build();
+		DamageMultiplier damageMult = DamageMultiplier.newBuilder()
+			    .setBrute(1)
+			    .setAsphyxiation(1)
+			    .setBurn(1)
+			    .setToxin(1)
+			    .setGenetic(1)
+			    .setStructural(1)
+			    .setBleeding(1)
+			    .build();
+		HitDamage hitDamage = HitDamage.newBuilder()
+			    .setBruteDamage(1)
+			    .setAsphyxiationDamage(0)
+			    .setBurnDamage(0)
+			    .setToxinDamage(0)
+			    .setGeneticDamage(0)
+			    .setStructuralDamage(0)
+			    .setBleedingPerTick(0)
+			    .build();
+		Damage damage = Damage.newBuilder()
+				.setBruteDamage(0)
+				.setAsphyxiationDamage(0)
+				.setBurnDamage(0)
+				.setToxinDamage(0)
+				.setGeneticDamage(0)
+				.setStructuralDamage(0)
+				.setBleedingPerTick(0)
+				.setDamageMultiplier(damageMult)
 				.build();
 		
 		Entity entity = Entity.newBuilder()
@@ -50,6 +80,9 @@ public class EntityManager {
 				.setVelocity(vector.toBuilder().build())
 				.setDirection(Direction.Down)
 				.setSelectedSlot("leftHand")
+				.setDamage(damage)
+				.setHitDamage(hitDamage)
+				.setReach(1.5)
 				.build();
 		
 		entities.put(currentId, entity);
@@ -99,6 +132,7 @@ public class EntityManager {
 			chunkManager.addEntity(entity);
 			tagHandler.addEntity(entity);
 		}
+		updatedEntities.add(entity.getId());
 		entities.put(entity.getId(), entity);
 	}
 	
@@ -149,6 +183,7 @@ public class EntityManager {
 	 * @param entity
 	 */
 	private void forceUpdateEntity(Entity entity) {
+		updatedEntities.add(entity.getId());
 		entities.put(entity.getId(), entity);
 	}
 	
@@ -157,26 +192,30 @@ public class EntityManager {
 	 * @param entity
 	 */
 	public void removeEntity(Entity entity) {
-		removedEntities.put(entity.getId(),entity.getMap());
-		forceUpdateEntity(entity.toBuilder().setMap(0).build());
+		removedEntities.add(entity.getId());
+		chunkManager.removeEntityFromChunk(entity);
+		entities.remove(entity.getId());
 	}
 	
-	public void clearRemovedEntities() {
-		
-		for (int id : removedEntities.keySet()) {
-			Entity entity = entities.get(id);
-			if (entity != null) entities.remove(id);
-			chunkManager.removeEntityFromChunk(entity.toBuilder().setMap(removedEntities.get(id)).build());
-		}
+	public void clearHashSets() {
 		removedEntities.clear();
+		updatedEntities.clear();
 	}
 	
 	public boolean isEntityRemoved(int id) {
-		return removedEntities.containsKey(id);
+		return removedEntities.contains(id);
 	}
 	
 	public boolean isEntityRemoved(Entity entity) {
 		return isEntityRemoved(entity.getId());
+	}
+	
+	public boolean isEntityUpdated(int id) {
+		return updatedEntities.contains(id);
+	}
+	
+	public boolean isEntityUpdated(Entity entity) {
+		return isEntityUpdated(entity.getId());
 	}
 
 	public void setClasses(ChunkManager chunkManager, TagHandler tagHandler) {

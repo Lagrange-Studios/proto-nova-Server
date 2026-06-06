@@ -55,8 +55,8 @@ public class GamemodeManager {
 		    		
 		    	try {
 		    		//System.out.println((String) staticClass.getField("gamemodeName").get(staticClass));
-			    	nameToGamemode.put((String) staticClass.getField("gamemodeName").get(staticClass), staticClass);
-				} catch (IllegalArgumentException | SecurityException | IllegalAccessException | NoSuchFieldException e) {
+			    	//nameToGamemode.put((String) staticClass.getField("gamemodeName").get(staticClass), staticClass);
+				} catch (IllegalArgumentException | SecurityException e) {
 					System.err.println("Error for class: "+staticClass.getName());
 					e.printStackTrace();
 				}
