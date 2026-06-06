@@ -172,17 +172,20 @@ public class PacketMaker {
 		// Add inventory
 		for (int id : playerEntity.getInventorySlotsMap().values()) {
 			Entity inventoryItem = entityManager.getEntity(id);
-			if (inventoryItem != null && !entitiesSent.contains(inventoryItem.getId())) {
+			if (inventoryItem != null && !entitiesSent.contains(inventoryItem.getId())
+				|| player.updateList.contains(id)) {
 				packet.addEntities(inventoryItem);
 				entitiesSentThisPacket.add(inventoryItem.getId());
 			}
+			else if (player.deleteList.contains(id)) packet.addRemovedEntities(id);
 		}
 		
 		//check for updates
 		for (int id : entitiesSent.toArray(new Integer[0])) {
 			if (player.deleteList.contains(id) ||
 				entityManager.getEntity(id) == null ||
-				VectorMath.distanceSquared(playerEntity.getPosition(), entityManager.getEntity(id).getPosition()) > renderDistanceSquared) {
+				VectorMath.distanceSquared(playerEntity.getPosition(), entityManager.getEntity(id).getPosition()) > renderDistanceSquared &&
+				!playerEntity.getInventorySlotsMap().containsValue(id)) {
 				
 				entitiesSent.remove(id);
 				packet.addRemovedEntities(id);

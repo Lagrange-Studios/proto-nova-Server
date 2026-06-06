@@ -315,6 +315,10 @@ public class Server {
 		}
 	}
 	
+	public boolean getTPSPaused() {
+		return tpsPaused;
+	}
+	
 	private void tick() throws Exception {
 		// Create a copy to avoid ConcurrentModificationException when players disconnect during iteration
 		ArrayList<Player> playerList = new ArrayList<>(serverSocket.getPlayerList());
