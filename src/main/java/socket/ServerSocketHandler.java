@@ -23,23 +23,21 @@ public class ServerSocketHandler {
 	private PacketMaker packetMaker;
 	private socket.TokenManager tokenManager;
 	
-	public ServerSocketHandler(Console console, PacketReciver packetReciver) {
-		this(console, packetReciver, null);
+	public ServerSocketHandler(Console console, PacketReciver packetReciver, ArrayList<Player> playerList) {
+		this(console, packetReciver, null, playerList);
 	}
 	
-	public ServerSocketHandler(Console console, PacketReciver packetReciver, socket.TokenManager tokenManager) {
+	public ServerSocketHandler(Console console, PacketReciver packetReciver, socket.TokenManager tokenManager, ArrayList<Player> playerList) {
 		this.console = console;
 		this.tokenManager = tokenManager;
-		playerList = new ArrayList<Player>();
+		this.playerList = playerList;
 		threadPool = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
 		
 		serverThread = new Thread(() -> {
 			try {
-				// Ensure keystore exists (generate if needed)
-				KeystoreGenerator.ensureKeystoreExists(console);
-				
 				// Initialize SSL context for secure connections
-				SSLContext sslContext = SSLContextProvider.getServerSSLContext();
+				// Uses embedded keystore from resources - no file system dependency
+				SSLContext sslContext = EmbeddedSSLProvider.getServerSSLContext();
 				SSLServerSocketFactory ssf = sslContext.getServerSocketFactory();
 				// Bind to 0.0.0.0 to allow connections from any network interface (NOT just localhost)
 				serverSocket = (SSLServerSocket) ssf.createServerSocket(PORT, 50, InetAddress.getByName("0.0.0.0"));

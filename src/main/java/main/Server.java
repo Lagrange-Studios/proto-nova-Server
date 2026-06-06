@@ -126,13 +126,15 @@ public class Server {
 			System.exit(1);
 		}
 		
+		ArrayList<Player> playerList = new ArrayList<>();
+		
 		validater = new Validater(console);
 		
 		boolean shouldGenerate = validater.validateWorldFiles();
 		
 		serverLoader = new ServerLoader(console);
 		planeManager = new PlaneManager(serverLoader.loadWorld());
-		entityManager = new EntityManager(serverLoader,console);
+		entityManager = new EntityManager(serverLoader,console, playerList);
 		soundManager = new SoundManager(serverLoader,console, this);
 		chatManager = new ChatManager(serverLoader,console, this);
 		
@@ -176,7 +178,7 @@ public class Server {
 		
 		// Create TokenManager and pass it to ServerSocketHandler
 		tokenManager = new socket.TokenManager(console);
-		serverSocket = new ServerSocketHandler(console, packetReciver, tokenManager);
+		serverSocket = new ServerSocketHandler(console, packetReciver, tokenManager, playerList);
 		statusHandler = new ServerStatusHandler(serverSocket, console, tokenManager);
 		
 		tagHandler.loadAllTagEntities();
@@ -317,6 +319,10 @@ public class Server {
 		}
 	}
 	
+	public boolean getTPSPaused() {
+		return tpsPaused;
+	}
+	
 	private void tick() throws Exception {
 		// Create a copy to avoid ConcurrentModificationException when players disconnect during iteration
 		ArrayList<Player> playerList = new ArrayList<>(serverSocket.getPlayerList());
@@ -336,6 +342,7 @@ public class Server {
 				player.shouldReconcile = false; // Reset reconciliation flag after sending
 			}
 		}
+		
 		chatManager.processChatMessagesToSend();
 		
 		celestialObjectManager.tickCelestialObjects();
@@ -346,8 +353,6 @@ public class Server {
 		
 		saveCheck();
 		
-		// this needs to be done once a tick
-		entityManager.clearHashSets();
 	}
 	
 	private void checkResourceLimits() {

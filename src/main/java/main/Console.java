@@ -89,13 +89,15 @@ public class Console {
     
     protected void updateBar() throws Exception {
     	
-    	if (countedTicks == 0) print("WARNING TPS is 0");
+    	if (countedTicks == 0 && !server.getTPSPaused()) print("WARNING TPS is 0");
     	
     	Runtime runtime = Runtime.getRuntime();
     	
     	String infoText = "TPS: "+ countedTicks + "  " + 
         		"Players: " + server.getPlayers().size() + "  " + 
         		"Memory: " +  Math.round((runtime.totalMemory() - runtime.freeMemory())/byteToMegaByteRatio) + "/" + Math.round(runtime.totalMemory()/byteToMegaByteRatio) + "MB";
+    	
+    	if (server.getTPSPaused()) infoText = infoText + "  " + "[PAUSED]";
     	
     	if (!headless) {
     		onUpdateBar(infoText);
@@ -173,7 +175,7 @@ public class Console {
         		print(players.get(i).getUsername());
         	}
     	} else if (input.startsWith("generate planet")) {
-    		if (input.length() == 14) {
+    		if (input.length() == 15) {
     			generator.generatePlanet();
     		} else if (input.length() > 16) {
         		String generationType = input.substring(16);

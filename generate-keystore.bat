@@ -1,6 +1,6 @@
 @echo off
 REM This script generates a self-signed SSL certificate and keystore for Proto-Nova
-REM The keystore will be used for secure socket connections between client and server
+REM The keystore will be embedded in the application for automatic SSL/TLS
 
 setlocal enabledelayedexpansion
 
@@ -10,7 +10,6 @@ echo ===================================================
 echo.
 
 REM Set variables
-set KEYSTORE_FILE=keystore.jks
 set KEYSTORE_PASSWORD=proto-nova-secure
 set CERT_ALIAS=proto-nova-server
 set KEY_ALGORITHM=RSA
@@ -28,6 +27,14 @@ if %ERRORLEVEL% neq 0 (
     exit /b 1
 )
 
+REM Create resources directory
+if not exist "src\main\resources" (
+    mkdir "src\main\resources"
+    echo Created src\main\resources directory
+)
+
+set KEYSTORE_FILE=src\main\resources\keystore.jks
+
 echo Creating self-signed certificate...
 echo Keystore File: %KEYSTORE_FILE%
 echo Password: %KEYSTORE_PASSWORD%
@@ -36,9 +43,9 @@ echo Validity: %VALIDITY_DAYS% days
 echo.
 
 REM Delete existing keystore if it exists
-if exist %KEYSTORE_FILE% (
+if exist "%KEYSTORE_FILE%" (
     echo Deleting existing keystore...
-    del %KEYSTORE_FILE%
+    del "%KEYSTORE_FILE%"
 )
 
 REM Generate the keystore with self-signed certificate
@@ -46,11 +53,12 @@ keytool -genkeypair ^
     -alias %CERT_ALIAS% ^
     -keyalg %KEY_ALGORITHM% ^
     -keysize %KEY_SIZE% ^
-    -keystore %KEYSTORE_FILE% ^
+    -keystore "%KEYSTORE_FILE%" ^
     -storepass %KEYSTORE_PASSWORD% ^
     -keypass %KEYSTORE_PASSWORD% ^
     -validity %VALIDITY_DAYS% ^
-    -dname "CN=%COMMON_NAME%, O=%ORGANIZATION%, L=%LOCATION%"
+    -dname "CN=%COMMON_NAME%, O=%ORGANIZATION%, L=%LOCATION%" ^
+    -noprompt
 
 if %ERRORLEVEL% equ 0 (
     echo.
@@ -63,11 +71,15 @@ if %ERRORLEVEL% equ 0 (
     echo - Password: %KEYSTORE_PASSWORD%
     echo - Location: %CD%\%KEYSTORE_FILE%
     echo.
-    echo IMPORTANT: Copy the keystore file to:
-    echo - Server root directory: proto-nova-Server\%KEYSTORE_FILE%
-    echo - Client root directory: proto-nova-Client\%KEYSTORE_FILE%
+    echo NEXT STEPS:
+    echo 1. Copy the keystore to the client resources:
+    echo    copy "%KEYSTORE_FILE%" "..\proto-nova-Client\src\main\resources\keystore.jks"
     echo.
-    echo Your SSL/TLS connection is now configured!
+    echo 2. Rebuild the projects:
+    echo    gradle build
+    echo.
+    echo 3. Your application is now ready! Run it anywhere without setup!
+    echo.
 ) else (
     echo ERROR: Failed to create keystore!
     pause
