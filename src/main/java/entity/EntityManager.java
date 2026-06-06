@@ -1,5 +1,6 @@
 package entity;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -20,18 +21,20 @@ public class EntityManager {
 	private HashMap<Integer, Entity> entities;
 	private ChunkManager chunkManager;
 	private Console console;
-	private final HashSet<Integer> updatedEntities = new HashSet<>();
-	private final HashSet<Integer> removedEntities = new HashSet<>();
+	//private final HashSet<Integer> updatedEntities = new HashSet<>();
+	//private final HashSet<Integer> removedEntities = new HashSet<>();
 	private TagHandler tagHandler;
+	private ArrayList<Player> playerList;
 
-	public EntityManager(ServerLoader serverLoader,Console console) {
+	public EntityManager(ServerLoader serverLoader,Console console, ArrayList<Player> playerList) {
 		entities = serverLoader.loadEntities();
 		this.console = console;
+		this.playerList = playerList;
 	}
 	
 	public Entity makeNewEntity(String name,int mapId) {
 		
-		int currentId = Id.getNewId(entities.keySet(), removedEntities);
+		int currentId = Id.getNewId(entities.keySet());
 		
 		Vector vector = Vector.newBuilder()
 				.setX(0)
@@ -132,7 +135,7 @@ public class EntityManager {
 			chunkManager.addEntity(entity);
 			tagHandler.addEntity(entity);
 		}
-		updatedEntities.add(entity.getId());
+		sendUpdate(entity);
 		entities.put(entity.getId(), entity);
 	}
 	
@@ -167,7 +170,7 @@ public class EntityManager {
 		if (item != null) {
 			item = decrementAmount(item);
 			
-			if (isEntityRemoved(item)) {
+			if (!entity.getStackable() || item.getAmount() == 0) {
 				entity = entity.toBuilder()
 						.removeInventorySlots(slot)
 						.build();
@@ -183,7 +186,7 @@ public class EntityManager {
 	 * @param entity
 	 */
 	private void forceUpdateEntity(Entity entity) {
-		updatedEntities.add(entity.getId());
+		sendUpdate(entity);
 		entities.put(entity.getId(), entity);
 	}
 	
@@ -192,30 +195,9 @@ public class EntityManager {
 	 * @param entity
 	 */
 	public void removeEntity(Entity entity) {
-		removedEntities.add(entity.getId());
+		sendDeletion(entity);
 		chunkManager.removeEntityFromChunk(entity);
 		entities.remove(entity.getId());
-	}
-	
-	public void clearHashSets() {
-		removedEntities.clear();
-		updatedEntities.clear();
-	}
-	
-	public boolean isEntityRemoved(int id) {
-		return removedEntities.contains(id);
-	}
-	
-	public boolean isEntityRemoved(Entity entity) {
-		return isEntityRemoved(entity.getId());
-	}
-	
-	public boolean isEntityUpdated(int id) {
-		return updatedEntities.contains(id);
-	}
-	
-	public boolean isEntityUpdated(Entity entity) {
-		return isEntityUpdated(entity.getId());
 	}
 
 	public void setClasses(ChunkManager chunkManager, TagHandler tagHandler) {
@@ -232,5 +214,17 @@ public class EntityManager {
 		entities.put(newId, Entity.newBuilder().build());
 		
 		return newId;
+	}
+	
+	private void sendUpdate(Entity entity) {
+		for (Player player : playerList) {
+			player.updateList.add(entity.getId());
+		}
+	}
+	
+	private void sendDeletion(Entity entity) {
+		for (Player player : playerList) {
+			player.deleteList.add(entity.getId());
+		}
 	}
 }

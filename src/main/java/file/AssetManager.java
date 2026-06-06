@@ -31,7 +31,7 @@ public class AssetManager {
 		if (entityAssets.containsKey(name)) {
 			
 			Entity clone = entityAssets.get(name).toBuilder()
-					.setId(Id.getNewId(entityManager.getAllEntities().keySet()))
+					.setId(entityManager.reserveNewEntityId())
 					.setMap(mapId)
 					.build();
 			

@@ -34,7 +34,10 @@ public class Player {
 	private ServerSocketHandler serverSocketHandler;
 	private boolean addedToGame = false;
 	private boolean tokenValidated = false; // Track if client has been authenticated
-	public final HashSet<Integer> lastEntitiesSent = new HashSet<>();
+	
+	public final HashSet<Integer> entitiesSent = new HashSet<>();
+	public final HashSet<Integer> updateList = new HashSet<>();
+	public final HashSet<Integer> deleteList = new HashSet<>();
 	
 	public Player(Socket socket, Console console, PacketReciver packetReciver, ServerSocketHandler serverSocketHandler) {
 		this.socket = socket;

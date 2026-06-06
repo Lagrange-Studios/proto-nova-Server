@@ -23,6 +23,7 @@ import protonova.protobuf.ServerToClientPacketProto.ServerToClientPacket.Builder
 import protonova.protobuf.TileProto.Tile;
 import sound.SoundFinder;
 import space.CelestialObjectManager;
+import util.VectorMath;
 
 public class PacketMaker {
 
@@ -37,6 +38,7 @@ public class PacketMaker {
 	private CelestialObjectManager celestialObjectManager;
 	
 	private static final double renderDistance = 40;
+	private static final double renderDistanceSquared = Math.pow(renderDistance, 2);
 	private static final int TILE_RENDER_X = 30;
 	private static final int TILE_RENDER_Y = 20;
 	
@@ -153,7 +155,7 @@ public class PacketMaker {
 			}
 		}
 		
-		HashSet<Integer> lastEntitiesSent = player.lastEntitiesSent;
+		HashSet<Integer> entitiesSent = player.entitiesSent;
 		
 		HashSet<Integer> entitiesSentThisPacket = new HashSet<>();
 		
@@ -161,7 +163,7 @@ public class PacketMaker {
 		ArrayList<Entity> foundEntities = entityFinder.getAllEntitiesInRadis(playerEntity, renderDistance);
 		
 		for (Entity entity : foundEntities) {
-			if (entity != null && !lastEntitiesSent.contains(entity.getId())) {
+			if (entity != null && !entitiesSent.contains(entity.getId())) {
 				packet.addEntities(entity);
 				entitiesSentThisPacket.add(entity.getId());
 			}
@@ -170,19 +172,26 @@ public class PacketMaker {
 		// Add inventory
 		for (int id : playerEntity.getInventorySlotsMap().values()) {
 			Entity inventoryItem = entityManager.getEntity(id);
-			if (inventoryItem != null && !lastEntitiesSent.contains(inventoryItem.getId())) {
+			if (inventoryItem != null && !entitiesSent.contains(inventoryItem.getId())) {
 				packet.addEntities(inventoryItem);
 				entitiesSentThisPacket.add(inventoryItem.getId());
 			}
 		}
 		
 		//check for updates
-		for (int lastId : lastEntitiesSent) {
-			if (entityManager.isEntityUpdated(lastId)) {
-				packet.addEntities(entityManager.getEntity(lastId));
-				entitiesSentThisPacket.add(lastId);
+		for (int id : entitiesSent.toArray(new Integer[0])) {
+			if (player.deleteList.contains(id) ||
+				entityManager.getEntity(id) == null ||
+				VectorMath.distanceSquared(playerEntity.getPosition(), entityManager.getEntity(id).getPosition()) > renderDistanceSquared) {
+				
+				entitiesSent.remove(id);
+				packet.addRemovedEntities(id);
+				if (entitiesSentThisPacket.contains(id)) entitiesSentThisPacket.remove(id);
 			}
-			else if (entityManager.isEntityRemoved(lastId)) packet.addRemovedEntities(lastId);
+			else if (player.updateList.contains(id)) {
+				packet.addEntities(entityManager.getEntity(id));
+				entitiesSentThisPacket.add(id);
+			}
 		}
 
 		ArrayList<Audio> foundSounds = soundFinder.getAllSoundsInRadis(playerEntity, renderDistance);
@@ -203,7 +212,10 @@ public class PacketMaker {
 		
 		player.send(packet.build().toByteArray());
 		
-		// Add all entities sent this packet to lastEntitiesSent so updates are tracked next tick
-		lastEntitiesSent.addAll(entitiesSentThisPacket);
+		// Add all entities sent this packet to entitiesSent so updates are tracked next tick
+		entitiesSent.addAll(entitiesSentThisPacket);
+		
+		player.deleteList.clear();
+		player.updateList.clear();
 	}
 }
