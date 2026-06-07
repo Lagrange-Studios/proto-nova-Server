@@ -26,6 +26,7 @@ import file.ServerSaver;
 import file.Validater;
 import generation.Generator;
 import health.CombatManager;
+import health.HealthManager;
 import plane.PlaneManager;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.VectorProto.Vector;
@@ -67,6 +68,7 @@ public class Server {
 	private socket.TokenManager tokenManager;
 	private TagHandler tagHandler;
 	private CombatManager combatManager;
+	private HealthManager healthManager;
 	private boolean headless;
 	
 	private int saveCounter = 0;
@@ -142,6 +144,7 @@ public class Server {
 		chatManager.setChunkManager(chunkManager);
 		
 		combatManager = new CombatManager(entityManager);
+		healthManager = new HealthManager(combatManager, entityManager, console);
 		
 		entityFinder = new EntityFinder(entityManager.getAllEntities(),chunkManager);
 		soundFinder = new SoundFinder(entityManager.getAllEntities(),soundManager.getAllSounds(),chunkManager);
@@ -166,9 +169,9 @@ public class Server {
 			
 		}
 		
-		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager, craftingManager, tagHandler, combatManager);
+		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager, craftingManager, tagHandler, combatManager, healthManager);
 
-		packetReciver = new PacketReciver(entityManager, soundManager, chatManager, console, actionHandler, entityFinder);
+		packetReciver = new PacketReciver(entityManager, soundManager, chatManager, console, actionHandler, entityFinder, healthManager);
 		
 		// Create TokenManager and pass it to ServerSocketHandler
 		tokenManager = new socket.TokenManager(console);
