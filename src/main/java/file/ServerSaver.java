@@ -9,7 +9,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.json.JSONObject;
+
 import entity.EntityManager;
+import gamemode.GamemodeManager;
 import main.Server;
 import plane.PlaneManager;
 import protonova.protobuf.CelestialObjectProto.CelestialObject;
@@ -26,12 +29,14 @@ public class ServerSaver {
 	private EntityManager entityManager;
 	private PlaneManager planeManager;
 	private CelestialObjectManager celestialObjectManager;
+	private GamemodeManager gamemodeManager;
 	
-	public ServerSaver(Server server, EntityManager entityManager, PlaneManager planeManager, CelestialObjectManager celestialObjectManager) {
+	public ServerSaver(Server server, EntityManager entityManager, PlaneManager planeManager, CelestialObjectManager celestialObjectManager, GamemodeManager gamemodeManager) {
 		this.server = server;
 		this.entityManager = entityManager;
 		this.planeManager = planeManager;
 		this.celestialObjectManager = celestialObjectManager;
+		this.gamemodeManager = gamemodeManager;
 	}
 	
 	public String save() {
@@ -84,6 +89,14 @@ public class ServerSaver {
 		catch(Exception e) {
 			e.printStackTrace();
 			return e.getMessage();
+		}
+		
+		// saving gamemode
+		try {
+			JSONObject gamemode = gamemodeManager.getGamemode();
+			Files.write(Path.of("worldroot/gamemode.json"), gamemode.toString().getBytes());
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 		
 		

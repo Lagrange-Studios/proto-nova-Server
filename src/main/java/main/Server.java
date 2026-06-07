@@ -24,6 +24,7 @@ import file.AssetManager;
 import file.ServerLoader;
 import file.ServerSaver;
 import file.Validater;
+import gamemode.GamemodeManager;
 import generation.Generator;
 import health.CombatManager;
 import health.HealthManager;
@@ -67,6 +68,7 @@ public class Server {
 	private CraftingManager craftingManager;
 	private socket.TokenManager tokenManager;
 	private TagHandler tagHandler;
+	private GamemodeManager gamemodeManager;
 	private CombatManager combatManager;
 	private HealthManager healthManager;
 	private boolean headless;
@@ -126,13 +128,15 @@ public class Server {
 			System.exit(1);
 		}
 		
+		ArrayList<Player> playerList = new ArrayList<>();
+		
 		validater = new Validater(console);
 		
 		boolean shouldGenerate = validater.validateWorldFiles();
 		
 		serverLoader = new ServerLoader(console);
 		planeManager = new PlaneManager(serverLoader.loadWorld());
-		entityManager = new EntityManager(serverLoader,console);
+		entityManager = new EntityManager(serverLoader,console, playerList);
 		soundManager = new SoundManager(serverLoader,console, this);
 		chatManager = new ChatManager(serverLoader,console, this);
 		
@@ -170,12 +174,14 @@ public class Server {
 		}
 		
 		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager, craftingManager, tagHandler, combatManager, healthManager);
-
+		
+		gamemodeManager = new GamemodeManager(console, entityManager, entityFinder, planeManager, serverLoader.getGamemode());
+		
 		packetReciver = new PacketReciver(entityManager, soundManager, chatManager, console, actionHandler, entityFinder, healthManager);
 		
 		// Create TokenManager and pass it to ServerSocketHandler
 		tokenManager = new socket.TokenManager(console);
-		serverSocket = new ServerSocketHandler(console, packetReciver, tokenManager);
+		serverSocket = new ServerSocketHandler(console, packetReciver, tokenManager, playerList);
 		statusHandler = new ServerStatusHandler(serverSocket, console, tokenManager);
 		
 		tagHandler.loadAllTagEntities();
@@ -194,13 +200,13 @@ public class Server {
 			console.print("Failed to start certificate server: " + e.getMessage());
 		}
 		
-		serverSaver = new ServerSaver(this, entityManager, planeManager, celestialObjectManager);
+		serverSaver = new ServerSaver(this, entityManager, planeManager, celestialObjectManager, gamemodeManager);
 		
 		startThread();
 		
 		packetMaker = new PacketMaker(serverSocket,serverLoader,serverSaver,entityManager,entityFinder,soundFinder,chatFinder,planeManager,celestialObjectManager);
 		
-		console.setCommandClasses(serverSaver,generator,entityManager,planeManager,celestialObjectManager);
+		console.setCommandClasses(serverSaver,generator,entityManager,planeManager,celestialObjectManager, gamemodeManager);
 		
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 			shutdown();
@@ -316,6 +322,10 @@ public class Server {
 		}
 	}
 	
+	public boolean getTPSPaused() {
+		return tpsPaused;
+	}
+	
 	private void tick() throws Exception {
 		// Create a copy to avoid ConcurrentModificationException when players disconnect during iteration
 		ArrayList<Player> playerList = new ArrayList<>(serverSocket.getPlayerList());
@@ -335,6 +345,7 @@ public class Server {
 				player.shouldReconcile = false; // Reset reconciliation flag after sending
 			}
 		}
+		
 		chatManager.processChatMessagesToSend();
 		
 		celestialObjectManager.tickCelestialObjects();
@@ -345,8 +356,6 @@ public class Server {
 		
 		saveCheck();
 		
-		// this needs to be done once a tick
-		entityManager.clearHashSets();
 	}
 	
 	private void checkResourceLimits() {

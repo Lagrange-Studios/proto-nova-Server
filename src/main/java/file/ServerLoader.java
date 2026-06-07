@@ -11,6 +11,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import main.Console;
@@ -174,5 +175,16 @@ public class ServerLoader {
 		}
 		
 		return recipeList;
+	}
+	
+	public JSONObject getGamemode() {
+		File gamemodeFile = new File("worldroot/gamemode.json");
+		
+		try {
+			return new JSONObject(Files.readString(Path.of(gamemodeFile.getPath())));
+		} catch (JSONException | IOException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 }

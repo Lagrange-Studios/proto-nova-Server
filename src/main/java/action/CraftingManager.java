@@ -52,6 +52,11 @@ public class CraftingManager {
 			
 			if (recipe != null) {
 				
+				// WARNING: this could be a possible dupe glitch in the future but also maybe not since we track entity ids
+				Entity result = assetManager.getEntity(recipe.getResult(), component.getMap());
+				result = result.toBuilder().setPosition(component.getPosition()).build();
+				entityManager.updateEntity(result);
+				
 				if (recipe.getItem1Consumed()) {
 					craftingEntity = entityManager.decrementSlot(craftingEntity, selectedSlot);
 				}
@@ -60,9 +65,7 @@ public class CraftingManager {
 					component = entityManager.decrementAmount(component);
 				}
 				
-				Entity result = assetManager.getEntity(recipe.getResult(), component.getMap());
-				result = result.toBuilder().setPosition(component.getPosition()).build();
-				entityManager.updateEntity(result);
+				
 				
 			}
 		}

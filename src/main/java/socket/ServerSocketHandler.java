@@ -23,14 +23,14 @@ public class ServerSocketHandler {
 	private PacketMaker packetMaker;
 	private socket.TokenManager tokenManager;
 	
-	public ServerSocketHandler(Console console, PacketReciver packetReciver) {
-		this(console, packetReciver, null);
+	public ServerSocketHandler(Console console, PacketReciver packetReciver, ArrayList<Player> playerList) {
+		this(console, packetReciver, null, playerList);
 	}
 	
-	public ServerSocketHandler(Console console, PacketReciver packetReciver, socket.TokenManager tokenManager) {
+	public ServerSocketHandler(Console console, PacketReciver packetReciver, socket.TokenManager tokenManager, ArrayList<Player> playerList) {
 		this.console = console;
 		this.tokenManager = tokenManager;
-		playerList = new ArrayList<Player>();
+		this.playerList = playerList;
 		threadPool = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
 		
 		serverThread = new Thread(() -> {

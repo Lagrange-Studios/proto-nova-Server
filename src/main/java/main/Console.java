@@ -2,6 +2,7 @@ package main;
 
 import entity.EntityManager;
 import file.ServerSaver;
+import gamemode.GamemodeManager;
 import generation.Generator;
 import plane.PlaneManager;
 import protonova.protobuf.EntityProto.Entity;
@@ -15,6 +16,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.json.JSONObject;
+
 public class Console {
     protected Server server;
     protected int countedTicks = 0;
@@ -26,6 +29,7 @@ public class Console {
 	protected boolean headless;
 	private PlaneManager planeManager;
 	protected space.CelestialObjectManager celestialObjectManager;
+	private GamemodeManager gamemodeManager;
 
     public Console(Server server) {
     	this(server, true);
@@ -85,13 +89,15 @@ public class Console {
     
     protected void updateBar() throws Exception {
     	
-    	if (countedTicks == 0) print("WARNING TPS is 0");
+    	if (countedTicks == 0 && !server.getTPSPaused()) print("WARNING TPS is 0");
     	
     	Runtime runtime = Runtime.getRuntime();
     	
     	String infoText = "TPS: "+ countedTicks + "  " + 
         		"Players: " + server.getPlayers().size() + "  " + 
         		"Memory: " +  Math.round((runtime.totalMemory() - runtime.freeMemory())/byteToMegaByteRatio) + "/" + Math.round(runtime.totalMemory()/byteToMegaByteRatio) + "MB";
+    	
+    	if (server.getTPSPaused()) infoText = infoText + "  " + "[PAUSED]";
     	
     	if (!headless) {
     		onUpdateBar(infoText);
@@ -125,6 +131,7 @@ public class Console {
     		print(" - players: Shows all currently connected players");
     		print(" - generate planet [generation type (optional)]: Generates a new planet optionally passing in a generation type");
     		print(" - state: shows all the players states");
+    		print(" - gamemode: shows current gamemode and time");
     		print("");
     	} else if (input.equalsIgnoreCase("time")) {
     		print("Current time: " + LocalTime.now());
@@ -168,7 +175,7 @@ public class Console {
         		print(players.get(i).getUsername());
         	}
     	} else if (input.startsWith("generate planet")) {
-    		if (input.length() == 14) {
+    		if (input.length() == 15) {
     			generator.generatePlanet();
     		} else if (input.length() > 16) {
         		String generationType = input.substring(16);
@@ -233,6 +240,10 @@ public class Console {
     		for (Player player : server.getPlayers()) {
     			print(player.getUsername()+": "+player.getState()+" Map: "+entityManager.getEntity(player).getMap());
     		}
+    	} else if (input.equalsIgnoreCase("gamemode")) {
+    		JSONObject gamemode = gamemodeManager.getGamemode();
+    		print("Gamemode name: "+gamemode.getString("name"));
+    		print("Gamemode time: "+gamemode.getInt("time"));
     	} else {
     		print("Unknown command. Type 'help' for options.");
     		print("");
@@ -259,12 +270,13 @@ public class Console {
 		countedTicks++;		
 	}
 	
-	public void setCommandClasses(ServerSaver serverSaver, Generator generator, EntityManager entityManager, PlaneManager planeManager, CelestialObjectManager celestialObjectManager) {
+	public void setCommandClasses(ServerSaver serverSaver, Generator generator, EntityManager entityManager, PlaneManager planeManager, CelestialObjectManager celestialObjectManager, GamemodeManager gamemodeManager) {
 		this.serverSaver = serverSaver;
 		this.generator = generator;
 		this.entityManager = entityManager;
 		this.planeManager = planeManager;
 		this.celestialObjectManager = celestialObjectManager;
+		this.gamemodeManager = gamemodeManager;
 	}
 	
 	private void setGameTime(String timeType) {
