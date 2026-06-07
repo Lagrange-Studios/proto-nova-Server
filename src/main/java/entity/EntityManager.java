@@ -80,6 +80,10 @@ public class EntityManager {
 				.setSize(one)
 				.setId(currentId)
 				.setSpeed(7.5)
+				.setMaxSpeed(7.5)
+				.setMaxHealth(200)
+				.setCritHealth(100)
+				.setAlive(true)
 				.setVelocity(vector.toBuilder().build())
 				.setDirection(Direction.Down)
 				.setSelectedSlot("leftHand")
@@ -122,6 +126,12 @@ public class EntityManager {
 	 * @param entity
 	 */
 	public void updateEntity(Entity entity) {
+		if (entity.getMaxSpeed() <= 0) {
+			entity = entity.toBuilder()
+					.setMaxSpeed(7.5)
+					.build();
+		}
+		
 		if (entities.containsKey(entity.getId())) {
 			Entity oldEntity = entities.get(entity.getId());
 			
