@@ -2,6 +2,7 @@ package plane;
 
 import java.util.HashMap;
 
+import protonova.protobuf.CoordinateProto.Coordinate;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.PlaneProto.Plane;
 import protonova.protobuf.TileProto.Tile;
@@ -36,7 +37,23 @@ public class PlaneManager {
 		planes.put(plane.getId(), plane);
 	}
 	
+	public void updateTile(Tile tile, int id) {
+		Plane newPlane = planes.get(id).toBuilder()
+				.putTiles(CoordinateConverter.convert(tile.getCoordinate()), tile)
+				.build();
+		
+		updatePlane(newPlane);
+	}
+	
+	public Tile getTileAt(String coordinate, int id) {
+		return planes.get(id).getTilesMap().get(coordinate);
+	}
+	
 	public Tile getTileAt(Vector coordinate, int id) {
+		return planes.get(id).getTilesMap().get(CoordinateConverter.convert(coordinate));
+	}
+	
+	public Tile getTileAt(Coordinate coordinate, int id) {
 		return planes.get(id).getTilesMap().get(CoordinateConverter.convert(coordinate));
 	}
 }

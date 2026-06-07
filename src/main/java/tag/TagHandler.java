@@ -1,6 +1,5 @@
  package tag;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,7 +22,6 @@ public class TagHandler {
 	private HashMap<String, HashSet<Integer>> tagToEntities;
 	private HashMap<String, TagClass> tagToClass;
 	private Server server; 
-	private int tickCount = 0;
 	private AssetManager assetManager;
 	private EntityFinder entityFinder;
 	private PlaneManager planeManager;
@@ -38,6 +36,7 @@ public class TagHandler {
 		tagToClass = new HashMap<>();
 		loadAllTagClasses();
 	}
+	
 	
 	public void addEntity(Entity entity) {
 		if (entity.getTagsCount() > 0) {
@@ -65,13 +64,6 @@ public class TagHandler {
 	}
 
 	public void tick() {
-		boolean secondTick = false;
-		
-		if (tickCount >= server.TPS) {
-			secondTick = true;
-			tickCount = 0;
-		}
-		else tickCount++;
 		
 		for (String tag : tagToEntities.keySet()) {
 			// Create a copy to avoid ConcurrentModificationException when removing entities
@@ -82,7 +74,7 @@ public class TagHandler {
 				if (entity != null) {
 					TagClass tagClass = tagToClass.get(tag);
 					tagClass.tick(this,entity);
-					if (secondTick) tagClass.secondTick(this, entity);
+					if (server.globalTicks % server.TPS == 0) tagClass.secondTick(this, entity);
 				}
 				else tagToEntities.get(tag).remove((Integer) entityId);
 			}

@@ -242,8 +242,11 @@ public class Console {
     		}
     	} else if (input.equalsIgnoreCase("gamemode")) {
     		JSONObject gamemode = gamemodeManager.getGamemode();
-    		print("Gamemode name: "+gamemode.getString("name"));
-    		print("Gamemode time: "+gamemode.getInt("time"));
+    		print("Gamemode data:");
+    		
+    		for (String key : gamemode.keySet()) {
+    			print(key+": "+gamemode.get(key));
+    		}
     	} else {
     		print("Unknown command. Type 'help' for options.");
     		print("");
