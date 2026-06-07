@@ -170,7 +170,7 @@ public class Server {
 			
 		}
 		
-		gamemodeManager = new GamemodeManager(console, entityManager, entityFinder, planeManager, serverLoader.getGamemode());
+		gamemodeManager = new GamemodeManager(this, console, entityManager, entityFinder, planeManager, assetManager, serverLoader.getGamemode());
 		
 		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager, craftingManager, tagHandler, combatManager);
 
@@ -347,6 +347,7 @@ public class Server {
 		
 		celestialObjectManager.tickCelestialObjects();
 		tagHandler.tick();
+		gamemodeManager.tickGamemode();
 		
 		console.addTick();
 		globalTicks++;
