@@ -61,6 +61,8 @@ public class EntityManager {
 			    .setGeneticDamage(0)
 			    .setStructuralDamage(0)
 			    .setBleedingPerTick(0)
+			    .setHitCooldown(1000)
+			    .setCanAttack(true)
 			    .build();
 		Damage damage = Damage.newBuilder()
 				.setBruteDamage(0)

@@ -146,6 +146,12 @@ class AssetMakerGUIPanels {
         root.add(makeDamageTable("Damage multipliers", gui.dmgMultValues));
         root.add(Box.createVerticalStrut(8));
         root.add(makeDamageTable("Hit damage (on contact)", gui.hitDmgValues));
+        root.add(Box.createVerticalStrut(8));
+        JPanel cooldownRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        cooldownRow.add(new JLabel("Hit Cooldown (ms):"));
+        cooldownRow.add(gui.hitCooldownSpinner);
+        cooldownRow.add(new JLabel("(milliseconds before can attack again)"));
+        root.add(cooldownRow);
         root.add(Box.createVerticalGlue());
         return root;
     }

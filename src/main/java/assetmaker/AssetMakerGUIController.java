@@ -237,6 +237,7 @@ class AssetMakerGUIController {
         gui.maxHealthSpinner.setValue(100);
         gui.critHealthSpinner.setValue(50);
         gui.lightRangeField.setText("");
+        gui.hitCooldownSpinner.setValue(0);
 
         gui.isItemBox.setSelected(false);
         gui.stackableBox.setSelected(false);
@@ -305,6 +306,9 @@ class AssetMakerGUIController {
             gui.dmgMultValues[i].setValue(multArr[i]);
             gui.hitDmgValues[i].setValue(hitArr[i]);
         }
+        gui.hitCooldownSpinner.setValue(entity.getHitDamage().hasHitCooldown()
+            ? entity.getHitDamage().getHitCooldown()
+            : 0);
         gui.maxHealthSpinner.setValue(entity.getMaxHealth());
         gui.critHealthSpinner.setValue(entity.getCritHealth());
         if (entity.hasLightRange()) {
@@ -406,6 +410,7 @@ class AssetMakerGUIController {
                 .setGeneticDamage(spinFloat(gui.hitDmgValues[4]))
                 .setStructuralDamage(spinFloat(gui.hitDmgValues[5]))
                 .setBleedingPerTick(spinFloat(gui.hitDmgValues[6]))
+                .setHitCooldown((Integer) gui.hitCooldownSpinner.getValue())
                 .build();
 
         Entity.Builder b = Entity.newBuilder(existing)

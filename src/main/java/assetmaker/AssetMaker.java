@@ -51,6 +51,7 @@ public class AssetMaker {
                 .setGeneticDamage(0)
                 .setStructuralDamage(10)
                 .setBleedingPerTick(0)
+                .setHitCooldown(0)
                 .build();
         Damage damage = Damage.newBuilder()
                 .setBruteDamage(0)

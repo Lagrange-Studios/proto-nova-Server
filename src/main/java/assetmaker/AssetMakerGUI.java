@@ -79,6 +79,7 @@ public class AssetMakerGUI {
     final JSpinner[] dmgValues = new JSpinner[AssetMakerGUIPanels.DAMAGE_KEYS.length];
     final JSpinner[] dmgMultValues = new JSpinner[AssetMakerGUIPanels.DAMAGE_KEYS.length];
     final JSpinner[] hitDmgValues = new JSpinner[AssetMakerGUIPanels.DAMAGE_KEYS.length];
+    final JSpinner hitCooldownSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 30000, 50));
     final JSpinner maxHealthSpinner = new JSpinner(new SpinnerNumberModel(100, 0, Integer.MAX_VALUE, 1));
     final JSpinner critHealthSpinner = new JSpinner(new SpinnerNumberModel(50, 0, Integer.MAX_VALUE, 1));
     final JTextField lightRangeField = new JTextField();
