@@ -237,4 +237,11 @@ public class EntityManager {
 			player.deleteList.add(entity.getId());
 		}
 	}
+	
+	public boolean entityExist(Entity entity) {
+	    if (entity == null) return false;
+
+	    Entity stored = entities.get(entity.getId());
+	    return stored != null;
+	}
 }

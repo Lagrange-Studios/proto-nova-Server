@@ -17,6 +17,9 @@ public class CombatManager {
 	}
 	
 	public boolean attemptToDamage(Entity attacker, Entity defender) {
+		if (!entityManager.entityExist(attacker)) {
+			return false;
+		}
 		if (attacker.getReach() >= VectorMath.distance(attacker.getPosition(), defender.getPosition())) {
 			damage(attacker, defender);
 			return true;

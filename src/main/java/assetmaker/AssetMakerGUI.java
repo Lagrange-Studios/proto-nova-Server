@@ -34,9 +34,11 @@ import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.table.DefaultTableModel;
 
 import protonova.protobuf.EntityProto.Direction;
 import protonova.protobuf.EntityProto.Entity;
+import protonova.protobuf.LootTableItemProto.lootTableItem;
 
 public class AssetMakerGUI {
 
@@ -85,6 +87,20 @@ public class AssetMakerGUI {
     final JCheckBox stackableBox = new JCheckBox("Stackable");
     final JSpinner amountSpinner = new JSpinner(new SpinnerNumberModel(1, 0, Integer.MAX_VALUE, 1));
     final JTextArea inventorySlotsField = new JTextArea();
+
+    // Loot table fields
+    final DefaultTableModel lootTableModel = new DefaultTableModel(new Object[]{"Item Name", "Probability (%)", "Amount"}, 0) {
+        @Override
+        public Class<?> getColumnClass(int column) {
+            switch (column) {
+                case 0: return String.class;
+                case 1: return Double.class;
+                case 2: return Integer.class;
+                default: return Object.class;
+            }
+        }
+    };
+    final javax.swing.JTable lootTable = new javax.swing.JTable(lootTableModel);
 
     final JLabel statusLabel = new JLabel(" ");
     final JLabel loadedEntityLabel = new JLabel(" ");
@@ -241,6 +257,7 @@ public class AssetMakerGUI {
         tabs.addTab("Combat", p.buildCombatTab());
         tabs.addTab("Item / Stack", p.buildItemTab());
         tabs.addTab("Tags & Display", p.buildTagsTab());
+        tabs.addTab("Loot Table", p.buildLootTableTab());
         return tabs;
     }
 

@@ -1,6 +1,7 @@
 package health;
 
 import entity.EntityManager;
+import entity.LootTableManager;
 import main.Console;
 import protonova.protobuf.EntityProto.Entity;
 
@@ -9,16 +10,19 @@ public class HealthManager {
 	public CombatManager combatManager;
 	private EntityManager entityManager;
 	private Console console;
+	private LootTableManager lootTableManager;
 	
-	public HealthManager(CombatManager combatManager, EntityManager entityManager, Console console) {
+	public HealthManager(CombatManager combatManager, EntityManager entityManager, Console console, LootTableManager lootTableManager) {
 		this.combatManager = combatManager;
 		this.entityManager = entityManager;
 		this.console = console;
+		this.lootTableManager = lootTableManager;
 	}
 	
 	public void entityCheck(Entity entity) {
 		healthCheck(entity);
 		entity = entityManager.getEntity(entity.getId());
+		checkDeathOfEntity(entity);
 		if (!entity.getAlive()) return;
 		if (checkDeath(entity)) {
 			changeDeathState(entity, false);
@@ -42,6 +46,10 @@ public class HealthManager {
 	}
 	
 	private void healthCheck(Entity entity) {
+		changeSpeedFromHealth(entity);
+	}
+	
+	private void changeSpeedFromHealth(Entity entity) {
 		entity = entityManager.getEntity(entity.getId());
 		double totalDamage = combatManager.getDamage(entity);
 		double critHealthThreshold = entity.getCritHealth();
@@ -61,10 +69,26 @@ public class HealthManager {
 			healthSpeedMult = 0.9;
 		}
 		
-		
 		Entity.Builder entityBuilder = entity.toBuilder();
 		entityBuilder.setSpeed(entity.getMaxSpeed() * healthSpeedMult);
 		Entity updatedEntity = entityBuilder.build();
 		entityManager.updateEntity(updatedEntity);
+	}
+	
+	
+	
+	private void gibEntity() {
+		return;
+	}
+	
+	private void checkDeathOfEntity(Entity entity) {
+		if (combatManager.getDamage(entity) >= entity.getMaxHealth()) {
+			if (!entity.getDropsABody()) {
+				lootTableManager.dropLoot(entity);
+				entityManager.removeEntity(entity);
+			} else {
+				
+			}
+		}
 	}
 }

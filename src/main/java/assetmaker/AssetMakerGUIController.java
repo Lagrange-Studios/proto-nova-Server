@@ -12,6 +12,7 @@ import protonova.protobuf.DamageProto.DamageMultiplier;
 import protonova.protobuf.DamageProto.HitDamage;
 import protonova.protobuf.EntityProto.Direction;
 import protonova.protobuf.EntityProto.Entity;
+import protonova.protobuf.LootTableItemProto.lootTableItem;
 import protonova.protobuf.VectorProto.Vector;
 
 class AssetMakerGUIController {
@@ -242,6 +243,8 @@ class AssetMakerGUIController {
         gui.amountSpinner.setValue(1);
         gui.inventorySlotsField.setText("");
 
+        gui.lootTableModel.setRowCount(0);
+
         gui.loadedEntityLabel.setText(" ");
     }
 
@@ -314,6 +317,16 @@ class AssetMakerGUIController {
         gui.stackableBox.setSelected(entity.getStackable());
         gui.amountSpinner.setValue(entity.getAmount());
 
+        // Populate loot table
+        gui.lootTableModel.setRowCount(0);
+        for (lootTableItem item : entity.getLootTableList()) {
+            gui.lootTableModel.addRow(new Object[]{
+                item.getItemName(),
+                item.getProbability(),
+                item.hasAmount() ? item.getAmount() : 1
+            });
+        }
+
         Map<String, Integer> slots = entity.getInventorySlotsMap();
         StringBuilder inv = new StringBuilder();
         for (Map.Entry<String, Integer> e : slots.entrySet()) {
@@ -343,6 +356,7 @@ class AssetMakerGUIController {
                 .append("  shadow: ").append(entity.getCastShadow()).append("<br>");
         sb.append("tags:      ").append(String.join(", ", entity.getTagsList())).append("<br>");
         sb.append("slots:     ").append(entity.getInventorySlotsMap().size()).append("<br>");
+        sb.append("loot:      ").append(entity.getLootTableCount()).append(" entries").append("<br>");
         sb.append("</body></html>");
         gui.loadedEntityLabel.setText(sb.toString());
     }
@@ -460,6 +474,32 @@ class AssetMakerGUIController {
         if (!tex.isEmpty()) b.setDisplayTexture(tex); else b.clearDisplayTexture();
         String hex = gui.hexColorField.getText().trim();
         if (!hex.isEmpty()) b.setHexColor(hex); else b.clearHexColor();
+
+        // Build loot table from table model
+        List<lootTableItem> lootItems = new ArrayList<>();
+        for (int row = 0; row < gui.lootTableModel.getRowCount(); row++) {
+            String itemName = (String) gui.lootTableModel.getValueAt(row, 0);
+            if (itemName == null || itemName.trim().isEmpty()) continue;
+            double probability = 100.0;
+            Object probVal = gui.lootTableModel.getValueAt(row, 1);
+            if (probVal instanceof Number) {
+                probability = ((Number) probVal).doubleValue();
+            }
+            int amount = 1;
+            Object amtVal = gui.lootTableModel.getValueAt(row, 2);
+            if (amtVal instanceof Number) {
+                amount = ((Number) amtVal).intValue();
+            }
+            lootTableItem.Builder itemBuilder = lootTableItem.newBuilder()
+                    .setItemName(itemName.trim())
+                    .setProbability(probability);
+            if (amount > 1) {
+                itemBuilder.setAmount(amount);
+            }
+            lootItems.add(itemBuilder.build());
+        }
+        b.clearLootTable();
+        b.addAllLootTable(lootItems);
 
         Entity built = b.build();
         gui.dirty = true;

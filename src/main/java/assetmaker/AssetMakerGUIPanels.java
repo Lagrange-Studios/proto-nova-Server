@@ -1,5 +1,6 @@
 package assetmaker;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -12,6 +13,7 @@ import java.awt.Insets;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -213,6 +215,51 @@ class AssetMakerGUIPanels {
 
         c.weighty = 1;
         root.add(Box.createVerticalGlue(), c);
+        return root;
+    }
+
+    JPanel buildLootTableTab() {
+        JPanel root = new JPanel(new BorderLayout());
+        root.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+
+        JLabel help = new JLabel("<html>Define what items this entity drops when defeated. " +
+                "Probability is out of 100% (e.g. 25 = 25% chance). " +
+                "Amount is optional; leave 0 or 1 for single drop.</html>");
+        help.setFont(help.getFont().deriveFont(Font.PLAIN, 11f));
+        help.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
+        root.add(help, BorderLayout.NORTH);
+
+        gui.lootTable.setFillsViewportHeight(true);
+        gui.lootTable.getColumnModel().getColumn(0).setPreferredWidth(200);
+        gui.lootTable.getColumnModel().getColumn(1).setPreferredWidth(120);
+        gui.lootTable.getColumnModel().getColumn(2).setPreferredWidth(80);
+        JScrollPane scroll = new JScrollPane(gui.lootTable);
+        scroll.setPreferredSize(new Dimension(600, 250));
+        root.add(scroll, BorderLayout.CENTER);
+
+        // Button panel
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        JButton btnAdd = new JButton("Add Entry");
+        JButton btnRemove = new JButton("Remove Selected");
+        JButton btnClear = new JButton("Clear All");
+        buttonPanel.add(btnAdd);
+        buttonPanel.add(btnRemove);
+        buttonPanel.add(btnClear);
+        root.add(buttonPanel, BorderLayout.SOUTH);
+
+        btnAdd.addActionListener(e -> {
+            gui.lootTableModel.addRow(new Object[]{"new_item", 100.0, 1});
+        });
+        btnRemove.addActionListener(e -> {
+            int row = gui.lootTable.getSelectedRow();
+            if (row >= 0) {
+                gui.lootTableModel.removeRow(row);
+            }
+        });
+        btnClear.addActionListener(e -> {
+            gui.lootTableModel.setRowCount(0);
+        });
+
         return root;
     }
 
