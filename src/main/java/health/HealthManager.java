@@ -77,7 +77,8 @@ public class HealthManager {
 	
 	
 	
-	private void gibEntity() {
+	private void gibEntity(Entity entity) {
+		entityManager.removeEntity(entity);
 		return;
 	}
 	
@@ -87,7 +88,9 @@ public class HealthManager {
 				lootTableManager.dropLoot(entity);
 				entityManager.removeEntity(entity);
 			} else {
-				
+				if (entity.getMaxHealth() * 2.5 <= combatManager.getDamage(entity)) {
+					gibEntity(entity);
+				}
 			}
 		}
 	}
