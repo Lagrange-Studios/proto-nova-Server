@@ -42,13 +42,12 @@ public class LootTableManager {
 			double prob = item.getProbability();
 			int randomNumber = ThreadLocalRandom.current().nextInt(1, 101);
 			if (randomNumber <= prob) {
-				Entity newItem = entityManager.makeNewEntity(item.getItemName(), entity.getMap());
 				Entity result = assetManager.getEntity(item.getItemName(), entity.getMap());
 				float offset = ThreadLocalRandom.current().nextFloat(-7, 7);
 				Vector velocity = Vector.newBuilder().setX(offset).setY(offset).build();
 				result = result.toBuilder().setVelocity(velocity).setPosition(entity.getPosition()).build();
 				entityManager.updateEntity(result);
-				loot.add(newItem);
+				loot.add(result);
 			}
 		}
 		return loot;

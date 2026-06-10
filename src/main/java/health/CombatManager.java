@@ -23,7 +23,7 @@ public class CombatManager {
 	}
 	
 	public boolean attemptToDamage(Entity attacker, Entity defender) {
-		if (!entityManager.entityExist(attacker)) {
+		if (!entityManager.entityExist(attacker) || !entityManager.entityExist(defender)) {
 			return false;
 		}
 		if (attacker.getReach() >= VectorMath.distance(attacker.getPosition(), defender.getPosition()) && attacker.getHitDamage().getCanAttack()) {
