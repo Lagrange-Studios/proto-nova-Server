@@ -56,4 +56,8 @@ public class PlaneManager {
 	public Tile getTileAt(Coordinate coordinate, int id) {
 		return planes.get(id).getTilesMap().get(CoordinateConverter.convert(coordinate));
 	}
+	
+	public boolean planeExists(int id) {
+		return planes.containsKey(id);
+	}
 }

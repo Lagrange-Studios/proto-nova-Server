@@ -73,7 +73,7 @@ public class Fungi extends CataclysmClass {
 				.putInventorySlots("parentSpore", newSpore.getId())
 				.build();
 		
-		//System.out.println("[Fungi] "+CoordinateConverter.convert(vector));
+		System.out.println("[Fungi] "+CoordinateConverter.convert(vector));
 		
 		entityManager.updateEntity(newSpore);
 		return true;

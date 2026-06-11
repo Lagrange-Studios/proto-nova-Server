@@ -7,9 +7,8 @@ import protonova.protobuf.EntityProto.Entity;
 public class HealthManager {
 	
 	public CombatManager combatManager;
-	EntityManager entityManager;
+	private EntityManager entityManager;
 	private Console console;
-	private long lastDebugPrintTime = 0;
 	
 	public HealthManager(CombatManager combatManager, EntityManager entityManager, Console console) {
 		this.combatManager = combatManager;

@@ -12,11 +12,15 @@ import util.VectorMath;
 
 public class Fungus extends TagClass {
 
-	private final int chanceOfGrowthPerSecond = 2; // one in ten chance
+	private final int chanceOfGrowthPerSecond = 15; // one in ten chance
+	private final int evolveChancePerSecond = chanceOfGrowthPerSecond*2; // one in ten chance
 	
 	// tile info
 	public static final HashSet<String> allowedTiles = new HashSet<>(Arrays.asList("grass", "stone", "sand"));
 	public static final HashSet<String> conversionTiles = new HashSet<>(Arrays.asList("grass"));
+	
+	// fungus names
+	public static final HashSet<String> fungusNames = new HashSet<>(Arrays.asList("fungus vein", "fungus spore", "fortifeid fungus vein"));
 	
 	public String getTag() {
 		return "fungus";
@@ -35,14 +39,17 @@ public class Fungus extends TagClass {
 	 * This class makes the entity act as a fungus by spreading and growing
 	 * inventory:
 	 * -parentSpore: the spore this entity relies on. if it dies so does this
+	 * 
+	 * name: if name is fortified fungus vein then none of these changes will occur
 	 */
 	
 	public void secondTick(TagHandler tagHandler, Entity entity) {
 		
 		// check to see if parent is still alive
-		if (tagHandler.getEntityManager().getEntity(entity.getInventorySlotsMap().get("parentSpore")) != null) {
+		if (tagHandler.getEntityManager().getEntity(entity.getInventorySlotsMap().get("parentSpore")) != null ) {
 			
-			if (Random.randomInt(1, chanceOfGrowthPerSecond) == 1) {
+			if (Random.randomInt(1, chanceOfGrowthPerSecond) == 1 &&
+					!entity.getName().equals("fortifeid fungus vein")) {
 				Vector offset = Vector.newBuilder().build();
 				int direction = Random.randomInt(1, 4);
 
@@ -64,12 +71,16 @@ public class Fungus extends TagClass {
 				Vector newPosition = VectorMath.add(offset, entity.getPosition());
 				Tile tile = tagHandler.getPlaneManager().getTileAt(newPosition, entity.getMap());
 
-				// check t osee if we can spread to this tile
+				// check to see if we can spread to this tile
 				if (tile != null && allowedTiles.contains(tile.getName())) {
 					boolean open = true;
 					
 					for (Entity foundEntity : tagHandler.getEntityFinder().getAllEntitiesInRadius(newPosition, entity.getMap(), .99)) {
 						if (!foundEntity.getIsItem() && foundEntity.getId() != entity.getId()) {
+							
+							//if (foundEntity.getTagsList().contains("plant")) System.out.println(tagHandler.getCombatManager().attemptToDamage(entity,foundEntity));
+							if (foundEntity.getTagsList().contains("plant")) tagHandler.getCombatManager().attemptToDamage(entity,foundEntity);
+							
 							open = false;
 							break;
 						}
@@ -89,15 +100,21 @@ public class Fungus extends TagClass {
 						tile = convertTile(tile);
 						tagHandler.getPlaneManager().updateTile(tile, entity.getMap());
 					}
-					else {
-						// TODO: damage structure/entity
-					}
 				}
+			}
+			// chance to fortify
+			else if (entity.getName().equals("fungus vein") && Random.randomInt(1,evolveChancePerSecond) == 1 && 
+					surroundedByVeins(entity, tagHandler)) {
+				entity = entity.toBuilder()
+						.setName("fortifeid fungus vein")
+						.build();
+				
+				tagHandler.updateEntity(entity);
 			}
 		}
 		else {
 			Entity.Builder entityBuilder = entity.toBuilder()
-					.setDisplayTexture("dead fungus vein")
+					.setName("dead fungus vein")
 					.removeInventorySlots("parentSpore")
 					.clearTags();
 			
@@ -111,5 +128,27 @@ public class Fungus extends TagClass {
 			tagHandler.updateEntity(entity);
 				
 		}
+	}
+	
+	private boolean surroundedByVeins(Entity centralVein, TagHandler tagHandler) {
+		Vector start = centralVein.getPosition();
+		int mapId = centralVein.getMap();
+		
+		Vector positionUp = start.toBuilder().setY(start.getY()+1).build();
+		Vector positionDown = start.toBuilder().setY(start.getY()-1).build();
+		Vector positionRight = start.toBuilder().setX(start.getX()+1).build();
+		Vector positionLeft = start.toBuilder().setX(start.getX()-1).build();
+		
+		return containsVein(positionUp, mapId, tagHandler) && 
+				containsVein(positionDown, mapId, tagHandler) && 
+				containsVein(positionLeft, mapId, tagHandler) && 
+				containsVein(positionRight, mapId, tagHandler);
+	}
+	
+	private boolean containsVein(Vector position, int mapId, TagHandler tagHandler) {
+		for (Entity vein : tagHandler.getEntityFinder().getAllEntitiesInRadius(position, mapId, 0.5)) {
+			if (fungusNames.contains(vein.getName())) return true;
+		}
+		return false;
 	}
 }

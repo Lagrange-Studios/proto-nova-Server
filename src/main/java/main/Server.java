@@ -142,7 +142,7 @@ public class Server {
 		
 		assetManager = new AssetManager(entityManager,serverLoader.loadEntityAssets(), console);
 		
-		chunkManager = new ChunkManager(entityManager.getAllEntities());
+		chunkManager = new ChunkManager(entityManager.getAllEntities(), planeManager);
 		chunkManager.groupAllEntites();
 		soundManager.setChunkManager(chunkManager);
 		chatManager.setChunkManager(chunkManager);
@@ -160,7 +160,7 @@ public class Server {
 
 		craftingManager = new CraftingManager(entityManager, serverLoader.loadCraftingRecipes(), console, assetManager);
 
-		tagHandler = new TagHandler(this, entityManager, assetManager, entityFinder, planeManager);
+		tagHandler = new TagHandler(this, entityManager, assetManager, entityFinder, planeManager, combatManager);
 		entityManager.setClasses(chunkManager,tagHandler);
 		
 		if (shouldGenerate) {
