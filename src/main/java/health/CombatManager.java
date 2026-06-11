@@ -1,29 +1,72 @@
 package health;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import entity.EntityManager;
 import protonova.protobuf.DamageProto.Damage;
 import protonova.protobuf.DamageProto.DamageMultiplier;
 import protonova.protobuf.DamageProto.HitDamage;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.EntityProto.Entity.Builder;
+import util.TimedTask;
 import util.VectorMath;
 
 public class CombatManager {
 	
 	private EntityManager entityManager;
+	private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
 	
 	public CombatManager(EntityManager entityManager) {
 		this.entityManager = entityManager;
 	}
 	
 	public boolean attemptToDamage(Entity attacker, Entity defender) {
-		if (attacker.getReach() >= VectorMath.distance(attacker.getPosition(), defender.getPosition())) {
+		if (!entityManager.entityExist(attacker) || !entityManager.entityExist(defender)) {
+			return false;
+		}
+		if (attacker.getReach() >= VectorMath.distance(attacker.getPosition(), defender.getPosition()) && attacker.getHitDamage().getCanAttack()) {
+			startEntityHitCooldown(attacker);
 			damage(attacker, defender);
 			return true;
 		} else {
 			return false;
 			
 		}
+	}
+	
+	public void startEntityHitCooldown(Entity entity) {
+		Entity updated = entity.toBuilder().setHitDamage(
+				entity.getHitDamage().toBuilder()
+				.setCanAttack(false)).build();
+		entityManager.updateEntity(updated);
+		startTimedCooldown(entity);
+	}
+	
+	private void startTimedCooldown(Entity entity) {
+		
+		int cooldownTime =  entity.getHitDamage().getHitCooldown();
+		
+		if (entity.getInventorySlotsMap().containsKey(entity.getSelectedSlot())) {
+			cooldownTime = entity.getHitDamage().getHitCooldown();
+		}
+		
+		TimedTask task = new TimedTask(
+	            () -> {
+	            	resetCooldown(entity);
+	            },
+	            cooldownTime,
+	            TimeUnit.MILLISECONDS,
+	            scheduler
+	    );
+	}
+	
+	private void resetCooldown(Entity entity) {
+		Entity updated = entity.toBuilder().setHitDamage(
+				entity.getHitDamage().toBuilder()
+				.setCanAttack(true)).build();
+		entityManager.updateEntity(updated);
 	}
 	
 	private void damage(Entity attacker, Entity defender) {

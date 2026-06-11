@@ -19,6 +19,7 @@ import chat.ChatManager;
 import entity.ChunkManager;
 import entity.EntityFinder;
 import entity.EntityManager;
+import entity.LootTableManager;
 import enums.Player.State;
 import file.AssetManager;
 import file.ServerLoader;
@@ -71,6 +72,7 @@ public class Server {
 	private GamemodeManager gamemodeManager;
 	private CombatManager combatManager;
 	private HealthManager healthManager;
+	private LootTableManager lootTableManager;
 	private boolean headless;
 	
 	private int saveCounter = 0;
@@ -147,8 +149,10 @@ public class Server {
 		soundManager.setChunkManager(chunkManager);
 		chatManager.setChunkManager(chunkManager);
 		
+		lootTableManager = new LootTableManager(entityManager, console, assetManager);
+		
 		combatManager = new CombatManager(entityManager);
-		healthManager = new HealthManager(combatManager, entityManager, console);
+		healthManager = new HealthManager(combatManager, entityManager, console, lootTableManager);
 		
 		entityFinder = new EntityFinder(entityManager.getAllEntities(),chunkManager);
 		soundFinder = new SoundFinder(entityManager.getAllEntities(),soundManager.getAllSounds(),chunkManager);
