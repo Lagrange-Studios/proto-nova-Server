@@ -1,6 +1,7 @@
 package file;
 
 import java.util.HashMap;
+import java.util.HashSet;
 
 import entity.EntityManager;
 import main.Console;
@@ -10,10 +11,12 @@ import util.Id;
 public class AssetManager {
 	private HashMap<String, Entity> entityAssets;
 	private EntityManager entityManager;
+	private HashMap<String, HashSet<String>> typeMap;
 	
-	public AssetManager(EntityManager entityManager, HashMap<String, Entity> entityAssets, Console console) {
+	public AssetManager(EntityManager entityManager, HashMap<String, Entity> entityAssets, Console console, HashMap<String, HashSet<String>> typeMap) {
 		this.entityAssets = entityAssets;
 		this.entityManager = entityManager;
+		this.typeMap = typeMap;
 		
 		// just checking the entities so they don't load with improper values
 		for (Entity entity : entityAssets.values()) {
@@ -41,11 +44,15 @@ public class AssetManager {
 		return null;
 	}
 	
-	public Entity getReadOnlyEntity(String name) {
+	public final Entity getReadOnlyEntity(String name) {
 		return entityAssets.get(name);
 	}
 	
 	public boolean containsEntity(String name) {
 		return entityAssets.containsKey(name);
+	}
+	
+	public HashSet<String> getTypes(String typeName) {
+		return typeMap.get(typeName);
 	}
 }

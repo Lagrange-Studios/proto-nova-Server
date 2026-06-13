@@ -6,9 +6,12 @@ import java.util.HashMap;
 
 import org.json.JSONObject;
 
+import entity.EntityManager;
+import file.AssetManager;
 import main.Console;
 import perlinNoise.OpenSimplex2S;
 import protonova.protobuf.CoordinateProto.Coordinate;
+import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.PlaneProto.Plane;
 import protonova.protobuf.PlaneProto.Plane.Builder;
 import protonova.protobuf.TileProto.Tile;
@@ -22,10 +25,14 @@ public class PlaneGenerator {
 	
 	private HashMap<Integer, Plane> planes;
 	private Console console;
+	private AssetManager assetManager;
+	private EntityManager entityManager;
 	
-	public PlaneGenerator(HashMap<Integer, Plane> planes, Console console) {
+	public PlaneGenerator(HashMap<Integer, Plane> planes, Console console, AssetManager assetManager, EntityManager entityManager) {
 		this.planes = planes;
 		this.console = console;
+		this.assetManager = assetManager;
+		this.entityManager = entityManager;
 	}
 	
 	public Plane generatePlane(int sizeX, int sizeY, String generationType) {
@@ -100,6 +107,12 @@ public class PlaneGenerator {
 						.build();
 				
 				plane.putTiles(CoordinateConverter.convert(coordinate), tile);
+				
+				// border entity
+				if (Math.abs(x) == sizeX/2 || Math.abs(y) == sizeY/2) {
+					Entity borderEntity = assetManager.getEntity("border", planeId);
+					entityManager.updateEntity(borderEntity);
+				}
 			}
 		}		
 		

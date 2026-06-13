@@ -10,7 +10,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -186,5 +188,39 @@ public class ServerLoader {
 			e.printStackTrace();
 			return null;
 		}
+	}
+
+	public HashMap<String, HashSet<String>> loadTypes() {
+		HashMap<String, HashSet<String>> types = new HashMap<>();
+		
+		File typeFolder = new File("assets/types");
+		
+		if (typeFolder.exists()) {
+			for (File typeFile : typeFolder.listFiles()) {
+				try {
+					String name = typeFile.getName();
+					name = (String) name.subSequence(0, name.indexOf('.')-1);
+					
+					JSONArray array = new JSONArray(Files.readString(Path.of(typeFile.getPath())));
+					
+					HashSet<String> typesSet = new HashSet<>();
+					
+					for (int i=0;i<array.length();i++) {
+						typesSet.add(array.getString(i));
+					}
+					
+					types.put(name, typesSet);
+					
+				} catch (JSONException | IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		else {
+			System.err.println("Warning: No type folder was found");
+			console.print("Warning: No type folder was found");
+		}
+		
+		return types;
 	}
 }

@@ -38,7 +38,7 @@ public class Generator {
 		this.celestialObjectManager = celestialObjectManager;
 		
 		enviromentGenerator = new EnviromentGenerator(assetManager,entityManager,console, entityFinder);
-		planeGenerator = new PlaneGenerator(planeManager.getPlanes(),console);
+		planeGenerator = new PlaneGenerator(planeManager.getPlanes(),console, assetManager, entityManager);
 	}
 	
 	private String getRandomWorldType() {

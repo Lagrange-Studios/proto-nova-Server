@@ -14,6 +14,7 @@ import javax.swing.SwingUtilities;
 
 import action.ActionHandler;
 import action.CraftingManager;
+import ai.PathfindingHandler;
 import chat.ChatFinder;
 import chat.ChatManager;
 import entity.ChunkManager;
@@ -73,6 +74,7 @@ public class Server {
 	private CombatManager combatManager;
 	private HealthManager healthManager;
 	private LootTableManager lootTableManager;
+	private PathfindingHandler pathfindingHandler;
 	private boolean headless;
 	
 	private int saveCounter = 0;
@@ -142,7 +144,7 @@ public class Server {
 		soundManager = new SoundManager(serverLoader,console, this);
 		chatManager = new ChatManager(serverLoader,console, this);
 		
-		assetManager = new AssetManager(entityManager,serverLoader.loadEntityAssets(), console);
+		assetManager = new AssetManager(entityManager,serverLoader.loadEntityAssets(), console, serverLoader.loadTypes());
 		
 		chunkManager = new ChunkManager(entityManager.getAllEntities(), planeManager);
 		chunkManager.groupAllEntites();
@@ -163,7 +165,8 @@ public class Server {
 		generator = new Generator(console, planeManager, entityManager, assetManager, entityFinder, celestialObjectManager);
 
 		craftingManager = new CraftingManager(entityManager, serverLoader.loadCraftingRecipes(), console, assetManager);
-
+		pathfindingHandler = new PathfindingHandler(entityManager, entityFinder, this);
+		
 		tagHandler = new TagHandler(this, entityManager, assetManager, entityFinder, planeManager, combatManager);
 		entityManager.setClasses(chunkManager,tagHandler);
 		
