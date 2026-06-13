@@ -60,4 +60,9 @@ public class PlaneManager {
 	public boolean planeExists(int id) {
 		return planes.containsKey(id);
 	}
+	
+	public int getTileCount(int id) {
+		if (planes.containsKey(id)) return planes.get(id).getTilesCount();
+		else return 0;
+	}
 }

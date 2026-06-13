@@ -93,6 +93,11 @@ public class TagHandler {
 		return interactingEntity;
 	}
 	
+	public int getTagAmount(String tagName) {
+		if (tagToEntities.containsKey(tagName)) return tagToEntities.get(tagName).size();
+		else return 0;
+	}
+	
 	/**
 	 * Shorthand for update entity
 	 */

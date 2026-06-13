@@ -15,6 +15,7 @@ import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.PlaneProto.Plane;
 import protonova.protobuf.PlaneProto.Plane.Builder;
 import protonova.protobuf.TileProto.Tile;
+import protonova.protobuf.VectorProto.Vector;
 import util.CoordinateConverter;
 import util.FileReader;
 import util.Id;
@@ -111,6 +112,10 @@ public class PlaneGenerator {
 				// border entity
 				if (Math.abs(x) == sizeX/2 || Math.abs(y) == sizeY/2) {
 					Entity borderEntity = assetManager.getEntity("border", planeId);
+					borderEntity = borderEntity.toBuilder()
+							.setPosition(Vector.newBuilder().setX(x).setY(y).build())
+							.build();
+					
 					entityManager.updateEntity(borderEntity);
 				}
 			}

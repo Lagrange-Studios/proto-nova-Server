@@ -9,6 +9,7 @@ import gamemode.Cataclysm;
 import gamemode.GamemodeManager;
 import main.Console;
 import plane.PlaneManager;
+import tag.TagHandler;
 
 public class CataclysmClass {
 
@@ -20,12 +21,13 @@ public class CataclysmClass {
 	protected Cataclysm cataclysm;
 	protected JSONObject gamemode;
 	protected AssetManager assetManager;
+	protected TagHandler tagHandler;
 	
 	protected int introStartTime;
 	protected int endStartTime;
 	
 	public CataclysmClass(Console console, EntityManager entityManager, EntityFinder entityFinder,
-			PlaneManager planeManager, GamemodeManager gamemodeManager, AssetManager assetManager, Cataclysm cataclysm, String ... arguments) {
+			PlaneManager planeManager, GamemodeManager gamemodeManager, AssetManager assetManager, Cataclysm cataclysm, TagHandler tagHandler, String ... arguments) {
 		this.console = console;
 		this.entityManager = entityManager;
 		this.entityFinder = entityFinder;
@@ -34,6 +36,7 @@ public class CataclysmClass {
 		this.cataclysm = cataclysm;
 		this.assetManager = assetManager;
 		this.gamemode = gamemodeManager.getGamemode();
+		this.tagHandler = tagHandler;
 	}
 	
 	/**
@@ -58,12 +61,20 @@ public class CataclysmClass {
 	}
 	
 	/**
-	 * Checks wether to switch the state. This is not called automatically
+	 * Checks whether to switch the state. This is not called automatically
 	 */
 	public void checkStateSwitch() {
 		int time = (int) gamemodeManager.getGamemodeTimeSeconds();
 		
 		if (time > introStartTime) gamemode.put("cataclysmState", "intro");
 		if (time > endStartTime) gamemode.put("cataclysmState", "end");
+	}
+	
+	/**
+	 * Returns the winner of the cataclysm
+	 * @return players or the name of the cataclysm or if no one won yet returns null
+	 */
+	public String getWinner() {
+		return null;
 	}
 }

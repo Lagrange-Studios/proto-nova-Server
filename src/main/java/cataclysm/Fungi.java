@@ -11,19 +11,22 @@ import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.TileProto.Tile;
 import protonova.protobuf.VectorProto.Vector;
 import tag.Fungus;
+import tag.TagHandler;
 import util.CoordinateConverter;
 import util.Random;
 
 public class Fungi extends CataclysmClass {
 	
 	private final int tilesPerIntroSpore = 30000;
+	private final double FUNGUS_WIN_PERCENTAGE  = 0.4;
+	private final double FUNGUS_LOOSE_PERCENTAGE  = 0.05;
 	
 	/**
 	 * The Fungi Cataclysm consists of fungus spores appearing across the planet and slowly growing and consuming the world
 	 */
 	public Fungi(Console console, EntityManager entityManager, EntityFinder entityFinder, PlaneManager planeManager,
-			GamemodeManager gamemodeManager, AssetManager assetManager, Cataclysm cataclysm, String[] arguments) {
-		super(console, entityManager, entityFinder, planeManager, gamemodeManager, assetManager, cataclysm, arguments);
+			GamemodeManager gamemodeManager, AssetManager assetManager, Cataclysm cataclysm, TagHandler tagHandler, String[] arguments) {
+		super(console, entityManager, entityFinder, planeManager, gamemodeManager, assetManager, cataclysm, tagHandler, arguments);
 		
 		introStartTime = 60;
 		endStartTime = 600;
@@ -53,6 +56,21 @@ public class Fungi extends CataclysmClass {
 		if (!state.equals(gamemode.get("cataclysmState"))) System.out.println("[Fungi]"+gamemode.get("cataclysmState"));
 	}
 	
+	public String getWinner() {
+		String state = gamemode.getString("cataclysmState");
+		
+		if (state.equals("end")) {
+			int fungusCount = tagHandler.getTagAmount("fungus");
+			int tileCount = planeManager.getTileCount(1);
+			
+			double currentRatio = (double) fungusCount/tileCount;
+			
+			if (currentRatio >= FUNGUS_WIN_PERCENTAGE) return getName();
+			else if (currentRatio <= FUNGUS_LOOSE_PERCENTAGE) return "players";
+		}
+		
+		return null;
+	}
 	
 	
 	private boolean spawnNewSpore() {
