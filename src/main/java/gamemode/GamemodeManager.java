@@ -69,6 +69,7 @@ public class GamemodeManager {
 			console.print("[Game Over]");
 			console.print("Winner: "+gamemode.getString("winner"));
 			console.print("Time: "+hours+"h, "+minutes+"m");
+			console.print("Currently the only way to reset for a new game is to close the server and delete the world root folder");
 		}
 	}
 	
