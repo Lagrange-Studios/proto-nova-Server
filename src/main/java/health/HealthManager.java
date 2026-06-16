@@ -78,8 +78,13 @@ public class HealthManager {
 	
 	
 	private void gibEntity(Entity entity) {
+		dropOrgans(entity);
 		entityManager.removeEntity(entity);
 		return;
+	}
+	
+	private void dropOrgans(Entity entity) {
+		
 	}
 	
 	private void checkDeathOfEntity(Entity entity) {

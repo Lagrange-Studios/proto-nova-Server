@@ -9,6 +9,7 @@ import main.Console;
 import protonova.protobuf.CraftingRecipeProto.CraftingRecipe;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.LootTableItemProto.lootTableItem;
+import protonova.protobuf.OrgansProto.Organs;
 import protonova.protobuf.VectorProto.Vector;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -52,5 +53,17 @@ public class LootTableManager {
 		}
 		return loot;
 	}
+	
+	public void dropEverythingIncludingInsides(Entity entity) {
+		
+		for (lootTableItem item : getLootTable(entity)) {			
+			Entity result = assetManager.getEntity(item.getItemName(), entity.getMap());
+			float offset = ThreadLocalRandom.current().nextFloat(-7, 7);
+			Vector velocity = Vector.newBuilder().setX(offset).setY(offset).build();
+			result = result.toBuilder().setVelocity(velocity).setPosition(entity.getPosition()).build();
+			entityManager.updateEntity(result);			
+		}
+	}
+	
 	
 }
