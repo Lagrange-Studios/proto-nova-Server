@@ -13,6 +13,7 @@ import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ScanResult;
 import main.Console;
 import plane.PlaneManager;
+import tag.TagHandler;
 import util.Random;
 
 public class Cataclysm extends GamemodeClass {
@@ -20,6 +21,8 @@ public class Cataclysm extends GamemodeClass {
 
 	private HashMap<String, Class> nameToStaticCataclysm = new HashMap<>();
 	private CataclysmClass currentCataclysm;
+	private final int winCheckIntervalSeconds = 60;
+	private int winCheckInterval = 0;
 	
 	/**
 	 * Cataclysm gamemode consists of a random cataclysm that occurs throughout the time of the server
@@ -29,8 +32,8 @@ public class Cataclysm extends GamemodeClass {
 	 * state3: end, the cataclysm becomes full force and the effects are felt across the world
 	 */
 	public Cataclysm(Console console, EntityManager entityManager, EntityFinder entityFinder,
-			PlaneManager planeManager, GamemodeManager gamemodeManager, AssetManager assetManager,  String ... arguments) {
-		super(console, entityManager, entityFinder, planeManager, gamemodeManager, assetManager, arguments);
+			PlaneManager planeManager, GamemodeManager gamemodeManager, AssetManager assetManager, TagHandler tagHandler,  String ... arguments) {
+		super(console, entityManager, entityFinder, planeManager, gamemodeManager, assetManager, tagHandler, arguments);
 		
 		loadAllloadCataclysms();
 		
@@ -57,6 +60,18 @@ public class Cataclysm extends GamemodeClass {
 	
 	public void secondTick() {
 		currentCataclysm.secondTick();
+		
+		winCheckInterval++;
+		if (winCheckInterval >= winCheckIntervalSeconds) {
+			winCheckInterval = 0;
+			
+			String winner = currentCataclysm.getWinner();
+			
+			if (winner != null) {
+				gamemode.put("gameOver", true);
+				gamemode.put("winner", winner);
+			}
+		}
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -68,8 +83,8 @@ public class Cataclysm extends GamemodeClass {
 		else {
 			try {
 				currentCataclysm = (CataclysmClass) nameToStaticCataclysm.get(cataclysmName).getDeclaredConstructor(
-						Console.class,EntityManager.class,EntityFinder.class,PlaneManager.class,GamemodeManager.class,AssetManager.class,Cataclysm.class,String[].class
-						).newInstance(console,entityManager,entityFinder,planeManager,gamemodeManager,assetManager,this,arguments);
+						Console.class,EntityManager.class,EntityFinder.class,PlaneManager.class,GamemodeManager.class,AssetManager.class,Cataclysm.class,TagHandler.class,String[].class
+						).newInstance(console,entityManager,entityFinder,planeManager,gamemodeManager,assetManager,this,tagHandler,arguments);
 				
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException | NoSuchMethodException | SecurityException e) {

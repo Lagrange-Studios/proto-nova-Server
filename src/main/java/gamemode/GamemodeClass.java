@@ -7,6 +7,7 @@ import entity.EntityManager;
 import file.AssetManager;
 import main.Console;
 import plane.PlaneManager;
+import tag.TagHandler;
 
 public class GamemodeClass {
 
@@ -17,9 +18,10 @@ public class GamemodeClass {
 	protected GamemodeManager gamemodeManager;
 	protected JSONObject gamemode;
 	protected AssetManager assetManager;
+	protected TagHandler tagHandler;
 	
 	public GamemodeClass(Console console, EntityManager entityManager, EntityFinder entityFinder,
-			PlaneManager planeManager, GamemodeManager gamemodeManager, AssetManager assetManager,  String ... arguments) {
+			PlaneManager planeManager, GamemodeManager gamemodeManager, AssetManager assetManager, TagHandler tagHandler,  String ... arguments) {
 		this.console = console;
 		this.entityManager = entityManager;
 		this.entityFinder = entityFinder;
@@ -27,6 +29,7 @@ public class GamemodeClass {
 		this.gamemodeManager = gamemodeManager;
 		this.assetManager = assetManager;
 		this.gamemode = gamemodeManager.getGamemode();
+		this.tagHandler = tagHandler;
 	}
 	
 	/**

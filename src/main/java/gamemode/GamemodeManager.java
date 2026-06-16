@@ -17,6 +17,7 @@ import main.Console;
 import main.Server;
 import plane.PlaneManager;
 import tag.TagClass;
+import tag.TagHandler;
 
 public class GamemodeManager {
 
@@ -29,9 +30,11 @@ public class GamemodeManager {
 	private GamemodeClass currentGamemode;
 	private Server server;
 	private AssetManager assetManager;
+	private TagHandler tagHandler;
+	private boolean printedGameOver = false;
 
 	public GamemodeManager(Server server, Console console, EntityManager entityManager, EntityFinder entityFinder,
-			PlaneManager planeManager, AssetManager assetManager, JSONObject gamemode) {
+			PlaneManager planeManager, AssetManager assetManager, JSONObject gamemode, TagHandler tagHandler) {
 		this.console = console;
 		this.entityManager = entityManager;
 		this.entityFinder = entityFinder;
@@ -39,6 +42,7 @@ public class GamemodeManager {
 		this.gamemode = gamemode;
 		this.server = server;
 		this.assetManager = assetManager;
+		this.tagHandler = tagHandler;
 		
 		loadAllGamemodes();
 		loadGamemode(gamemode.getString("name"));
@@ -53,6 +57,19 @@ public class GamemodeManager {
 			
 			currentGamemode.tick();
 			if (server.globalTicks % server.TPS == 0) currentGamemode.secondTick();
+		}
+		else if (!printedGameOver) {
+			printedGameOver = true;
+			
+			int seconds = gamemode.getInt("time") / server.TPS;
+			int minutes = seconds / 60;
+			int hours = minutes / 60;
+			minutes = minutes % 60;
+			
+			console.print("[Game Over]");
+			console.print("Winner: "+gamemode.getString("winner"));
+			console.print("Time: "+hours+"h, "+minutes+"m");
+			console.print("Currently the only way to reset for a new game is to close the server and delete the world root folder");
 		}
 	}
 	
@@ -77,8 +94,8 @@ public class GamemodeManager {
 		else {
 			try {
 				currentGamemode = (GamemodeClass) nameToStaticGamemode.get(gamemodeName).getDeclaredConstructor(
-						Console.class,EntityManager.class,EntityFinder.class,PlaneManager.class,GamemodeManager.class,AssetManager.class,String[].class
-						).newInstance(console,entityManager,entityFinder,planeManager,this,assetManager,arguments);
+						Console.class,EntityManager.class,EntityFinder.class,PlaneManager.class,GamemodeManager.class,AssetManager.class, TagHandler.class,String[].class
+						).newInstance(console,entityManager,entityFinder,planeManager,this,assetManager,tagHandler,arguments);
 				
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException | NoSuchMethodException | SecurityException e) {

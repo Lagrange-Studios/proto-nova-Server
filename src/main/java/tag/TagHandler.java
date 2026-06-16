@@ -8,6 +8,7 @@ import java.util.HashSet;
 import entity.EntityFinder;
 import entity.EntityManager;
 import file.AssetManager;
+import health.CombatManager;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ScanResult;
@@ -25,13 +26,15 @@ public class TagHandler {
 	private AssetManager assetManager;
 	private EntityFinder entityFinder;
 	private PlaneManager planeManager;
+	private CombatManager combatManager;
 
-	public TagHandler(Server server, EntityManager entityManager, AssetManager assetManager, EntityFinder entityFinder, PlaneManager planeManager) {
+	public TagHandler(Server server, EntityManager entityManager, AssetManager assetManager, EntityFinder entityFinder, PlaneManager planeManager, CombatManager combatManager) {
 		this.server = server;
 		this.entityManager = entityManager;
 		this.assetManager = assetManager;
 		this.entityFinder = entityFinder;
 		this.planeManager = planeManager;
+		this.combatManager = combatManager;
 		tagToEntities = new HashMap<>();
 		tagToClass = new HashMap<>();
 		loadAllTagClasses();
@@ -90,11 +93,20 @@ public class TagHandler {
 		return interactingEntity;
 	}
 	
+	public int getTagAmount(String tagName) {
+		if (tagToEntities.containsKey(tagName)) return tagToEntities.get(tagName).size();
+		else return 0;
+	}
+	
 	/**
 	 * Shorthand for update entity
 	 */
 	public void updateEntity(Entity entity) {
 		entityManager.updateEntity(entity);
+	}
+	
+	public CombatManager getCombatManager() {
+		return combatManager;
 	}
 	
 	public PlaneManager getPlaneManager() {
