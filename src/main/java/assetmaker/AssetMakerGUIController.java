@@ -208,7 +208,7 @@ class AssetMakerGUIController {
     private void clearForm() {
         gui.nameField.setText("");
         gui.idField.setText("0");
-        gui.mapField.setText("1");
+        gui.mapField.setText("0");
         gui.selectedSlotField.setText("");
         gui.directionCombo.setSelectedItem(Direction.Down);
         gui.tagsField.setText("");
@@ -223,25 +223,25 @@ class AssetMakerGUIController {
         gui.sizeYField.setText("1");
         gui.speedField.setText("0");
         gui.maxSpeedField.setText("0");
-        gui.reachField.setText("1.5");
+        gui.reachField.setText("0");
         gui.anchoredBox.setSelected(false);
         gui.canCollideBox.setSelected(false);
         gui.castShadowBox.setSelected(false);
-        gui.aliveBox.setSelected(true);
+        gui.aliveBox.setSelected(false);
 
         for (int i = 0; i < AssetMakerGUIPanels.DAMAGE_KEYS.length; i++) {
             gui.dmgValues[i].setValue(0.0f);
             gui.dmgMultValues[i].setValue(1.0f);
             gui.hitDmgValues[i].setValue(0.0f);
         }
-        gui.maxHealthSpinner.setValue(100);
-        gui.critHealthSpinner.setValue(50);
+        gui.maxHealthSpinner.setValue(0);
+        gui.critHealthSpinner.setValue(0);
         gui.lightRangeField.setText("");
         gui.hitCooldownSpinner.setValue(0);
 
         gui.isItemBox.setSelected(false);
         gui.stackableBox.setSelected(false);
-        gui.amountSpinner.setValue(1);
+        gui.amountSpinner.setValue(0);
         gui.inventorySlotsField.setText("");
 
         gui.lootTableModel.setRowCount(0);
