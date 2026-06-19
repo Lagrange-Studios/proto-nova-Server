@@ -140,7 +140,7 @@ public class Server {
 		
 		serverLoader = new ServerLoader(console);
 		planeManager = new PlaneManager(serverLoader.loadWorld());
-		entityManager = new EntityManager(serverLoader,console, playerList);
+		entityManager = new EntityManager(serverLoader,console, playerList, this);
 		soundManager = new SoundManager(serverLoader,console, this);
 		chatManager = new ChatManager(serverLoader,console, this);
 		
@@ -168,7 +168,7 @@ public class Server {
 		pathfindingHandler = new PathfindingHandler(entityManager, entityFinder, this);
 		
 		tagHandler = new TagHandler(this, entityManager, assetManager, entityFinder, planeManager, combatManager);
-		entityManager.setClasses(chunkManager,tagHandler);
+		entityManager.setClasses(chunkManager,tagHandler, entityFinder);
 		
 		if (shouldGenerate) {
 			generator.generatePlanet("continents");
@@ -183,7 +183,7 @@ public class Server {
 		gamemodeManager = new GamemodeManager(this, console, entityManager, entityFinder, planeManager, assetManager, serverLoader.getGamemode(), tagHandler);
 		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager, craftingManager, tagHandler, combatManager, healthManager);
 		
-		packetReciver = new PacketReciver(entityManager, soundManager, chatManager, console, actionHandler, entityFinder, healthManager);
+		packetReciver = new PacketReciver(entityManager, soundManager, chatManager, console, actionHandler, entityFinder, healthManager, this);
 		
 		// Create TokenManager and pass it to ServerSocketHandler
 		tokenManager = new socket.TokenManager(console);
@@ -356,6 +356,8 @@ public class Server {
 		
 		celestialObjectManager.tickCelestialObjects();
 		tagHandler.tick();
+		entityManager.tick();
+		
 		gamemodeManager.tickGamemode();
 		
 		console.addTick();

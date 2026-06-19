@@ -10,6 +10,7 @@ import entity.EntityFinder;
 import entity.EntityManager;
 import health.HealthManager;
 import main.Console;
+import main.Server;
 import protonova.protobuf.ActionProto.Action;
 import protonova.protobuf.ActionProto.ActionType;
 import protonova.protobuf.ClientToServerPacketProto.ClientToServerPacket;
@@ -24,14 +25,15 @@ public class PacketReciver {
 	private EntityManager entityManager;
 	private SoundManager soundManager;
 	private ChatManager chatManager;
-	private final double reconcileDistance = 1;
 	private Console console;
 	private ActionHandler actionHandler;
 	private EntityFinder entityFinder;
 	private HealthManager healthManager;
+	private final double reconcileCoefficient = 5;
 	private long lastDebugPrintTime = 0;
+	private Server server;
 	
-	public PacketReciver(EntityManager entityManager, SoundManager soundManager, ChatManager chatManager, Console console, ActionHandler actionHandler, EntityFinder entityFinder, HealthManager healthManager) {
+	public PacketReciver(EntityManager entityManager, SoundManager soundManager, ChatManager chatManager, Console console, ActionHandler actionHandler, EntityFinder entityFinder, HealthManager healthManager, Server server) {
 		this.entityManager = entityManager;
 		this.soundManager = soundManager;
 		this.chatManager = chatManager;
@@ -39,6 +41,7 @@ public class PacketReciver {
 		this.actionHandler = actionHandler;
 		this.entityFinder = entityFinder;
 		this.healthManager = healthManager;
+		this.server = server;
 	}
 	
 	public void recivePacket(Player player, ClientToServerPacket packet) {
@@ -78,10 +81,9 @@ public class PacketReciver {
 			chatManager.addChatToQueue(packet.getChatMessage(i));
 		}
 		
-		Entity finalEntity = simulateVelocity(serverEntity);
-		entityManager.updateEntity(finalEntity);
+		entityManager.updateEntity(serverEntity);
 		
-		healthManager.entityCheck(finalEntity);
+		healthManager.entityCheck(serverEntity);
 		
 		long currentTime = System.currentTimeMillis();
 		if (currentTime - lastDebugPrintTime >= 1000) {
@@ -90,62 +92,10 @@ public class PacketReciver {
 			lastDebugPrintTime = currentTime;
 		}
 		
-		if (VectorMath.distance(clientEntity.getPosition(), serverEntity.getPosition()) >= reconcileDistance) {
+		if (VectorMath.distance(clientEntity.getPosition(), serverEntity.getPosition()) >= (serverEntity.getSpeed()/server.TPS)*reconcileCoefficient) {
 			player.shouldReconcile = true;
 			console.print("WARNING: Player "+player.getUsername()+" is moving too fast!");
 			
 		}
-	}
-	
-	private Entity simulateVelocity(Entity entity) {
-		
-		ArrayList<Entity> closeEntities = entityFinder.getAllEntitiesInRadis(entity, 10);
-		
-		Entity entityXAxis = checkCollision(EntitySimulation.simulateVelocityXAxis(entity),entity,closeEntities);
-		
-		// check if we actualy did anything
-		if (entityXAxis.getPosition().equals(entity.getPosition())) {
-			// if not then just remove the veloicty
-			
-			Vector newVeloicty = entity.getVelocity().toBuilder()
-					.setX(0)
-					.build();
-			
-			entity = entity.toBuilder()
-					.setVelocity(newVeloicty)
-					.build();
-		}
-		else entity = entityXAxis;
-		
-		Entity entityYAxis = checkCollision(EntitySimulation.simulateVelocityYAxis(entity),entity,closeEntities);
-		
-		// check if we actualy did anything
-		if (entityYAxis.getPosition().equals(entity.getPosition())) {
-			// if not then just remove the veloicty
-			
-			Vector newVeloicty = entity.getVelocity().toBuilder()
-					.setY(0)
-					.build();
-			
-			entity = entity.toBuilder()
-					.setVelocity(newVeloicty)
-					.build();
-		}
-		else entity = entityYAxis;
-
-		return entity;
-	}
-	
-	private Entity checkCollision(Entity updatedEntity, Entity originalEntity, ArrayList<Entity> closeEntities) {
-		if (originalEntity.getPosition().equals(updatedEntity.getPosition())) return originalEntity;
-		
-		for (Entity entity : closeEntities) {
-			if (entity.getId() != originalEntity.getId()) {
-				//if (EntityCollision.checkCollision(updatedEntity, entity)) System.out.println(true);
-				if (entity.getCanCollide() && EntityCollision.checkCollision(updatedEntity, entity)) return originalEntity;
-			}
-		}
-		
-		return updatedEntity;
 	}
 }
