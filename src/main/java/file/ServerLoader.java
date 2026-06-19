@@ -18,6 +18,7 @@ import org.json.JSONObject;
 
 import main.Console;
 import protonova.protobuf.CelestialObjectProto.CelestialObject;
+import protonova.protobuf.CraftingRecipeProto.CraftingComponent;
 import protonova.protobuf.CraftingRecipeProto.CraftingRecipe;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.PlaneProto;
@@ -158,18 +159,20 @@ public class ServerLoader {
 				JSONObject jsonRecipe = new JSONObject(Files.readString(Path.of(file.getPath())));
 				
 				JSONObject item1 = jsonRecipe.getJSONObject("item1");
+				CraftingComponent itemComponent1 = loadItemComponent(item1);
+				
 				JSONObject item2 = jsonRecipe.getJSONObject("item2");
+				CraftingComponent itemComponent2 = loadItemComponent(item2);
 				
-				CraftingRecipe newRecipe = CraftingRecipe.newBuilder()
-						.setItem1Consumed(item1.getBoolean("consumed"))
-						.setItem1MustBeHeld(item1.getBoolean("mustBeHeld"))
-						.setItem1Name(item1.getString("name"))
-						.setItem2Consumed(item2.getBoolean("consumed"))
-						.setItem2Name(item2.getString("name"))
-						.setResult(jsonRecipe.getString("result"))
-						.build();
+				CraftingRecipe.Builder newRecipe = CraftingRecipe.newBuilder();
 				
-				recipeList.add(newRecipe);
+				newRecipe.setItem1(itemComponent1);
+				newRecipe.setItem1MustBeHeld(item1.getBoolean("mustBeHeld"));
+				newRecipe.setItem2(itemComponent2);
+				newRecipe.setResult(jsonRecipe.getString("result"));
+				
+						
+				recipeList.add(newRecipe.build());
 				
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -177,6 +180,32 @@ public class ServerLoader {
 		}
 		
 		return recipeList;
+	}
+	
+	private CraftingComponent loadItemComponent(JSONObject itemJson) {
+		CraftingComponent.Builder component = CraftingComponent.newBuilder();
+		
+		component.setName(itemJson.getString("name"));
+		component.setConsumed(itemJson.getBoolean("consumed"));
+		
+		if (itemJson.has("minimumSlotValue")) {
+			JSONObject slotValues = itemJson.getJSONObject("minimumSlotValue");
+			
+			for (String key : slotValues.keySet()) {
+				component.putMinimumSlotValue(key, slotValues.getInt(key));
+			}
+		}
+		
+		if (itemJson.has("tagsRequired")) {
+			 JSONArray tagsRequired = itemJson.getJSONArray("tagsRequired");
+			 
+			 for (int i=0;i<tagsRequired.length();i++) {
+				 component.addTagsRequired(tagsRequired.getString(i));
+			 }
+		}
+		
+		return component.build();
+		
 	}
 	
 	public JSONObject getGamemode() {

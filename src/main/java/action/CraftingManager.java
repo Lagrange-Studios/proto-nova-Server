@@ -57,11 +57,11 @@ public class CraftingManager {
 				result = result.toBuilder().setPosition(component.getPosition()).build();
 				entityManager.updateEntity(result);
 				
-				if (recipe.getItem1Consumed()) {
+				if (recipe.getItem1().getConsumed()) {
 					craftingEntity = entityManager.decrementSlot(craftingEntity, selectedSlot);
 				}
 				
-				if (recipe.getItem2Consumed()) {
+				if (recipe.getItem2().getConsumed()) {
 					component = entityManager.decrementAmount(component);
 				}
 				
@@ -77,11 +77,11 @@ public class CraftingManager {
 		itemsToRecipes = new HashMap<>();
 		
 		for (CraftingRecipe recipe : loadedRecipes) {
-			attemptToAddRecipe(recipe.getItem1Name()+recipe.getItem2Name(),recipe);
+			attemptToAddRecipe(recipe.getItem1().getName()+recipe.getItem2().getName(),recipe);
 			
 			// only add the other variation of recipe if its not forced to be held and theres different ingredients
-			if (!recipe.getItem1MustBeHeld() && !recipe.getItem1Name().equals(recipe.getItem2Name())) {
-				attemptToAddRecipe(recipe.getItem2Name()+recipe.getItem1Name(),recipe);
+			if (!recipe.getItem1MustBeHeld() && !recipe.getItem1().getName().equals(recipe.getItem2().getName())) {
+				attemptToAddRecipe(recipe.getItem2().getName()+recipe.getItem1().getName(),recipe);
 			}
 		}
 	}
@@ -96,8 +96,8 @@ public class CraftingManager {
 			console.print(warningMessage);
 			System.err.print(warningMessage);
 		}
-		else if (!assetManager.containsEntity(value.getItem1Name())) console.print("Warning: Could not add recipe for "+value.getResult()+" becuase the asset manager is missing: "+value.getItem1Name());
-		else if (!assetManager.containsEntity(value.getItem2Name())) console.print("Warning: Could not add recipe for "+value.getResult()+" becuase the asset manager is missing: "+value.getItem2Name());
+		else if (!assetManager.containsEntity(value.getItem1().getName())) console.print("Warning: Could not add recipe for "+value.getResult()+" becuase the asset manager is missing: "+value.getItem1().getName());
+		else if (!assetManager.containsEntity(value.getItem2().getName())) console.print("Warning: Could not add recipe for "+value.getResult()+" becuase the asset manager is missing: "+value.getItem2().getName());
 		else if (!assetManager.containsEntity(value.getResult())) console.print("Warning: Could not add recipe for "+value.getResult()+" becuase the asset manager is missing: "+value.getResult());
 		else itemsToRecipes.put(key, value);
 	}
