@@ -129,6 +129,14 @@ public class TagHandler {
 		return server.console;
 	}
 	
+	public Server getServer() {
+		return server;
+	}
+	
+	public int getTPS() {
+		return server.TPS;
+	}
+	
 	public void loadAllTagEntities() {
 		for (Entity entity : entityManager.getAllEntities().values()) {
 			addEntity(entity);

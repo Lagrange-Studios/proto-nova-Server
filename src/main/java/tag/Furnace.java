@@ -1,5 +1,6 @@
 package tag;
 
+import protonova.protobuf.EntityProto.Direction;
 import protonova.protobuf.EntityProto.Entity;
 
 public class Furnace extends TagClass {
@@ -9,6 +10,8 @@ public class Furnace extends TagClass {
 	}
 	
 	private String fuelTypeName = "basicFuel";
+	private int fuelTimeAddedPerFuel = 100;
+	private int animationFPS = 5;
 	
 	/*
 	 * This tag makes the entity act as a furnace
@@ -34,6 +37,7 @@ public class Furnace extends TagClass {
 			if (fuelTime == 0) {
 				builder.setDisplayTexture("");
 			}
+			builder.setDirection(switchFPS(tagHandler));
 			
 			tagHandler.updateEntity(builder.build());
 		}
@@ -45,7 +49,27 @@ public class Furnace extends TagClass {
 	
 	public Entity interact(TagHandler tagHandler, Entity interactingEntity, Entity thisEntity) {
 		
-		
+		if (!interactingEntity.getSelectedSlot().equals("")) {
+			String slot = interactingEntity.getSelectedSlot();
+			
+			if (interactingEntity.getInventorySlotsMap().containsKey(slot)) {
+				Entity item = tagHandler.getEntityManager().getEntity(interactingEntity.getInventorySlotsMap().get(slot));
+				
+				if (item != null && item.getTagsList().contains(fuelTypeName)) {
+					tagHandler.getEntityManager().decrementSlot(interactingEntity, slot);
+					
+					int fuelTimer = getSlot(thisEntity, "fuelTimer", 0) + fuelTimeAddedPerFuel;
+					
+					thisEntity = thisEntity.toBuilder()
+							.putInventorySlots("fuelTimer", fuelTimer)
+							.setDisplayTexture("lit "+thisEntity.getName())
+							.build();
+					
+					tagHandler.updateEntity(thisEntity);
+					
+				}
+			}
+		}
 		
 		return interactingEntity;
 	}
@@ -54,5 +78,20 @@ public class Furnace extends TagClass {
 	public int getSlot(Entity entity, String slotName, int defualtValue) {
 		if (entity.containsInventorySlots(slotName)) return entity.getInventorySlotsMap().get(slotName);
 		else return defualtValue;
+	}
+	
+	private Direction switchFPS(TagHandler tagHandler) {
+		switch(tagHandler.getTPS()%animationFPS) {
+			case 0:
+				return Direction.Down;
+			case 1:
+				return Direction.Up;
+			case 2:
+				return Direction.Left;
+			case 3:
+				return Direction.Right;
+			default:
+				return Direction.Down;
+		}
 	}
 }
