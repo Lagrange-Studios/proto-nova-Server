@@ -1,0 +1,14 @@
+{
+  "item1": {
+    "mustBeHeld": true,
+    "name":"flint axe",
+    "consumed": false
+  },
+  "item2": {
+    "name":"stick",
+    "consumed": true
+  },
+
+  "tileResult": true,
+  "result":"wood floor"
+}

@@ -6,20 +6,25 @@ import java.util.HashMap;
 import entity.EntityManager;
 import file.AssetManager;
 import main.Console;
+import plane.PlaneManager;
 import protonova.protobuf.CraftingRecipeProto.CraftingRecipe;
 import protonova.protobuf.EntityProto.Entity;
+import protonova.protobuf.TileProto.Tile;
+import protonova.protobuf.VectorProto.Vector;
 
 public class CraftingManager {
 	private HashMap<String, CraftingRecipe> itemsToRecipes;
-	private HashMap<String, CraftingRecipe> RecipeNames; // TODO: add implementation later when needed
+	private HashMap<String, CraftingRecipe> recipeNames; // TODO: add implementation later when needed
 	private EntityManager entityManager;
 	private Console console;
 	private AssetManager assetManager;
+	private PlaneManager planeManager;
 	
-	public CraftingManager(EntityManager entityManager,ArrayList<CraftingRecipe> loadedRecipes, Console console, AssetManager assetManager) {
+	public CraftingManager(EntityManager entityManager,ArrayList<CraftingRecipe> loadedRecipes, Console console, AssetManager assetManager, PlaneManager planeManager) {
 		this.entityManager = entityManager;
 		this.console = console;
 		this.assetManager = assetManager;
+		this.planeManager = planeManager;
 		
 		// make the recipes accesible based on crafting components
 		loadRecipes(loadedRecipes);
@@ -50,12 +55,34 @@ public class CraftingManager {
 		if (heldComponent != null && component != null) {
 			CraftingRecipe recipe = getrecipe(heldComponent,component);
 			
-			if (recipe != null) {
+			if (recipe != null && (!recipe.hasTileResult() || planeManager.getTileAt(component).getSurfaceTexture().equals(""))) {
 				
-				// WARNING: this could be a possible dupe glitch in the future but also maybe not since we track entity ids
-				Entity result = assetManager.getEntity(recipe.getResult(), component.getMap());
-				result = result.toBuilder().setPosition(component.getPosition()).build();
-				entityManager.updateEntity(result);
+				if (recipe.getTileResult()) {
+					// tile result
+					
+					Tile tile = planeManager.getTileAt(component);
+					tile = tile.toBuilder().setSurfaceTexture(recipe.getResult()).build();
+					planeManager.updateTile(tile, component.getMap());
+				}
+				else {
+					// entity result
+					
+					// WARNING: this could be a possible dupe glitch in the future but also maybe not since we track entity ids
+					Entity result = assetManager.getEntity(recipe.getResult(), component.getMap());
+					
+					if (result.getAnchored()) {
+						Vector position = component.getPosition();
+						position = position.toBuilder()
+								.setX(Math.round(position.getX()))
+								.setY(Math.round(position.getY()))
+								.build();
+						
+						result = result.toBuilder().setPosition(position).build();
+					}
+					else result = result.toBuilder().setPosition(component.getPosition()).build();
+					entityManager.updateEntity(result);
+				}
+				
 				
 				if (recipe.getItem1().getConsumed()) {
 					craftingEntity = entityManager.decrementSlot(craftingEntity, selectedSlot);
@@ -98,7 +125,7 @@ public class CraftingManager {
 		}
 		else if (!assetManager.containsEntity(value.getItem1().getName())) console.print("Warning: Could not add recipe for "+value.getResult()+" becuase the asset manager is missing: "+value.getItem1().getName());
 		else if (!assetManager.containsEntity(value.getItem2().getName())) console.print("Warning: Could not add recipe for "+value.getResult()+" becuase the asset manager is missing: "+value.getItem2().getName());
-		else if (!assetManager.containsEntity(value.getResult())) console.print("Warning: Could not add recipe for "+value.getResult()+" becuase the asset manager is missing: "+value.getResult());
+		else if (!value.getTileResult() && !assetManager.containsEntity(value.getResult())) console.print("Warning: Could not add recipe for "+value.getResult()+" becuase the asset manager is missing: "+value.getResult());
 		else itemsToRecipes.put(key, value);
 	}
 	

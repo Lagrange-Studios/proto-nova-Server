@@ -29,7 +29,7 @@ public class PacketReciver {
 	private ActionHandler actionHandler;
 	private EntityFinder entityFinder;
 	private HealthManager healthManager;
-	private final double reconcileCoefficient = 5;
+	private final double reconcileCoefficient = 10;
 	private long lastDebugPrintTime = 0;
 	private Server server;
 	

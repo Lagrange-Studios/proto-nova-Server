@@ -59,7 +59,7 @@ public class EntityManager {
 			    .setBleeding(1)
 			    .build();
 		HitDamage hitDamage = HitDamage.newBuilder()
-			    .setBruteDamage(1)
+			    .setBruteDamage(10)
 			    .setAsphyxiationDamage(0)
 			    .setBurnDamage(0)
 			    .setToxinDamage(0)
@@ -168,6 +168,9 @@ public class EntityManager {
 	 * @param entity to decrement
 	 */
 	public Entity decrementAmount(Entity entity) {
+		System.out.println(entity.getName());
+		System.out.println(entity.getStackable());
+		System.out.println(entity.getAmount());
 		
 		if (entity.getStackable()) {
 			entity = entity.toBuilder()
@@ -193,13 +196,13 @@ public class EntityManager {
 		if (item != null) {
 			item = decrementAmount(item);
 			
-			if (!entity.getStackable() || item.getAmount() == 0) {
+			if (!item.getStackable() || item.getAmount() == 0) {
 				entity = entity.toBuilder()
 						.removeInventorySlots(slot)
 						.build();
 			}
 		}
-		else System.err.print("Error: Could not find item in slot "+slot);
+		else System.err.print("[Entity Manager] Error: Could not find item in slot "+slot);
 		
 		return entity;
 	}
@@ -209,6 +212,7 @@ public class EntityManager {
 	 * @param entity
 	 */
 	public void removeEntity(Entity entity) {
+		if (velocityEntities.contains(entity.getId())) velocityEntities.remove(entity.getId());
 		sendDeletion(entity);
 		chunkManager.removeEntityFromChunk(entity);
 		entities.remove(entity.getId());
@@ -256,9 +260,12 @@ public class EntityManager {
 	 */
 	public void tick() {
 		for (int id : velocityEntities.toArray(new Integer[0])) {
-			Entity entity = entities.get(id);
-			entity = simulateVelocity(entity);
-			updateEntity(entity);
+			if (entities.containsKey(id)) {
+				Entity entity = entities.get(id);
+				entity = simulateVelocity(entity);
+				updateEntity(entity);
+			}
+			else velocityEntities.remove(id);
 		}
 	}
 	

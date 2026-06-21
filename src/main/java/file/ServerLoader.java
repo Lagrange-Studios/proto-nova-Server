@@ -170,6 +170,7 @@ public class ServerLoader {
 				newRecipe.setItem1MustBeHeld(item1.getBoolean("mustBeHeld"));
 				newRecipe.setItem2(itemComponent2);
 				newRecipe.setResult(jsonRecipe.getString("result"));
+				if (jsonRecipe.has("tileResult")) newRecipe.setTileResult(jsonRecipe.getBoolean("tileResult"));
 				
 						
 				recipeList.add(newRecipe.build());

@@ -1,7 +1,7 @@
 {
   "item1": {
     "mustBeHeld": true,
-    "name":"flint blade",
+    "name":"dev tool",
     "consumed": false
   },
   "item2": {

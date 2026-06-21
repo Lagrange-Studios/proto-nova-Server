@@ -1,0 +1,13 @@
+{
+  "item1": {
+    "mustBeHeld": false,
+    "name":"flint pickaxe head",
+    "consumed": true
+  },
+  "item2": {
+    "name":"stick",
+    "consumed": true
+  },
+
+  "result":"flint pickaxe"
+}

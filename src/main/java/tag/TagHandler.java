@@ -69,9 +69,7 @@ public class TagHandler {
 	public void tick() {
 		
 		for (String tag : tagToEntities.keySet()) {
-			// Create a copy to avoid ConcurrentModificationException when removing entities
-			ArrayList<Integer> entityIdsCopy = new ArrayList<>(tagToEntities.get(tag));
-			for (int entityId : entityIdsCopy) {
+			for (int entityId : tagToEntities.get(tag).toArray(new Integer[0])) {
 				Entity entity = entityManager.getEntity(entityId);
 				
 				if (entity != null) {
@@ -87,6 +85,7 @@ public class TagHandler {
 	public Entity interact(Entity interactingEntity, Entity tagEntity) {
 		
 		for (String tag : tagEntity.getTagsList()) {
+			if (!tagToClass.containsKey(tag)) continue;
 			interactingEntity = tagToClass.get(tag).interact(this, interactingEntity, tagEntity);
 		}
 		

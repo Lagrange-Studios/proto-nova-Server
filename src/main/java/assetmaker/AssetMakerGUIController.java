@@ -247,6 +247,7 @@ class AssetMakerGUIController {
         gui.lootTableModel.setRowCount(0);
 
         gui.loadedEntityLabel.setText(" ");
+        gui.selectedSlotField.setText("");
     }
 
     private void populateForm(Entity entity) {

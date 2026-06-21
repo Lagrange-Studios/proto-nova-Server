@@ -57,6 +57,10 @@ public class PlaneManager {
 		return planes.get(id).getTilesMap().get(CoordinateConverter.convert(coordinate));
 	}
 	
+	public Tile getTileAt(Entity entity) {
+		return planes.get(entity.getMap()).getTilesMap().get(CoordinateConverter.convert(entity.getPosition()));
+	}
+	
 	public boolean planeExists(int id) {
 		return planes.containsKey(id);
 	}

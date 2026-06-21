@@ -164,7 +164,7 @@ public class Server {
 		
 		generator = new Generator(console, planeManager, entityManager, assetManager, entityFinder, celestialObjectManager);
 
-		craftingManager = new CraftingManager(entityManager, serverLoader.loadCraftingRecipes(), console, assetManager);
+		craftingManager = new CraftingManager(entityManager, serverLoader.loadCraftingRecipes(), console, assetManager, planeManager);
 		pathfindingHandler = new PathfindingHandler(entityManager, entityFinder, this);
 		
 		tagHandler = new TagHandler(this, entityManager, assetManager, entityFinder, planeManager, combatManager);

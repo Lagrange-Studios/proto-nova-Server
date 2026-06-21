@@ -1,0 +1,13 @@
+{
+  "item1": {
+    "mustBeHeld": false,
+    "name":"log",
+    "consumed": true
+  },
+  "item2": {
+    "name":"stick",
+    "consumed": true
+  },
+
+  "result":"wood door"
+}
