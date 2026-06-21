@@ -69,7 +69,9 @@ public class TagHandler {
 	public void tick() {
 		
 		for (String tag : tagToEntities.keySet()) {
-			for (int entityId : tagToEntities.get(tag).toArray(new Integer[0])) {
+			Integer[] entityIds = tagToEntities.get(tag).toArray(new Integer[0]);
+			
+			for (int entityId : entityIds) {
 				Entity entity = entityManager.getEntity(entityId);
 				
 				if (entity != null) {
