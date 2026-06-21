@@ -49,6 +49,7 @@ public class Server {
 	private ServerSocketHandler serverSocket;
 	private ServerStatusHandler statusHandler;
 	public int TPS;
+	public final int CLIENT_TPS = 60;
 	public Long globalTicks = 0L;
 	private ServerLoader serverLoader;
 	private ServerSaver serverSaver;

@@ -29,7 +29,7 @@ public class PacketReciver {
 	private ActionHandler actionHandler;
 	private EntityFinder entityFinder;
 	private HealthManager healthManager;
-	private final double reconcileCoefficient = 10;
+	private final double reconcileCoefficient = 5; // this is very tight could cuase rubber banding in the future
 	private long lastDebugPrintTime = 0;
 	private Server server;
 	
@@ -81,6 +81,7 @@ public class PacketReciver {
 			chatManager.addChatToQueue(packet.getChatMessage(i));
 		}
 		
+		serverEntity = entityManager.simulateVelocity(serverEntity, server.CLIENT_TPS);
 		entityManager.updateEntity(serverEntity);
 		
 		healthManager.entityCheck(serverEntity);
@@ -92,9 +93,9 @@ public class PacketReciver {
 			lastDebugPrintTime = currentTime;
 		}
 		
-		if (VectorMath.distance(clientEntity.getPosition(), serverEntity.getPosition()) >= (serverEntity.getSpeed()/server.TPS)*reconcileCoefficient) {
+		if (VectorMath.distance(clientEntity.getPosition(), serverEntity.getPosition()) >= (serverEntity.getSpeed()/server.CLIENT_TPS)*reconcileCoefficient) {
 			player.shouldReconcile = true;
-			console.print("WARNING: Player "+player.getUsername()+" is moving too fast!");
+			console.print("WARNING: Player "+player.getUsername()+" rubberbanded");
 			
 		}
 	}

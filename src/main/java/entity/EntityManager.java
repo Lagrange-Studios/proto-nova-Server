@@ -168,9 +168,6 @@ public class EntityManager {
 	 * @param entity to decrement
 	 */
 	public Entity decrementAmount(Entity entity) {
-		System.out.println(entity.getName());
-		System.out.println(entity.getStackable());
-		System.out.println(entity.getAmount());
 		
 		if (entity.getStackable()) {
 			entity = entity.toBuilder()
@@ -262,8 +259,13 @@ public class EntityManager {
 		for (int id : velocityEntities.toArray(new Integer[0])) {
 			if (entities.containsKey(id)) {
 				Entity entity = entities.get(id);
-				entity = simulateVelocity(entity);
-				updateEntity(entity);
+				
+				// TODO: change this to check the brain for human player
+				if (!entity.getName().equals("human")) {
+					entity = simulateVelocity(entity, server.TPS);
+					updateEntity(entity);
+				}
+				
 			}
 			else velocityEntities.remove(id);
 		}
@@ -284,11 +286,11 @@ public class EntityManager {
 	 * @param entity the given entity
 	 * @return entity with modified position based on velocity
 	 */
-	public Entity simulateVelocity(Entity entity) {
+	public Entity simulateVelocity(Entity entity, int tps) {
 		
 		ArrayList<Entity> closeEntities = entityFinder.getAllEntitiesInRadis(entity, 10);
 		
-		Entity entityXAxis = checkCollision(EntitySimulation.simulateVelocityXAxis(entity,server.TPS),entity,closeEntities);
+		Entity entityXAxis = checkCollision(EntitySimulation.simulateVelocityXAxis(entity,tps),entity,closeEntities);
 		
 		// check if we actualy did anything
 		if (entityXAxis.getPosition().equals(entity.getPosition())) {
@@ -304,7 +306,7 @@ public class EntityManager {
 		}
 		else entity = entityXAxis;
 		
-		Entity entityYAxis = checkCollision(EntitySimulation.simulateVelocityYAxis(entity,server.TPS),entity,closeEntities);
+		Entity entityYAxis = checkCollision(EntitySimulation.simulateVelocityYAxis(entity,tps),entity,closeEntities);
 		
 		// check if we actualy did anything
 		if (entityYAxis.getPosition().equals(entity.getPosition())) {
