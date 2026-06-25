@@ -63,6 +63,7 @@ public class CombatManager {
 	}
 	
 	private void resetCooldown(Entity entity) {
+		entity = entityManager.getEntity(entity.getId());
 		Entity updated = entity.toBuilder().setHitDamage(
 				entity.getHitDamage().toBuilder()
 				.setCanAttack(true)).build();
@@ -207,16 +208,6 @@ public class CombatManager {
 		 }
 	}
 	
-	public double getDamage(Entity entity) {
-		float brute = entity.getDamage().getBruteDamage();
-		float burn = entity.getDamage().getBurnDamage();
-		float toxin = entity.getDamage().getToxinDamage();
-		float asphyxiation = entity.getDamage().getAsphyxiationDamage();
-		float genetic = entity.getDamage().getGeneticDamage();
-		float structural = entity.getDamage().getStructuralDamage();
-		double totalDamage = brute + burn + toxin + asphyxiation + genetic + structural;
-		return totalDamage;
-		
-	}
+	
 	
 }

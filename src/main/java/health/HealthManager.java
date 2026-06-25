@@ -20,7 +20,7 @@ public class HealthManager {
 	}
 	
 	public void entityCheck(Entity entity) {
-		healthCheck(entity);
+		entityManager.recalculateEntity(entity);
 		entity = entityManager.getEntity(entity.getId());
 		checkDeathOfEntity(entity);
 		if (!entity.getAlive()) return;
@@ -31,7 +31,7 @@ public class HealthManager {
 	}
 	
 	public boolean checkCrit(Entity entity) {
-		return (entity.getCritHealth() <= combatManager.getDamage(entity));
+		return (entity.getCritHealth() <= Health.getDamage(entity));
 	}
 	
 	public void changeDeathState(Entity entity, boolean alive) {
@@ -42,40 +42,8 @@ public class HealthManager {
 	}
 	
 	public boolean checkDeath(Entity entity) {
-		return (entity.getMaxHealth() <= combatManager.getDamage(entity));
+		return (entity.getMaxHealth() <= Health.getDamage(entity));
 	}
-	
-	private void healthCheck(Entity entity) {
-		changeSpeedFromHealth(entity);
-	}
-	
-	private void changeSpeedFromHealth(Entity entity) {
-		entity = entityManager.getEntity(entity.getId());
-		double totalDamage = combatManager.getDamage(entity);
-		double critHealthThreshold = entity.getCritHealth();
-		double healthSpeedMult = 1;
-		
-		if (totalDamage >= critHealthThreshold || !entity.getAlive()) {
-			healthSpeedMult = 0;
-		} else if (totalDamage >= critHealthThreshold * 0.90) {
-			healthSpeedMult = 0.1;
-		} else if (totalDamage >= critHealthThreshold * 0.75) {
-			healthSpeedMult = 0.3;
-		} else if (totalDamage >= critHealthThreshold * 0.50) {
-			healthSpeedMult = 0.5;
-		} else if (totalDamage >= critHealthThreshold * 0.35) {
-			healthSpeedMult = 0.6;
-		} else if (totalDamage >= critHealthThreshold * 0.10) {
-			healthSpeedMult = 0.9;
-		}
-		
-		Entity.Builder entityBuilder = entity.toBuilder();
-		entityBuilder.setSpeed(entity.getMaxSpeed() * healthSpeedMult);
-		Entity updatedEntity = entityBuilder.build();
-		entityManager.updateEntity(updatedEntity);
-	}
-	
-	
 	
 	private void gibEntity(Entity entity) {
 		dropOrgans(entity);
@@ -84,16 +52,16 @@ public class HealthManager {
 	}
 	
 	private void dropOrgans(Entity entity) {
-		
+		// TODO: Add organs droping after adding organs
 	}
 	
 	private void checkDeathOfEntity(Entity entity) {
-		if (combatManager.getDamage(entity) >= entity.getMaxHealth()) {
+		if (Health.getDamage(entity) >= entity.getMaxHealth()) {
 			if (!entity.getDropsABody()) {
 				lootTableManager.dropLoot(entity);
 				entityManager.removeEntity(entity);
 			} else {
-				if (entity.getMaxHealth() * 2.5 <= combatManager.getDamage(entity)) {
+				if (entity.getMaxHealth() * 2.5 <= Health.getDamage(entity)) {
 					gibEntity(entity);
 				}
 			}

@@ -1,11 +1,7 @@
 package socket;
 
-import java.util.ArrayList;
-
 import action.ActionHandler;
 import chat.ChatManager;
-import collision.EntityCollision;
-import entity.ChunkManager;
 import entity.EntityFinder;
 import entity.EntityManager;
 import health.HealthManager;
@@ -30,7 +26,6 @@ public class PacketReciver {
 	private EntityFinder entityFinder;
 	private HealthManager healthManager;
 	private final double reconcileCoefficient = 5; // this is very tight could cuase rubber banding in the future
-	private long lastDebugPrintTime = 0;
 	private Server server;
 	
 	public PacketReciver(EntityManager entityManager, SoundManager soundManager, ChatManager chatManager, Console console, ActionHandler actionHandler, EntityFinder entityFinder, HealthManager healthManager, Server server) {
@@ -60,7 +55,9 @@ public class PacketReciver {
 					serverEntity = EntitySimulation.simulateMovement(serverEntity, action);
 				}
 				else {
-					serverEntity = actionHandler.executeAction(player, action);
+					// so we need the velocity changes persisted first to prevent the re-fetch from getting stale data.
+					entityManager.updateEntity(serverEntity);
+					serverEntity = actionHandler.executeAction(player, action, serverEntity);
 				}
 			}
 		} else {
@@ -86,12 +83,6 @@ public class PacketReciver {
 		
 		healthManager.entityCheck(serverEntity);
 		
-		long currentTime = System.currentTimeMillis();
-		if (currentTime - lastDebugPrintTime >= 1000) {
-			Entity updated = entityManager.getEntity(player);
-			double totalDamage = healthManager.combatManager.getDamage(updated);
-			lastDebugPrintTime = currentTime;
-		}
 		
 		if (VectorMath.distance(clientEntity.getPosition(), serverEntity.getPosition()) >= (serverEntity.getSpeed()/server.CLIENT_TPS)*reconcileCoefficient) {
 			player.shouldReconcile = true;

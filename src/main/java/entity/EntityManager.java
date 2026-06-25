@@ -6,6 +6,8 @@ import java.util.HashSet;
 
 import collision.EntityCollision;
 import file.ServerLoader;
+import health.Health;
+import health.Health.HealthState;
 import main.Console;
 import main.Server;
 import protonova.protobuf.DamageProto.Damage;
@@ -336,5 +338,42 @@ public class EntityManager {
 		}
 		
 		return updatedEntity;
+	}
+	
+	public void recalculateEntity(Entity entity) {
+		if (entity == null) return;
+		
+		// MAKE COMMENTS FOR EVERYTHING YOU PUT IN HERE. THIS WILL BE VERY LONG!!
+		
+		// Calculate Health Speed
+		
+		entity = getEntity(entity.getId());
+		double totalDamage = Health.getDamage(entity);
+		double critHealthThreshold = entity.getCritHealth();
+		double healthSpeedMult = 1;
+		
+		if (totalDamage >= critHealthThreshold || !entity.getAlive()) {
+			healthSpeedMult = 0;
+		} else if (totalDamage >= critHealthThreshold * HealthState.MORTALLY_WOUNDED.getPercent()) {
+			healthSpeedMult = 0.3;
+		} else if (totalDamage >= critHealthThreshold * HealthState.SEVERLY_INJURED.getPercent()) {
+			healthSpeedMult = 0.6;
+		} else if (totalDamage >= critHealthThreshold * HealthState.INJURED.getPercent()) {
+			healthSpeedMult = 0.75;
+		} else if (totalDamage >= critHealthThreshold * HealthState.MINOR_INJURIES.getPercent()) {
+			healthSpeedMult = 0.9;
+		}
+		
+		Entity.Builder entityBuilder = entity.toBuilder();
+		entityBuilder.setSpeed(entity.getMaxSpeed() * healthSpeedMult);
+		entity = entityBuilder.build();
+		
+		
+		// End of Health Speed
+		
+		
+		
+		// This should always be at the bottom
+		updateEntity(entity);
 	}
 }

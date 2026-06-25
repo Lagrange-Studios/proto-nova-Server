@@ -1,10 +1,9 @@
 package action;
 
-import java.util.HashMap;
-
 import entity.EntityFinder;
 import entity.EntityManager;
 import health.CombatManager;
+import health.Health;
 import health.HealthManager;
 import main.Console;
 import plane.PlaneManager;
@@ -12,7 +11,6 @@ import protonova.protobuf.ActionProto.Action;
 import protonova.protobuf.ActionProto.ActionType;
 import protonova.protobuf.ActionProto.InteractionType;
 import protonova.protobuf.EntityProto.Entity;
-import protonova.protobuf.PlaneProto.Plane;
 import socket.Player;
 import tag.TagHandler;
 
@@ -39,8 +37,7 @@ public class ActionHandler {
 		this.healthManager = healthManager;
 	}
 
-	public Entity executeAction(Player player, Action action) {
-		Entity playerEntity = entityManager.getEntity(player);
+	public Entity executeAction(Player player, Action action, Entity playerEntity) {
 		
 		if (action.getActionType() != ActionType.Interact) return playerEntity;
 		Entity interactingEntity = entityManager.getEntity(action.getInteractingEntityId());
@@ -116,11 +113,11 @@ public class ActionHandler {
 				break;
 			case(InteractionType.Hit_VALUE):
 				combatManager.attemptToDamage(playerEntity, interactingEntity);
-				playerEntity = entityManager.getEntity(playerEntity.getId());
 				interactingEntity = entityManager.getEntity(interactingEntity.getId());
-				healthManager.entityCheck(playerEntity);
-				healthManager.entityCheck(interactingEntity);
-				console.print(interactingEntity.getName()+" total damage: "+combatManager.getDamage(interactingEntity));
+				if (interactingEntity != null) {
+					healthManager.entityCheck(interactingEntity);
+					console.print(interactingEntity.getName()+" total damage: "+ Health.getDamage(interactingEntity));
+				}
 				break;
 			case(InteractionType.Standard_VALUE):
 				playerEntity = tagHandler.interact(playerEntity, interactingEntity);
