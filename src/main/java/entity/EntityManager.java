@@ -7,7 +7,7 @@ import java.util.HashSet;
 import collision.EntityCollision;
 import file.ServerLoader;
 import health.Health;
-import health.Health.HealthState;
+import health.Health.TraumaState;
 import main.Console;
 import main.Server;
 import protonova.protobuf.DamageProto.Damage;
@@ -354,13 +354,13 @@ public class EntityManager {
 		
 		if (totalDamage >= critHealthThreshold || !entity.getAlive()) {
 			healthSpeedMult = 0;
-		} else if (totalDamage >= critHealthThreshold * HealthState.MORTALLY_WOUNDED.getPercent()) {
+		} else if (totalDamage >= critHealthThreshold * TraumaState.MORTALLY_WOUNDED.getTraumaPercent()) {
 			healthSpeedMult = 0.3;
-		} else if (totalDamage >= critHealthThreshold * HealthState.SEVERLY_INJURED.getPercent()) {
+		} else if (totalDamage >= critHealthThreshold * TraumaState.SEVERELY_INJURED.getTraumaPercent()) {
 			healthSpeedMult = 0.6;
-		} else if (totalDamage >= critHealthThreshold * HealthState.INJURED.getPercent()) {
+		} else if (totalDamage >= critHealthThreshold * TraumaState.INJURED.getTraumaPercent()) {
 			healthSpeedMult = 0.75;
-		} else if (totalDamage >= critHealthThreshold * HealthState.MINOR_INJURIES.getPercent()) {
+		} else if (totalDamage >= critHealthThreshold * TraumaState.MINOR_INJURIES.getTraumaPercent()) {
 			healthSpeedMult = 0.9;
 		}
 		

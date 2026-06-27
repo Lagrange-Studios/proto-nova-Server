@@ -57,7 +57,8 @@ public class PacketReciver {
 				else {
 					// so we need the velocity changes persisted first to prevent the re-fetch from getting stale data.
 					entityManager.updateEntity(serverEntity);
-					serverEntity = actionHandler.executeAction(player, action, serverEntity);
+					actionHandler.executeAction(player, action, serverEntity);
+					serverEntity = entityManager.getEntity(player);
 				}
 			}
 		} else {

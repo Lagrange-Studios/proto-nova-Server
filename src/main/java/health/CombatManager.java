@@ -73,6 +73,7 @@ public class CombatManager {
 	private void damage(Entity attacker, Entity defender) {
 		defender = entityManager.getEntity(defender.getId());
 		attacker = entityManager.getEntity(attacker.getId());
+		System.out.println(Health.getDamage(defender));
 		checkDamageMults(defender);
 		
 		HitDamage hitDamage = attacker.getHitDamage();
@@ -132,6 +133,7 @@ public class CombatManager {
 		
 		Entity defenderFinal = defenderBuilder.setDamage(entityDamage.build()).build();
 		entityManager.updateEntity(defenderFinal);
+		System.out.println(Health.getDamage(defenderFinal));
 		
 	}
 	
@@ -206,8 +208,5 @@ public class CombatManager {
 						.build();
 				entityManager.updateEntity(entity);
 		 }
-	}
-	
-	
-	
+	}	
 }
