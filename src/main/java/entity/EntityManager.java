@@ -93,6 +93,7 @@ public class EntityManager {
 				.setMaxHealth(200)
 				.setCritHealth(100)
 				.setAlive(true)
+				.setDropsABody(true)
 				.setVelocity(vector.toBuilder().build())
 				.setDirection(Direction.Down)
 				.setSelectedSlot("leftHand")
