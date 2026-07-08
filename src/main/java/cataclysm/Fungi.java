@@ -18,8 +18,8 @@ import util.Random;
 public class Fungi extends CataclysmClass {
 	
 	private final int tilesPerIntroSpore = 30000;
-	private final double FUNGUS_WIN_PERCENTAGE  = 0.4;
-	private final double FUNGUS_LOOSE_PERCENTAGE  = 0.05;
+	private final double FUNGUS_WIN_PERCENTAGE  = 0.05;
+	private final double FUNGUS_LOOSE_PERCENTAGE  = 0.002;
 	
 	/**
 	 * The Fungi Cataclysm consists of fungus spores appearing across the planet and slowly growing and consuming the world
@@ -59,11 +59,12 @@ public class Fungi extends CataclysmClass {
 	public String getWinner() {
 		String state = gamemode.getString("cataclysmState");
 		
-		if (state.equals("end")) {
+		if (state.equals("end") || true ) {
 			int fungusCount = tagHandler.getTagAmount("fungus");
 			int tileCount = planeManager.getTileCount(1);
 			
 			double currentRatio = (double) fungusCount/tileCount;
+			System.out.println("percentage: " +currentRatio);
 			
 			if (currentRatio >= FUNGUS_WIN_PERCENTAGE) return getName();
 			else if (currentRatio <= FUNGUS_LOOSE_PERCENTAGE) return "players";

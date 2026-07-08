@@ -7,6 +7,7 @@ import entity.EntityManager;
 import file.AssetManager;
 import main.Console;
 import plane.PlaneManager;
+import protonova.protobuf.CraftingRecipeProto.CraftingComponent;
 import protonova.protobuf.CraftingRecipeProto.CraftingRecipe;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.TileProto.Tile;
@@ -55,7 +56,8 @@ public class CraftingManager {
 		if (heldComponent != null && component != null) {
 			CraftingRecipe recipe = getrecipe(heldComponent,component);
 			
-			if (recipe != null && (!recipe.hasTileResult() || planeManager.getTileAt(component).getSurfaceTexture().equals(""))) {
+			if (recipe != null && (!recipe.hasTileResult() || planeManager.getTileAt(component).getSurfaceTexture().equals("")) &&
+					checkComponent(heldComponent,recipe.getItem1()) && checkComponent(component,recipe.getItem2())) {
 				
 				if (recipe.getTileResult()) {
 					// tile result
@@ -98,6 +100,20 @@ public class CraftingManager {
 		}
 		
 		return craftingEntity;
+	}
+	
+	private boolean checkComponent(Entity component, CraftingComponent craftingComponent) {
+		
+		for (String key : craftingComponent.getMinimumSlotValueMap().keySet()) {			
+			if (!component.containsInventorySlots(key) || 
+					component.getInventorySlotsMap().get(key) < craftingComponent.getMinimumSlotValueMap().get(key)) return false;
+		}
+		
+		for (String tag : craftingComponent.getTagsRequiredList()) {
+			if (!component.getTagsList().contains(tag)) return false;
+		}
+		
+		return true;
 	}
 	
 	private void loadRecipes(ArrayList<CraftingRecipe> loadedRecipes) {

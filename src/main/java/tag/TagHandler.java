@@ -45,9 +45,9 @@ public class TagHandler {
 		if (entity.getTagsCount() > 0) {
 			for (String tag : entity.getTagsList()) {
 				if (!tagToClass.containsKey(tag)) {
-					String errorMessage = "Error: entity named "+entity.getName()+" has a tag called "+tag+" without a matching class";
-					System.err.print(errorMessage);
-					server.console.print(errorMessage);
+					//String errorMessage = "Error: entity named "+entity.getName()+" has a tag called "+tag+" without a matching class";
+					//System.err.print(errorMessage);
+					//server.console.print(errorMessage);
 					continue;
 				}
 				

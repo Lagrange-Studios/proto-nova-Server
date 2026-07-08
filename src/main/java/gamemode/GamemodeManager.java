@@ -49,7 +49,7 @@ public class GamemodeManager {
 	}
 	
 	public void tickGamemode() {
-		if (!gamemode.getBoolean("gameover")) {
+		if (!gamemode.getBoolean("gameOver")) {
 			int newTime = gamemode.getInt("time");
 			newTime++;
 			

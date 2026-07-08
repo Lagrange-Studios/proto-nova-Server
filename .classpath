@@ -22,7 +22,5 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11/"/>
 	<classpathentry kind="con" path="org.eclipse.buildship.core.gradleclasspathcontainer"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/proto-nova-Library"/>
-	<classpathentry kind="lib" path="C:/Users/Cole/git/proto-nova-Library/build/libs/proto-nova-Library-1.0-SNAPSHOT.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Cole/.gradle/caches/modules-2/files-2.1/io.github.classgraph/classgraph/4.8.180/aaa09049cd621dfb742e844722c822a69d7f44bb/classgraph-4.8.180.jar" sourcepath="C:/Users/Cole/.gradle/caches/modules-2/files-2.1/io.github.classgraph/classgraph/4.8.180/dcb89a144b3ff3abf54c26a77e2bec70085975fd/classgraph-4.8.180-sources.jar"/>
 	<classpathentry kind="output" path="bin/default"/>
 </classpath>

@@ -62,7 +62,7 @@ public class Validater {
 			JSONObject gamemodeJSON = new JSONObject();
 			gamemodeJSON.put("name", "cataclysm");
 			gamemodeJSON.put("time", 0);
-			gamemodeJSON.put("gameover", false);
+			gamemodeJSON.put("gameOver", false);
 			try {
 				Files.write(Path.of(gamemode.getPath()), gamemodeJSON.toString().getBytes());
 			} catch (IOException e) {
