@@ -111,7 +111,6 @@ public class ServerConfig {
         console.print("Processor Limit: " + (processorLimit == 0 ? "Unlimited" : processorLimit + " cores"));
         console.print("RAM Limit: " + (ramLimit == 0 ? "Unlimited" : ramLimit + " MB"));
         console.print("Worker Thread Limit: " + workerThreadLimit);
-        console.print("Keystore: " + keystorePath);
         console.print("════════════════════════════");
     }
     

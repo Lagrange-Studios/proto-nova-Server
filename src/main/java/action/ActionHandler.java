@@ -113,7 +113,8 @@ public class ActionHandler {
 				break;
 			case(InteractionType.Hit_VALUE):
 				combatManager.attemptToDamage(playerEntity, interactingEntity);
-				interactingEntity = entityManager.getEntity(interactingEntity.getId());
+				playerEntity = entityManager.getEntity(playerEntity.getId());
+				if (interactingEntity != null) interactingEntity = entityManager.getEntity(interactingEntity.getId());
 				if (interactingEntity != null) {
 					healthManager.entityCheck(interactingEntity);
 					console.print(interactingEntity.getName()+" total damage: "+ Health.getDamage(interactingEntity));

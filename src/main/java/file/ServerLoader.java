@@ -247,7 +247,6 @@ public class ServerLoader {
 			}
 		}
 		else {
-			System.err.println("Warning: No type folder was found");
 			console.print("Warning: No type folder was found");
 		}
 		
