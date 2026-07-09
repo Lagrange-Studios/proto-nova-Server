@@ -6,7 +6,11 @@
   },
   "item2": {
     "name":"campfire",
-    "consumed": false
+    "consumed": false	,
+	"minimumSlotValue": {
+		"fuelTimer": 1
+	},
+	"tagsRequired": ["campfire"]
   },
 
   "result":"lit torch"

@@ -9,9 +9,25 @@ public class Furnace extends TagClass {
 		return "furnace";
 	}
 	
-	private String fuelTypeName = "basicFuel";
-	private int fuelTimeAddedPerFuel = 100;
-	private int animationFPS = 5;
+	protected String getFuelType() {
+		return "basicFuel";
+	}
+	
+	protected int getFuelTimeAdded() {
+		return 20 * 20;
+	}
+	
+	protected int getTicksBetweenFrames()  {
+		return 5;
+	}
+	
+	protected String getHexColor()  {
+		return "FF0000";
+	}
+	
+	protected float getLightRange() {
+		return 2;
+	}
 	
 	/*
 	 * This tag makes the entity act as a furnace
@@ -35,9 +51,11 @@ public class Furnace extends TagClass {
 			builder.putInventorySlots("fuelTimer", fuelTime);
 			
 			if (fuelTime == 0) {
-				builder.setDisplayTexture("");
+				builder = unlight(builder);
 			}
-			builder.setDirection(switchFPS(tagHandler));
+			else {
+				builder.setDirection(switchFPS(tagHandler, entity));
+			}
 			
 			tagHandler.updateEntity(builder.build());
 		}
@@ -55,14 +73,15 @@ public class Furnace extends TagClass {
 			if (interactingEntity.getInventorySlotsMap().containsKey(slot)) {
 				Entity item = tagHandler.getEntityManager().getEntity(interactingEntity.getInventorySlotsMap().get(slot));
 				
-				if (item != null && item.getTagsList().contains(fuelTypeName)) {
-					tagHandler.getEntityManager().decrementSlot(interactingEntity, slot);
+				if (item != null && item.getTagsList().contains(getFuelType())) {
+					interactingEntity = tagHandler.getEntityManager().decrementSlot(interactingEntity, slot);
 					
-					int fuelTimer = getSlot(thisEntity, "fuelTimer", 0) + fuelTimeAddedPerFuel;
+					int fuelTimer = getSlot(thisEntity, "fuelTimer", 0) + getFuelTimeAdded();
+					
+					thisEntity = light(thisEntity);
 					
 					thisEntity = thisEntity.toBuilder()
 							.putInventorySlots("fuelTimer", fuelTimer)
-							.setDisplayTexture("lit "+thisEntity.getName())
 							.build();
 					
 					tagHandler.updateEntity(thisEntity);
@@ -74,24 +93,32 @@ public class Furnace extends TagClass {
 		return interactingEntity;
 	}
 	
-	@SuppressWarnings("unused")
-	public int getSlot(Entity entity, String slotName, int defualtValue) {
-		if (entity.containsInventorySlots(slotName)) return entity.getInventorySlotsMap().get(slotName);
-		else return defualtValue;
+	protected Direction switchFPS(TagHandler tagHandler, Entity entity) {
+		int cycle = (int) Math.round(tagHandler.getServer().globalTicks%getTicksBetweenFrames());
+		
+		if (cycle == 0) {
+			int direction = entity.getDirectionValue();
+			direction++;
+			
+			if (direction > 3) direction = 0;
+			
+			return Direction.forNumber(direction);
+		}
+		else return entity.getDirection();
 	}
 	
-	private Direction switchFPS(TagHandler tagHandler) {
-		switch(tagHandler.getTPS()%animationFPS) {
-			case 0:
-				return Direction.Down;
-			case 1:
-				return Direction.Up;
-			case 2:
-				return Direction.Left;
-			case 3:
-				return Direction.Right;
-			default:
-				return Direction.Down;
-		}
+	protected Entity light(Entity entity) {
+		return entity.toBuilder()
+				.setLightRange(getLightRange())
+				.setHexColor(getHexColor())
+				.setDisplayTexture(entity.getName()+" lit")
+				.build();
+	}
+	
+	protected Entity.Builder unlight(Entity.Builder entity) {
+		return entity
+				.clearLightRange()
+				.clearHexColor()
+				.clearDisplayTexture();
 	}
 }
