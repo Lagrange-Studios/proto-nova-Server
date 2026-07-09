@@ -12,15 +12,16 @@ public class Agent {
 	private static float minimumDistanceSquared = (float) Math.pow(0.1f, 2);
 	
 	private int entityId;
-	private Vector goalPosition;
 	private EntityManager entityManager;
 	private EntityFinder entityFinder;
 	private Server server;
 	private boolean completed = false;
 	
-	public Agent(int entityId, Vector goalPosition, EntityManager entityManager, EntityFinder entityFinder, Server server) {
+	private Vector goalPosition;
+	private int entityGoal = 0;
+	
+	public Agent(int entityId, EntityManager entityManager, EntityFinder entityFinder, Server server) {
 		this.entityId = entityId;
-		this.goalPosition = goalPosition;
 		this.entityManager = entityManager;
 		this.entityFinder = entityFinder;
 		this.server = server;
@@ -31,7 +32,9 @@ public class Agent {
 		
 		// checking to see if our entity still exits and is alive
 		if (entity != null) {
-			Vector difference = VectorMath.minus(entity.getPosition(), goalPosition);
+			Vector goal = getGoal();
+			
+			Vector difference = VectorMath.minus(entity.getPosition(), goal);
 			difference = VectorMath.unitVector(difference);
 			
 			difference = Vector.newBuilder()
@@ -47,7 +50,7 @@ public class Agent {
 			
 			entityManager.updateEntity(entity);
 			
-			if (VectorMath.distanceSquared(difference, goalPosition) <= minimumDistanceSquared)	completed = true;
+			if (VectorMath.distanceSquared(difference, goal) <= minimumDistanceSquared)	completed = true;
 			
 		}
 		else {
@@ -56,8 +59,22 @@ public class Agent {
 		
 	}
 	
+	public void setGoal(int entityId) {
+		this.entityGoal = entityId;
+	}
+	
+	public void setGoal(Vector position) {
+		this.goalPosition = position;
+	}
+	
 	public boolean isCompleted() {
 		return completed;
 	}
 	
+	private Vector getGoal() {
+		if (entityGoal != 0 && entityManager.entityExist(entityGoal)) {
+			return entityManager.getEntity(entityGoal).getPosition();
+		}
+		else return goalPosition;
+	}
 }

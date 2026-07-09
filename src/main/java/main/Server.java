@@ -168,7 +168,7 @@ public class Server {
 		craftingManager = new CraftingManager(entityManager, serverLoader.loadCraftingRecipes(), console, assetManager, planeManager);
 		pathfindingHandler = new PathfindingHandler(entityManager, entityFinder, this);
 		
-		tagHandler = new TagHandler(this, entityManager, assetManager, entityFinder, planeManager, combatManager);
+		tagHandler = new TagHandler(this, entityManager, assetManager, entityFinder, planeManager, combatManager, pathfindingHandler);
 		entityManager.setClasses(chunkManager,tagHandler, entityFinder);
 		
 		if (shouldGenerate) {
@@ -356,6 +356,7 @@ public class Server {
 		chatManager.processChatMessagesToSend();
 		
 		celestialObjectManager.tickCelestialObjects();
+		pathfindingHandler.tick();
 		tagHandler.tick();
 		entityManager.tick();
 		

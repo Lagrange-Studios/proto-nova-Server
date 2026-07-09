@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import ai.PathfindingHandler;
 import entity.EntityFinder;
 import entity.EntityManager;
 import file.AssetManager;
@@ -27,14 +28,16 @@ public class TagHandler {
 	private EntityFinder entityFinder;
 	private PlaneManager planeManager;
 	private CombatManager combatManager;
+	private PathfindingHandler pathfindingHandler;
 
-	public TagHandler(Server server, EntityManager entityManager, AssetManager assetManager, EntityFinder entityFinder, PlaneManager planeManager, CombatManager combatManager) {
+	public TagHandler(Server server, EntityManager entityManager, AssetManager assetManager, EntityFinder entityFinder, PlaneManager planeManager, CombatManager combatManager, PathfindingHandler pathfindingHandler) {
 		this.server = server;
 		this.entityManager = entityManager;
 		this.assetManager = assetManager;
 		this.entityFinder = entityFinder;
 		this.planeManager = planeManager;
 		this.combatManager = combatManager;
+		this.pathfindingHandler = pathfindingHandler;
 		tagToEntities = new HashMap<>();
 		tagToClass = new HashMap<>();
 		loadAllTagClasses();
@@ -136,6 +139,10 @@ public class TagHandler {
 	
 	public int getTPS() {
 		return server.TPS;
+	}
+	
+	public PathfindingHandler getPathfindingHandler() {
+		return pathfindingHandler;
 	}
 	
 	public void loadAllTagEntities() {

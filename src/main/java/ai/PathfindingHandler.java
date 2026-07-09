@@ -33,14 +33,33 @@ public class PathfindingHandler {
 	
 	public void pathTo(int id, Vector position) {
 		if (!agents.contains(id)) {
-			Agent agent = new Agent(id,position,entityManager,entityFinder,server);
+			Agent agent = new Agent(id,entityManager,entityFinder,server);
+			agent.setGoal(position);
 			
 			agents.put(id, agent);
 		}
+		else changeGoal(id, position);
+	}
+	
+	public void pathTo(int id, int otherEntity) {
+		if (!agents.contains(id)) {
+			Agent agent = new Agent(id,entityManager,entityFinder,server);
+			agent.setGoal(otherEntity);
+			
+			agents.put(id, agent);
+		}
+		else changeGoal(id, otherEntity);
 	}
 	
 	public boolean hasAgent(int id) {
 		return agents.contains(id);
 	}
 	
+	public void changeGoal(int id, Vector position) {
+		agents.get(id).setGoal(position);
+	}
+	
+	public void changeGoal(int id, int entityId) {
+		agents.get(id).setGoal(entityId);
+	}
 }

@@ -254,6 +254,10 @@ public class EntityManager {
 	    return stored != null;
 	}
 	
+	public boolean entityExist(int id) {
+		return entities.containsKey(id);
+	}
+	
 	/**
 	 * Ticks all the velocity for all entities
 	 * @return stop reading this

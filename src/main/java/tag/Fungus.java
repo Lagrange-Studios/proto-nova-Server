@@ -79,7 +79,11 @@ public class Fungus extends TagClass {
 						if (!foundEntity.getIsItem() && foundEntity.getId() != entity.getId()) {
 							
 							//if (foundEntity.getTagsList().contains("plant")) System.out.println(tagHandler.getCombatManager().attemptToDamage(entity,foundEntity));
-							if (foundEntity.getTagsList().contains("plant")) tagHandler.getCombatManager().attemptToDamage(entity,foundEntity);
+							if (foundEntity.getTagsList().contains("plant")) {
+								
+								tagHandler.getCombatManager().attemptToDamage(entity,foundEntity);
+							
+							}
 							
 							open = false;
 							break;
