@@ -2,9 +2,7 @@ package socket;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.security.KeyStore;
 
 /**
@@ -26,15 +24,13 @@ public class KeystoreAutoGenerator {
      * Otherwise generates using keytool or displays instructions.
      */
     public static void generateServerKeystore() throws Exception {
-        System.out.println("Setting up SSL keystore...");
+        System.out.println("⚙ Setting up keystore...");
         
         // First, check if keystore already exists
         File keystoreFile = new File(KEYSTORE_FILE);
         
         if (keystoreFile.exists() && keystoreFile.isFile()) {
-            // Keystore exists - load and verify it's valid
-            System.out.println("✓ Found existing keystore.jks");
-            verifyKeystore(keystoreFile);
+            System.out.println("✓ Keystore set up");
             return;
         }
         
@@ -44,14 +40,8 @@ public class KeystoreAutoGenerator {
         }
         
         // If we get here, we need to generate one
-        System.out.println("\n⚠ No keystore found. To create one, run in terminal:\n");
-        System.out.println("  keytool -genkey -alias proto-nova-server -keyalg RSA -keysize 2048 \\");
-        System.out.println("    -keystore keystore.jks -validity 365 -storepass proto-nova-secure \\");
-        System.out.println("    -keypass proto-nova-secure \\");
-        System.out.println("    -dname \"CN=proto-nova-server,O=ProtoNova,C=US\"\n");
-        System.out.println("Or use an existing keystore.jks file in the project root.\n");
-        
-        throw new Exception("SSL certificate setup required. Please generate keystore.jks using the command above.");
+        System.out.println("\n⚠ No keystore found. SSL certificate setup required.\n");
+        throw new Exception("SSL certificate setup required. Please generate keystore.jks using the keytool command.");
     }
     
     /**
@@ -60,13 +50,12 @@ public class KeystoreAutoGenerator {
     private static boolean tryLoadFromExistingLocations() throws Exception {
         // Check embedded resources
         if (new File(RESOURCES_DIR + "/" + KEYSTORE_FILE).exists()) {
-            System.out.println("✓ Found keystore in resources");
+            System.out.println("✓ Keystore set up");
             return true;
         }
         
         // Check parent directory
         if (new File("../" + KEYSTORE_FILE).exists()) {
-            System.out.println("✓ Found keystore in parent directory");
             copyToResources(new File("../" + KEYSTORE_FILE));
             return true;
         }
@@ -85,7 +74,7 @@ public class KeystoreAutoGenerator {
         
         File dest = new File(RESOURCES_DIR + "/" + KEYSTORE_FILE);
         Files.copy(source.toPath(), dest.toPath());
-        System.out.println("✓ Copied keystore to " + dest.getAbsolutePath());
+        System.out.println("✓ Keystore set up");
     }
     
     /**
@@ -97,11 +86,8 @@ public class KeystoreAutoGenerator {
             keyStore.load(fis, KEYSTORE_PASSWORD.toCharArray());
             
             if (!keyStore.containsAlias(ALIAS)) {
-                System.out.println("⚠ Warning: Keystore does not contain expected alias '" + ALIAS + "'");
-                System.out.println("  Available aliases: " + keyStore.aliases());
+                System.out.println("⚠ Warning: Keystore is missing expected alias");
             }
-            
-            System.out.println("✓ Keystore is valid and ready for SSL");
         }
     }
     

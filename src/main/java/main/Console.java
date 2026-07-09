@@ -1,15 +1,5 @@
 package main;
 
-import entity.EntityManager;
-import file.ServerSaver;
-import gamemode.GamemodeManager;
-import generation.Generator;
-import plane.PlaneManager;
-import protonova.protobuf.EntityProto.Entity;
-import protonova.protobuf.VectorProto.Vector;
-import space.CelestialObjectManager;
-import socket.Player;
-
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
@@ -17,6 +7,16 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.json.JSONObject;
+
+import entity.EntityManager;
+import file.ServerSaver;
+import gamemode.GamemodeManager;
+import generation.Generator;
+import plane.PlaneManager;
+import protonova.protobuf.EntityProto.Entity;
+import protonova.protobuf.VectorProto.Vector;
+import socket.Player;
+import space.CelestialObjectManager;
 
 public class Console {
     protected Server server;
@@ -89,7 +89,7 @@ public class Console {
     
     protected void updateBar() throws Exception {
     	
-    	if (countedTicks == 0 && !server.getTPSPaused()) print("WARNING TPS is 0");
+    	if (countedTicks == 0 && server.isServerReady() && !server.getTPSPaused()) print("WARNING TPS is 0");
     	
     	Runtime runtime = Runtime.getRuntime();
     	

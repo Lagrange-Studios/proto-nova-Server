@@ -76,6 +76,7 @@ public class Server {
 	private HealthManager healthManager;
 	private LootTableManager lootTableManager;
 	private PathfindingHandler pathfindingHandler;
+	private volatile boolean serverReady = false;
 	private boolean headless;
 	
 	private int saveCounter = 0;
@@ -210,6 +211,7 @@ public class Server {
 		serverSaver = new ServerSaver(this, entityManager, planeManager, celestialObjectManager, gamemodeManager);
 		
 		startThread();
+		serverReady = true;
 		
 		packetMaker = new PacketMaker(serverSocket,serverLoader,serverSaver,entityManager,entityFinder,soundFinder,chatFinder,planeManager,celestialObjectManager);
 		
@@ -415,6 +417,10 @@ public class Server {
 			lastSaveTime = currentTime;
 			console.print(serverSaver.save());
 		}
+	}
+	
+	public boolean isServerReady() {
+		return serverReady;
 	}
 	
 	public ArrayList<Player> getPlayers() {

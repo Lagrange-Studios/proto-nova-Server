@@ -6,16 +6,17 @@ import java.util.HashSet;
 import entity.EntityManager;
 import main.Console;
 import protonova.protobuf.EntityProto.Entity;
-import util.Id;
 
 public class AssetManager {
 	private HashMap<String, Entity> entityAssets;
 	private EntityManager entityManager;
 	private HashMap<String, HashSet<String>> typeMap;
+	private Console console;
 	
 	public AssetManager(EntityManager entityManager, HashMap<String, Entity> entityAssets, Console console, HashMap<String, HashSet<String>> typeMap) {
 		this.entityAssets = entityAssets;
 		this.entityManager = entityManager;
+		this.console = console;
 		this.typeMap = typeMap;
 		
 		// just checking the entities so they don't load with improper values
@@ -40,7 +41,7 @@ public class AssetManager {
 			
 			return clone;
 		}
-		else System.err.print("Error: Could not find asset: "+name);
+		else console.print("Error: Could not find asset: "+name);
 		return null;
 	}
 	
