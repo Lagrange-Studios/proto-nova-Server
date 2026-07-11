@@ -133,6 +133,12 @@ public class PacketMaker {
 		Builder packet = ServerToClientPacket.newBuilder()
 				.setMindId(player.data.getEntityId());
 		
+		// clone the delete and update list so we only remove the updates we actualy sent
+		// this is a possible fix for desyncs but could also just use more cpu and ram for no reason
+		// further testing required
+		HashSet<Integer> updateList = (HashSet<Integer>) player.updateList.clone();
+		HashSet<Integer> deleteList = (HashSet<Integer>) player.deleteList.clone();
+		
 		int startX = Math.round(playerEntity.getPosition().getX());
 		int startY = Math.round(playerEntity.getPosition().getY());
 		
@@ -173,16 +179,16 @@ public class PacketMaker {
 		for (int id : playerEntity.getInventorySlotsMap().values()) {
 			Entity inventoryItem = entityManager.getEntity(id);
 			if (inventoryItem != null && !entitiesSent.contains(inventoryItem.getId())
-				|| player.updateList.contains(id)) {
+				|| updateList.contains(id)) {
 				packet.addEntities(inventoryItem);
 				entitiesSentThisPacket.add(inventoryItem.getId());
 			}
-			else if (player.deleteList.contains(id)) packet.addRemovedEntities(id);
+			else if (deleteList.contains(id)) packet.addRemovedEntities(id);
 		}
 		
 		//check for updates
 		for (int id : entitiesSent.toArray(new Integer[0])) {
-			if (player.deleteList.contains(id) ||
+			if (deleteList.contains(id) ||
 				entityManager.getEntity(id) == null ||
 				VectorMath.distanceSquared(playerEntity.getPosition(), entityManager.getEntity(id).getPosition()) > renderDistanceSquared &&
 				!playerEntity.getInventorySlotsMap().containsValue(id)) {
@@ -191,7 +197,7 @@ public class PacketMaker {
 				packet.addRemovedEntities(id);
 				if (entitiesSentThisPacket.contains(id)) entitiesSentThisPacket.remove(id);
 			}
-			else if (player.updateList.contains(id)) {
+			else if (updateList.contains(id)) {
 				packet.addEntities(entityManager.getEntity(id));
 				entitiesSentThisPacket.add(id);
 			}
@@ -218,7 +224,8 @@ public class PacketMaker {
 		// Add all entities sent this packet to entitiesSent so updates are tracked next tick
 		entitiesSent.addAll(entitiesSentThisPacket);
 		
-		player.deleteList.clear();
-		player.updateList.clear();
+		// clear only the entities updates and deletes we cloned since its linked values
+		deleteList.clear();
+		updateList.clear();
 	}
 }
