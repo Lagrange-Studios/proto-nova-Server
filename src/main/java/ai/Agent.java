@@ -2,6 +2,9 @@ package ai;
 
 import entity.EntityManager;
 import main.Server;
+
+import java.util.HashSet;
+
 import entity.EntityFinder;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.VectorProto.Vector;
@@ -34,7 +37,7 @@ public class Agent {
 		if (entity != null) {
 			Vector goal = getGoal();
 			
-			Vector difference = VectorMath.minus(entity.getPosition(), goal);
+			Vector difference = VectorMath.minus(goal, entity.getPosition());
 			difference = VectorMath.unitVector(difference);
 			
 			difference = Vector.newBuilder()
@@ -43,6 +46,8 @@ public class Agent {
 					.build();
 			
 			difference = VectorMath.add(entity.getPosition(), difference);
+			
+			
 			
 			entity = entity.toBuilder()
 					.setPosition(difference)

@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.concurrent.ConcurrentHashMap;
 
 import ai.PathfindingHandler;
 import entity.EntityFinder;
@@ -21,8 +22,8 @@ import protonova.protobuf.EntityProto.Entity;
 public class TagHandler {
 	
 	private EntityManager entityManager;
-	private HashMap<String, HashSet<Integer>> tagToEntities;
-	private HashMap<String, TagClass> tagToClass;
+	private ConcurrentHashMap<String, HashSet<Integer>> tagToEntities;
+	private ConcurrentHashMap<String, TagClass> tagToClass;
 	private Server server; 
 	private AssetManager assetManager;
 	private EntityFinder entityFinder;
@@ -38,8 +39,8 @@ public class TagHandler {
 		this.planeManager = planeManager;
 		this.combatManager = combatManager;
 		this.pathfindingHandler = pathfindingHandler;
-		tagToEntities = new HashMap<>();
-		tagToClass = new HashMap<>();
+		tagToEntities = new ConcurrentHashMap<>();
+		tagToClass = new ConcurrentHashMap<>();
 		loadAllTagClasses();
 	}
 	

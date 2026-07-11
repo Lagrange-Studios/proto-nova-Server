@@ -7,6 +7,7 @@ import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.TileProto.Tile;
 import protonova.protobuf.VectorProto.Vector;
 import util.CoordinateConverter;
+import util.DebugPrinter;
 import util.Random;
 import util.VectorMath;
 
@@ -14,6 +15,7 @@ public class Fungus extends TagClass {
 
 	private final int chanceOfGrowthPerSecond = 15; // one in ten chance
 	private final int evolveChancePerSecond = chanceOfGrowthPerSecond*2; // one in ten chance
+	private final int fungusMonsterChance = 20; // 1 in x amount 
 	
 	// tile info
 	public static final HashSet<String> allowedTiles = new HashSet<>(Arrays.asList("grass", "stone", "sand"));
@@ -78,7 +80,7 @@ public class Fungus extends TagClass {
 					for (Entity foundEntity : tagHandler.getEntityFinder().getAllEntitiesInRadius(newPosition, entity.getMap(), .99)) {
 						if (!foundEntity.getIsItem() && foundEntity.getId() != entity.getId()) {
 							
-							//if (foundEntity.getTagsList().contains("plant")) System.out.println(tagHandler.getCombatManager().attemptToDamage(entity,foundEntity));
+							if (foundEntity.getTagsList().contains("plant")) System.out.println(tagHandler.getCombatManager().attemptToDamage(entity,foundEntity));
 							if (foundEntity.getTagsList().contains("plant")) {
 								
 								tagHandler.getCombatManager().attemptToDamage(entity,foundEntity);
@@ -109,11 +111,27 @@ public class Fungus extends TagClass {
 			// chance to fortify
 			else if (entity.getName().equals("fungus vein") && Random.randomInt(1,evolveChancePerSecond) == 1 && 
 					surroundedByVeins(entity, tagHandler)) {
+				
+				// chance to spawn a monster along with fortifying
+				if (Random.randomInt(1, fungusMonsterChance) == 1) {
+					Entity newMonster = tagHandler.getAssetManager().getEntity("fungus monster", entity.getMap());
+					
+					newMonster = newMonster.toBuilder()
+							.setPosition(entity.getPosition())
+							.build();
+					
+					tagHandler.updateEntity(newMonster);
+					
+					System.out.println("new monster spawned at: ");
+					DebugPrinter.print(entity.getPosition());
+				}
 				entity = entity.toBuilder()
 						.setName("fortifeid fungus vein")
 						.build();
 				
 				tagHandler.updateEntity(entity);
+				
+				
 			}
 		}
 		else {
