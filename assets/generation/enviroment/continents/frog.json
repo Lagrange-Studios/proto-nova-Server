@@ -1,6 +1,0 @@
-{
-	"name": "frog",
-	"tiles": ["grass","sand"],
-	"tileDensity": 100,
-	"grid": false
-}

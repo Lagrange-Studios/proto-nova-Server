@@ -35,6 +35,7 @@ public class Door extends TagClass {
 					.putInventorySlots("doorState", 1)
 					.setDisplayTexture(thisEntity.getName()+" open")
 					.setCanCollide(false)
+					.setCastShadow(false)
 					.build();
 		}
 		// starts open
@@ -43,6 +44,7 @@ public class Door extends TagClass {
 					.putInventorySlots("doorState", 0)
 					.clearDisplayTexture()
 					.setCanCollide(true)
+					.setCastShadow(true)
 					.build();
 		}
 		
