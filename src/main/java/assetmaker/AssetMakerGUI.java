@@ -120,6 +120,21 @@ public class AssetMakerGUI {
     };
     final javax.swing.JTable lootTable = new javax.swing.JTable(lootTableModel);
 
+    // ===== Advanced Entity.proto fields =====
+    final JCheckBox dropsABodyBox = new JCheckBox("Drops a body");
+    final JSpinner internalSpaceSpinner = new JSpinner(new SpinnerNumberModel(0, 0, Integer.MAX_VALUE, 1));
+    final JTextArea internalValuesField = new JTextArea();
+    final JCheckBox heartBox = new JCheckBox("Heart");
+    final JTextField heartBloodField = new JTextField();
+    final JTextField heartMaxBloodField = new JTextField();
+    final JCheckBox lungsBox = new JCheckBox("Lungs");
+    final JSpinner lungsOxygenSpinner = new JSpinner(new SpinnerNumberModel(0, 0, Integer.MAX_VALUE, 1));
+    final JCheckBox liverBox = new JCheckBox("Liver");
+    final JSpinner liverDetoxificationSpinner = new JSpinner(new SpinnerNumberModel(0, 0, Integer.MAX_VALUE, 1));
+    final JCheckBox brainBox = new JCheckBox("Brain");
+    final JTextArea stomachChemicalsField = new JTextArea();
+    final JTextArea cardiovascularChemicalsField = new JTextArea();
+
     final JLabel statusLabel = new JLabel(" ");
     final JLabel loadedEntityLabel = new JLabel(" ");
 
@@ -278,6 +293,7 @@ public class AssetMakerGUI {
         tabs.addTab("Item / Stack", wrapEditorTab(p.buildItemTab()));
         tabs.addTab("Tags & Display", wrapEditorTab(p.buildTagsTab()));
         tabs.addTab("Loot Table", wrapEditorTab(p.buildLootTableTab()));
+        tabs.addTab("Advanced", wrapEditorTab(p.buildAdvancedTab()));
         return tabs;
     }
 

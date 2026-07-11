@@ -282,6 +282,71 @@ class AssetMakerGUIPanels {
         return root;
     }
 
+    /**
+     * Less frequently edited fields from Entity.proto. Internal values use
+     * {@code name=id}; chemical lines use {@code id=amount}.
+     */
+    JPanel buildAdvancedTab() {
+        JPanel root = new JPanel();
+        root.setLayout(new BoxLayout(root, BoxLayout.Y_AXIS));
+        root.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+
+        JPanel body = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        body.add(gui.dropsABodyBox);
+        body.add(new JLabel("Internal space:"));
+        body.add(gui.internalSpaceSpinner);
+        root.add(body);
+
+        JPanel internal = new JPanel(new BorderLayout());
+        internal.setBorder(BorderFactory.createTitledBorder("Internal values (name=id)"));
+        internal.add(new JLabel("Runtime/custom values. Leave blank unless another system expects them."), BorderLayout.NORTH);
+        gui.internalValuesField.setLineWrap(true);
+        gui.internalValuesField.setWrapStyleWord(true);
+        internal.add(new JScrollPane(gui.internalValuesField), BorderLayout.CENTER);
+        internal.setPreferredSize(new Dimension(600, 120));
+        root.add(internal);
+
+        JPanel organs = new JPanel(new GridBagLayout());
+        organs.setBorder(BorderFactory.createTitledBorder("Organs"));
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(3, 4, 3, 4);
+        c.anchor = GridBagConstraints.WEST;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = 0;
+        int row = 0;
+        c.gridx = 0; c.gridy = row; organs.add(gui.heartBox, c);
+        c.gridx = 1; organs.add(new JLabel("Blood:"), c);
+        c.gridx = 2; c.weightx = 1; organs.add(gui.heartBloodField, c);
+        c.gridx = 3; c.weightx = 0; organs.add(new JLabel("Max blood:"), c);
+        c.gridx = 4; c.weightx = 1; organs.add(gui.heartMaxBloodField, c); row++;
+        c.gridx = 0; c.gridy = row; c.weightx = 0; organs.add(gui.lungsBox, c);
+        c.gridx = 1; organs.add(new JLabel("Oxygen:"), c);
+        c.gridx = 2; c.weightx = 1; organs.add(gui.lungsOxygenSpinner, c); row++;
+        c.gridx = 0; c.gridy = row; c.weightx = 0; organs.add(gui.liverBox, c);
+        c.gridx = 1; organs.add(new JLabel("Detoxification:"), c);
+        c.gridx = 2; c.weightx = 1; organs.add(gui.liverDetoxificationSpinner, c); row++;
+        c.gridx = 0; c.gridy = row; c.gridwidth = 5; organs.add(gui.brainBox, c); row++;
+        addChemicalArea(organs, gui.stomachChemicalsField, "Stomach chemical IDs (one per line):", row++);
+        addChemicalArea(organs, gui.cardiovascularChemicalsField, "Cardiovascular chemicals (id=amount):", row);
+        root.add(organs);
+        root.add(Box.createVerticalGlue());
+        return root;
+    }
+
+    private static void addChemicalArea(JPanel panel, JTextArea area, String label, int row) {
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(3, 4, 3, 4);
+        c.anchor = GridBagConstraints.WEST;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 0; c.gridy = row; c.gridwidth = 2;
+        panel.add(new JLabel(label), c);
+        area.setRows(2);
+        area.setLineWrap(true);
+        area.setWrapStyleWord(true);
+        c.gridx = 2; c.gridwidth = 3; c.weightx = 1;
+        panel.add(new JScrollPane(area), c);
+    }
+
     private JPanel makeDamageTable(String title, JSpinner[] spinners) {
         JPanel table = new JPanel(new GridBagLayout());
         table.setBorder(BorderFactory.createTitledBorder(title));

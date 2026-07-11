@@ -12,7 +12,9 @@ import protonova.protobuf.DamageProto.DamageMultiplier;
 import protonova.protobuf.DamageProto.HitDamage;
 import protonova.protobuf.EntityProto.Direction;
 import protonova.protobuf.EntityProto.Entity;
+import protonova.protobuf.ChemicalProto.Chemical;
 import protonova.protobuf.LootTableItemProto.lootTableItem;
+import protonova.protobuf.OrgansProto.Organs;
 import protonova.protobuf.VectorProto.Vector;
 
 /**
@@ -255,6 +257,21 @@ class AssetMakerGUIController {
 
         gui.lootTableModel.setRowCount(0);
 
+        // ===== Advanced Entity.proto fields =====
+        gui.dropsABodyBox.setSelected(false);
+        gui.internalSpaceSpinner.setValue(0);
+        gui.internalValuesField.setText("");
+        gui.heartBox.setSelected(false);
+        gui.heartBloodField.setText("");
+        gui.heartMaxBloodField.setText("");
+        gui.lungsBox.setSelected(false);
+        gui.lungsOxygenSpinner.setValue(0);
+        gui.liverBox.setSelected(false);
+        gui.liverDetoxificationSpinner.setValue(0);
+        gui.brainBox.setSelected(false);
+        gui.stomachChemicalsField.setText("");
+        gui.cardiovascularChemicalsField.setText("");
+
         gui.loadedEntityLabel.setText(" ");
         gui.selectedSlotField.setText("");
     }
@@ -344,11 +361,29 @@ class AssetMakerGUIController {
         gui.lootTableModel.setRowCount(0);
         for (lootTableItem item : entity.getLootTableList()) {
             gui.lootTableModel.addRow(new Object[]{
-                item.getItemName(),
-                item.getProbability(),
-                item.hasAmount() ? item.getAmount() : 1
+                    item.getItemName(),
+                    item.getProbability(),
+                    item.hasAmount() ? item.getAmount() : 1
             });
         }
+
+        // ===== Advanced Entity.proto fields =====
+        gui.dropsABodyBox.setSelected(entity.getDropsABody());
+        gui.internalSpaceSpinner.setValue(entity.getInternalSpace());
+        gui.internalValuesField.setText(formatMap(entity.getInternalMap()));
+        Organs organs = entity.getOrgans();
+        gui.heartBox.setSelected(organs.hasHeart());
+        gui.heartBloodField.setText(organs.hasHeart() ? fmt(organs.getHeart().getBlood()) : "");
+        gui.heartMaxBloodField.setText(organs.hasHeart() ? fmt(organs.getHeart().getMaxBlood()) : "");
+        gui.lungsBox.setSelected(organs.hasLungs());
+        gui.lungsOxygenSpinner.setValue(organs.hasLungs() ? organs.getLungs().getOxygen() : 0);
+        gui.liverBox.setSelected(organs.hasLiver());
+        gui.liverDetoxificationSpinner.setValue(organs.hasLiver() ? organs.getLiver().getDetoxification() : 0);
+        gui.brainBox.setSelected(organs.hasBrain());
+        gui.stomachChemicalsField.setText(formatChemicals(organs.hasStomach()
+                ? organs.getStomach().getChemicalsList() : java.util.Collections.emptyList()));
+        gui.cardiovascularChemicalsField.setText(formatChemicalMessages(organs.hasCardiovascularSystem()
+                ? organs.getCardiovascularSystem().getChemicalsList() : java.util.Collections.emptyList()));
 
         Map<String, Integer> slots = entity.getInventorySlotsMap();
         StringBuilder inv = new StringBuilder();
@@ -380,6 +415,10 @@ class AssetMakerGUIController {
         sb.append("tags:      ").append(String.join(", ", entity.getTagsList())).append("<br>");
         sb.append("slots:     ").append(entity.getInventorySlotsMap().size()).append("<br>");
         sb.append("loot:      ").append(entity.getLootTableCount()).append(" entries").append("<br>");
+        sb.append("body:      ").append(entity.getDropsABody())
+                .append("  organs: ").append(entity.getOrgans().getAllFields().size()).append("<br>");
+        sb.append("internal:  ").append(entity.getInternalMap().size())
+                .append(" values / ").append(entity.getInternalSpace()).append(" space<br>");
         sb.append("</body></html>");
         gui.loadedEntityLabel.setText(sb.toString());
     }
@@ -420,11 +459,121 @@ class AssetMakerGUIController {
         setOptionalText(builder, gui.displayTextureField.getText(), true);
         setOptionalText(builder, gui.hexColorField.getText(), false);
 
-        // 5. Loot table rows are converted from the table model at save time.
+        // 5. Advanced Entity.proto fields.
+        builder.setDropsABody(gui.dropsABodyBox.isSelected())
+                .setInternalSpace((Integer) gui.internalSpaceSpinner.getValue())
+                .putAllInternal(parseInternalValues())
+                .setOrgans(buildOrgans());
+
+        // 6. Loot table rows are converted from the table model at save time.
         builder.clearLootTable().addAllLootTable(buildLootTable());
 
         gui.dirty = true;
         return builder.build();
+    }
+
+    /** Formats the Entity.proto map as one name=id entry per line. */
+    private static String formatMap(Map<String, Integer> values) {
+        StringBuilder result = new StringBuilder();
+        for (Map.Entry<String, Integer> entry : values.entrySet()) {
+            result.append(entry.getKey()).append('=').append(entry.getValue()).append('\n');
+        }
+        return result.toString();
+    }
+
+    /** Formats stomach chemical IDs as one ID per line. */
+    private static String formatChemicals(List<Integer> ids) {
+        StringBuilder result = new StringBuilder();
+        for (Integer id : ids) result.append(id).append('\n');
+        return result.toString();
+    }
+
+    /** Formats full Chemical messages as id=amount entries. */
+    private static String formatChemicalMessages(List<Chemical> chemicals) {
+        StringBuilder result = new StringBuilder();
+        for (Chemical chemical : chemicals) {
+            result.append(chemical.getId()).append('=').append(chemical.getAmount()).append('\n');
+        }
+        return result.toString();
+    }
+
+    /** Parses the advanced internal map as name=id entries. */
+    private Map<String, Integer> parseInternalValues() {
+        Map<String, Integer> values = new LinkedHashMap<>();
+        for (String line : gui.internalValuesField.getText().split("\\r?\\n")) {
+            line = line.trim();
+            if (line.isEmpty()) continue;
+            int equals = line.indexOf('=');
+            if (equals < 0) continue;
+            String name = line.substring(0, equals).trim();
+            if (name.isEmpty()) continue;
+            try {
+                values.put(name, Integer.parseInt(line.substring(equals + 1).trim()));
+            } catch (NumberFormatException ex) {
+                throw new NumberFormatException("Internal value '" + name + "': " + ex.getMessage());
+            }
+        }
+        return values;
+    }
+
+    /** Builds the nested Organs message. Blank/unchecked organs are omitted. */
+    private Organs buildOrgans() {
+        Organs.Builder organs = Organs.newBuilder();
+        if (gui.heartBox.isSelected()) {
+            organs.setHeart(protonova.protobuf.OrgansProto.Heart.newBuilder()
+                    .setBlood(parseFloat(gui.heartBloodField.getText(), "Heart blood"))
+                    .setMaxBlood(parseFloat(gui.heartMaxBloodField.getText(), "Heart max blood")));
+        }
+        if (gui.lungsBox.isSelected()) {
+            organs.setLungs(protonova.protobuf.OrgansProto.Lungs.newBuilder()
+                    .setOxygen((Integer) gui.lungsOxygenSpinner.getValue()));
+        }
+        if (gui.liverBox.isSelected()) {
+            organs.setLiver(protonova.protobuf.OrgansProto.Liver.newBuilder()
+                    .setDetoxification((Integer) gui.liverDetoxificationSpinner.getValue()));
+        }
+        if (gui.brainBox.isSelected()) {
+            organs.setBrain(protonova.protobuf.OrgansProto.Brain.newBuilder());
+        }
+        List<Integer> stomachIds = parseIntegerLines(gui.stomachChemicalsField.getText(), "Stomach chemical");
+        if (!stomachIds.isEmpty()) {
+            organs.setStomach(protonova.protobuf.OrgansProto.Stomach.newBuilder().addAllChemicals(stomachIds));
+        }
+        List<Chemical> cardiovascular = parseChemicals(gui.cardiovascularChemicalsField.getText());
+        if (!cardiovascular.isEmpty()) {
+            organs.setCardiovascularSystem(protonova.protobuf.OrgansProto.CardiovascularSystem.newBuilder()
+                    .addAllChemicals(cardiovascular));
+        }
+        return organs.build();
+    }
+
+    private List<Integer> parseIntegerLines(String text, String label) {
+        List<Integer> values = new ArrayList<>();
+        for (String line : text.split("\\r?\\n")) {
+            line = line.trim();
+            if (line.isEmpty()) continue;
+            try { values.add(Integer.parseInt(line)); }
+            catch (NumberFormatException ex) { throw new NumberFormatException(label + ": " + ex.getMessage()); }
+        }
+        return values;
+    }
+
+    private List<Chemical> parseChemicals(String text) {
+        List<Chemical> values = new ArrayList<>();
+        for (String line : text.split("\\r?\\n")) {
+            line = line.trim();
+            if (line.isEmpty()) continue;
+            int equals = line.indexOf('=');
+            if (equals < 0) throw new NumberFormatException("Cardiovascular chemical must use id=amount");
+            try {
+                values.add(Chemical.newBuilder()
+                        .setId(Integer.parseInt(line.substring(0, equals).trim()))
+                        .setAmount(Float.parseFloat(line.substring(equals + 1).trim())).build());
+            } catch (NumberFormatException ex) {
+                throw new NumberFormatException("Cardiovascular chemical: " + ex.getMessage());
+            }
+        }
+        return values;
     }
 
     /** Writes the identity and movement tab into the protobuf builder. */
