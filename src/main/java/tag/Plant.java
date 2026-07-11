@@ -13,6 +13,9 @@ public class Plant extends TagClass {
 		return "plant";
 	}
 	
+	private static final int defaultRandomSproutChance = 200;
+	private static final int defaultTotalPlantGrowTime = 300;
+	
 	/*
 	 * This class makes the entity act as a plant. it will spread and grow
 	 * 
@@ -63,8 +66,8 @@ public class Plant extends TagClass {
 		// check to see if its grown
 		else if (!entity.containsInventorySlots("currentPlantAge")) {
 			
-			int randomSproutChance = getSlot(entity, "randomSproutChance", 60);
-			int totalPlantGrowTime = getSlot(entity, "totalPlantGrowTime", 60);
+			int randomSproutChance = getSlot(entity, "randomSproutChance", defaultRandomSproutChance);
+			int totalPlantGrowTime = getSlot(entity, "totalPlantGrowTime", defaultTotalPlantGrowTime);
 			
 			// chance check
 			if (Math.round(Math.random()*randomSproutChance) == 1) {

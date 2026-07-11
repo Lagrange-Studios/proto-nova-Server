@@ -1,13 +1,9 @@
 package socket;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 
 import chat.ChatFinder;
-import chat.ChatManager;
-import entity.ChunkManager;
 import entity.EntityFinder;
 import entity.EntityManager;
 import enums.Player.State;
@@ -20,7 +16,6 @@ import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.PlaneProto.Plane;
 import protonova.protobuf.ServerToClientPacketProto.ServerToClientPacket;
 import protonova.protobuf.ServerToClientPacketProto.ServerToClientPacket.Builder;
-import protonova.protobuf.TileProto.Tile;
 import sound.SoundFinder;
 import space.CelestialObjectManager;
 import util.VectorMath;
@@ -124,6 +119,7 @@ public class PacketMaker {
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	private void sendNormalPacket(Player player) {
 		
 		Entity playerEntity = entityManager.getEntity(player.data.getEntityId());

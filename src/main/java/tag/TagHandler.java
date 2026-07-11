@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import ai.PathfindingHandler;
@@ -11,6 +12,7 @@ import entity.EntityFinder;
 import entity.EntityManager;
 import file.AssetManager;
 import health.CombatManager;
+import health.HealthManager;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ScanResult;
@@ -22,7 +24,7 @@ import protonova.protobuf.EntityProto.Entity;
 public class TagHandler {
 	
 	private EntityManager entityManager;
-	private ConcurrentHashMap<String, HashSet<Integer>> tagToEntities;
+	private ConcurrentHashMap<String, Set<Integer>> tagToEntities;
 	private ConcurrentHashMap<String, TagClass> tagToClass;
 	private Server server; 
 	private AssetManager assetManager;
@@ -30,8 +32,9 @@ public class TagHandler {
 	private PlaneManager planeManager;
 	private CombatManager combatManager;
 	private PathfindingHandler pathfindingHandler;
+	private HealthManager healthManager;
 
-	public TagHandler(Server server, EntityManager entityManager, AssetManager assetManager, EntityFinder entityFinder, PlaneManager planeManager, CombatManager combatManager, PathfindingHandler pathfindingHandler) {
+	public TagHandler(Server server, EntityManager entityManager, AssetManager assetManager, EntityFinder entityFinder, PlaneManager planeManager, CombatManager combatManager, PathfindingHandler pathfindingHandler, HealthManager healthManager) {
 		this.server = server;
 		this.entityManager = entityManager;
 		this.assetManager = assetManager;
@@ -39,6 +42,7 @@ public class TagHandler {
 		this.planeManager = planeManager;
 		this.combatManager = combatManager;
 		this.pathfindingHandler = pathfindingHandler;
+		this.healthManager = healthManager;
 		tagToEntities = new ConcurrentHashMap<>();
 		tagToClass = new ConcurrentHashMap<>();
 		loadAllTagClasses();
@@ -55,7 +59,7 @@ public class TagHandler {
 					continue;
 				}
 				
-				if (!tagToEntities.containsKey(tag)) tagToEntities.put(tag, new HashSet<>());
+				if (!tagToEntities.containsKey(tag)) tagToEntities.put(tag, ConcurrentHashMap.newKeySet());
 				 tagToEntities.get(tag).add(entity.getId());
 			}
 		}
@@ -144,6 +148,10 @@ public class TagHandler {
 	
 	public PathfindingHandler getPathfindingHandler() {
 		return pathfindingHandler;
+	}
+	
+	public HealthManager getHealthManager() {
+		return healthManager;
 	}
 	
 	public void loadAllTagEntities() {

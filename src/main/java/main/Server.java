@@ -169,7 +169,7 @@ public class Server {
 		craftingManager = new CraftingManager(entityManager, serverLoader.loadCraftingRecipes(), console, assetManager, planeManager);
 		pathfindingHandler = new PathfindingHandler(entityManager, entityFinder, this);
 		
-		tagHandler = new TagHandler(this, entityManager, assetManager, entityFinder, planeManager, combatManager, pathfindingHandler);
+		tagHandler = new TagHandler(this, entityManager, assetManager, entityFinder, planeManager, combatManager, pathfindingHandler, healthManager);
 		entityManager.setClasses(chunkManager,tagHandler, entityFinder);
 		
 		if (shouldGenerate) {
