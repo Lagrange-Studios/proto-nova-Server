@@ -21,6 +21,13 @@ import javax.swing.JSpinner;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 
+/**
+ * Builds the editor tabs. Each method below represents one logical asset
+ * section. To add a new UI section, create a buildXTab method, add its controls
+ * to AssetMakerGUI, add the tab in AssetMakerGUI.buildEditorTabs() using
+ * {@code wrapEditorTab(...)} so it remains reachable on small windows, and
+ * update AssetMakerGUIController for loading and saving.
+ */
 class AssetMakerGUIPanels {
 
     static final String[] DAMAGE_KEYS = {
@@ -40,6 +47,7 @@ class AssetMakerGUIPanels {
         p.add(lbl, c);
     }
 
+    /** Identity, IDs, direction, and state flags. */
     JPanel buildIdentityTab() {
         JPanel p = new JPanel(new GridBagLayout());
         p.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
@@ -82,6 +90,7 @@ class AssetMakerGUIPanels {
         return p;
     }
 
+    /** Position, velocity, size, speed, and anchoring. */
     JPanel buildMovementTab() {
         JPanel p = new JPanel(new GridBagLayout());
         p.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
@@ -121,6 +130,7 @@ class AssetMakerGUIPanels {
         return p;
     }
 
+    /** Health, light emission, damage, multipliers, and hit cooldown. */
     JPanel buildCombatTab() {
         JPanel root = new JPanel();
         root.setLayout(new BoxLayout(root, BoxLayout.Y_AXIS));
@@ -156,6 +166,7 @@ class AssetMakerGUIPanels {
         return root;
     }
 
+    /** Item flags, stack amount, and inventory slot references. */
     JPanel buildItemTab() {
         JPanel root = new JPanel();
         root.setLayout(new BoxLayout(root, BoxLayout.Y_AXIS));
@@ -189,6 +200,7 @@ class AssetMakerGUIPanels {
         return root;
     }
 
+    /** Tags and visual presentation fields used by the client. */
     JPanel buildTagsTab() {
         JPanel root = new JPanel(new GridBagLayout());
         root.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
@@ -224,6 +236,7 @@ class AssetMakerGUIPanels {
         return root;
     }
 
+    /** Drop entries created when an entity is defeated. */
     JPanel buildLootTableTab() {
         JPanel root = new JPanel(new BorderLayout());
         root.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));

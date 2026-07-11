@@ -40,17 +40,29 @@ import protonova.protobuf.EntityProto.Direction;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.LootTableItemProto.lootTableItem;
 
+/**
+ * Swing window for editing entity protobuf assets.
+ *
+ * <p>This class owns controls and layout only. Button behavior belongs in
+ * {@link AssetMakerGUIController}; tab layout belongs in
+ * {@link AssetMakerGUIPanels}. To add a field, add the control in the matching
+ * section below, place it on the matching tab, then read/write it in the
+ * controller.</p>
+ */
 public class AssetMakerGUI {
 
+    // ===== Shared application state =====
     final AssetMaker assetMaker = new AssetMaker();
 
     final JFrame frame = new JFrame("Proto Nova - Asset Maker");
 
+    // ===== Asset browser controls =====
     final DefaultListModel<String> entityListModel = new DefaultListModel<>();
     final JList<String> entityList = new JList<>(entityListModel);
     final JTextField searchField = new JTextField(18);
     final JTextArea otherAssetsArea = new JTextArea();
 
+    // ===== Identity and display controls =====
     final JTextField nameField = new JTextField();
     final JTextField idField = new JTextField();
     final JTextField mapField = new JTextField();
@@ -62,6 +74,7 @@ public class AssetMakerGUI {
     final JTextField displayTextureField = new JTextField();
     final JTextField hexColorField = new JTextField();
 
+    // ===== Movement controls =====
     final JTextField posXField = new JTextField();
     final JTextField posYField = new JTextField();
     final JTextField velXField = new JTextField();
@@ -76,6 +89,7 @@ public class AssetMakerGUI {
     final JCheckBox castShadowBox = new JCheckBox("Cast Shadow");
     final JCheckBox aliveBox = new JCheckBox("Alive");
 
+    // ===== Combat controls =====
     final JSpinner[] dmgValues = new JSpinner[AssetMakerGUIPanels.DAMAGE_KEYS.length];
     final JSpinner[] dmgMultValues = new JSpinner[AssetMakerGUIPanels.DAMAGE_KEYS.length];
     final JSpinner[] hitDmgValues = new JSpinner[AssetMakerGUIPanels.DAMAGE_KEYS.length];
@@ -84,12 +98,15 @@ public class AssetMakerGUI {
     final JSpinner critHealthSpinner = new JSpinner(new SpinnerNumberModel(50, 0, Integer.MAX_VALUE, 1));
     final JTextField lightRangeField = new JTextField();
 
+    // ===== Item and inventory controls =====
     final JCheckBox isItemBox = new JCheckBox("Is Item");
     final JCheckBox stackableBox = new JCheckBox("Stackable");
     final JSpinner amountSpinner = new JSpinner(new SpinnerNumberModel(1, 0, Integer.MAX_VALUE, 1));
     final JTextArea inventorySlotsField = new JTextArea();
 
-    // Loot table fields
+    // ===== Loot table controls =====
+    // Add a column here and update AssetMakerGUIController.buildLootTable() when
+    // the protobuf loot entry gains another editable property.
     final DefaultTableModel lootTableModel = new DefaultTableModel(new Object[]{"Item Name", "Probability (%)", "Amount"}, 0) {
         @Override
         public Class<?> getColumnClass(int column) {
@@ -253,13 +270,29 @@ public class AssetMakerGUI {
         JTabbedPane tabs = new JTabbedPane();
         tabs.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
         AssetMakerGUIPanels p = new AssetMakerGUIPanels(this);
-        tabs.addTab("Identity", p.buildIdentityTab());
-        tabs.addTab("Movement", p.buildMovementTab());
-        tabs.addTab("Combat", p.buildCombatTab());
-        tabs.addTab("Item / Stack", p.buildItemTab());
-        tabs.addTab("Tags & Display", p.buildTagsTab());
-        tabs.addTab("Loot Table", p.buildLootTableTab());
+        // Every editor section is wrapped in its own scroll pane. This keeps
+        // lower controls reachable on smaller screens or at higher display scaling.
+        tabs.addTab("Identity", wrapEditorTab(p.buildIdentityTab()));
+        tabs.addTab("Movement", wrapEditorTab(p.buildMovementTab()));
+        tabs.addTab("Combat", wrapEditorTab(p.buildCombatTab()));
+        tabs.addTab("Item / Stack", wrapEditorTab(p.buildItemTab()));
+        tabs.addTab("Tags & Display", wrapEditorTab(p.buildTagsTab()));
+        tabs.addTab("Loot Table", wrapEditorTab(p.buildLootTableTab()));
         return tabs;
+    }
+
+    /**
+     * Makes an editor tab vertically scrollable without allowing horizontal
+     * scrolling to hide field labels. Add new tabs through this helper too.
+     */
+    private JScrollPane wrapEditorTab(JPanel content) {
+        JScrollPane scroll = new JScrollPane(content,
+                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scroll.setBorder(BorderFactory.createEmptyBorder());
+        scroll.getVerticalScrollBar().setUnitIncrement(16);
+        scroll.getHorizontalScrollBar().setUnitIncrement(16);
+        return scroll;
     }
 
     private JPanel buildStatusBar() {

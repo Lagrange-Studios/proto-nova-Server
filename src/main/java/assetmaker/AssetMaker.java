@@ -17,9 +17,20 @@ import protonova.protobuf.EntityProto.Direction;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.VectorProto.Vector;
 
+/**
+ * Reads and writes entity assets used by the server asset maker.
+ *
+ * <p>Adding a new asset format or asset folder should start here. Keep file
+ * system code in this class and keep Swing code in the GUI/controller classes.
+ * The GUI only needs to call {@link #loadAsset(String)}, {@link #saveEntity(String, Entity)},
+ * and the list/delete methods below.</p>
+ */
 public class AssetMaker {
 
+    /** Default folder for editable entity assets. Paths are relative to the server. */
     public static final String ASSET_DIR = "assets/entities/";
+    /** File suffix used by protobuf entity assets. */
+    public static final String ASSET_EXTENSION = ".data";
 
     public static void main(String[] args) {
         AssetMaker assetMaker = new AssetMaker();
@@ -33,6 +44,13 @@ public class AssetMaker {
         return createAsset("new entity");
     }
 
+    /**
+     * Creates a new entity with safe defaults for the editor.
+     *
+     * <p>When a new protobuf field is added, give it an editor-friendly default
+     * here and add the matching control in {@link AssetMakerGUIPanels} and
+     * serialization code in {@link AssetMakerGUIController}.</p>
+     */
     public Entity createAsset(String name) {
         DamageMultiplier damageMult = DamageMultiplier.newBuilder()
                 .setBrute(1)
@@ -98,7 +116,7 @@ public class AssetMaker {
     }
 
     public Entity loadAsset(String assetName, String directory) {
-        Path path = Paths.get(directory + assetName + ".data");
+        Path path = assetPath(directory, assetName);
         if (!Files.exists(path)) {
             return null;
         }
@@ -124,7 +142,7 @@ public class AssetMaker {
             if (entity == null) {
                 entity = createAsset(assetName);
             }
-            Path path = Paths.get(directory + assetName + ".data");
+            Path path = assetPath(directory, assetName);
             Files.write(path, entity.toByteArray(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
             return true;
         } catch (IOException e) {
@@ -150,7 +168,7 @@ public class AssetMaker {
             if (!dir.exists() && !dir.mkdirs()) {
                 return false;
             }
-            Path path = Paths.get(directory + assetName + ".data");
+            Path path = assetPath(directory, assetName);
             Files.write(path, entity.toByteArray(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
             return true;
         } catch (IOException e) {
@@ -167,7 +185,7 @@ public class AssetMaker {
         if (assetName == null || assetName.trim().isEmpty()) {
             return false;
         }
-        Path path = Paths.get(directory + assetName + ".data");
+        Path path = assetPath(directory, assetName);
         try {
             return Files.deleteIfExists(path);
         } catch (IOException e) {
@@ -186,13 +204,13 @@ public class AssetMaker {
         if (!dir.exists() || !dir.isDirectory()) {
             return names;
         }
-        File[] files = dir.listFiles((d, name) -> name.toLowerCase().endsWith(".data"));
+        File[] files = dir.listFiles((d, name) -> name.toLowerCase().endsWith(ASSET_EXTENSION));
         if (files == null) {
             return names;
         }
         for (File f : files) {
             String n = f.getName();
-            names.add(n.substring(0, n.length() - ".data".length()));
+            names.add(n.substring(0, n.length() - ASSET_EXTENSION.length()));
         }
         Collections.sort(names, String.CASE_INSENSITIVE_ORDER);
         return names;
@@ -209,8 +227,8 @@ public class AssetMaker {
         if (oldName.equals(newName)) {
             return true;
         }
-        Path from = Paths.get(directory + oldName + ".data");
-        Path to = Paths.get(directory + newName + ".data");
+        Path from = assetPath(directory, oldName);
+        Path to = assetPath(directory, newName);
         if (!Files.exists(from) || Files.exists(to)) {
             return false;
         }
@@ -221,5 +239,10 @@ public class AssetMaker {
             e.printStackTrace();
             return false;
         }
+    }
+
+    /** Builds an asset path in one place so all file operations use the same suffix. */
+    private static Path assetPath(String directory, String assetName) {
+        return Paths.get(directory, assetName + ASSET_EXTENSION);
     }
 }

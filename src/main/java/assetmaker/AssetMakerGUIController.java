@@ -15,6 +15,14 @@ import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.LootTableItemProto.lootTableItem;
 import protonova.protobuf.VectorProto.Vector;
 
+/**
+ * Coordinates user actions and converts between Swing controls and protobufs.
+ *
+ * <p>The controller is intentionally organized in the same order as the GUI:
+ * browser actions first, loading/resetting next, then protobuf read/write
+ * helpers. When adding a field, update both the read path ({@link #populateForm(Entity)})
+ * and the write path ({@link #buildEntityFromForm()}).</p>
+ */
 class AssetMakerGUIController {
 
     private final AssetMakerGUI gui;
@@ -205,6 +213,7 @@ class AssetMakerGUIController {
         setStatus("Loaded " + name);
     }
 
+    /** Resets every editor section to its new-asset default. */
     private void clearForm() {
         gui.nameField.setText("");
         gui.idField.setText("0");
@@ -250,7 +259,12 @@ class AssetMakerGUIController {
         gui.selectedSlotField.setText("");
     }
 
+    /**
+     * Reads an entity into the editor. Keep this in the same section order as
+     * buildEntityFromForm so a newly added field has an obvious home.
+     */
     private void populateForm(Entity entity) {
+        // ===== Identity and display =====
         gui.nameField.setText(entity.getName());
         gui.idField.setText(String.valueOf(entity.getId()));
         gui.mapField.setText(String.valueOf(entity.getMap()));
@@ -268,6 +282,7 @@ class AssetMakerGUIController {
             gui.hexColorField.setText("");
         }
 
+        // ===== Movement =====
         gui.posXField.setText(fmt(entity.getPosition().getX()));
         gui.posYField.setText(fmt(entity.getPosition().getY()));
         gui.velXField.setText(fmt(entity.getVelocity().getX()));
@@ -282,6 +297,7 @@ class AssetMakerGUIController {
         gui.castShadowBox.setSelected(entity.getCastShadow());
         gui.aliveBox.setSelected(entity.getAlive());
 
+        // ===== Combat =====
         Damage dmg = entity.getDamage();
         DamageMultiplier mult = dmg.getDamageMultiplier();
         float[] dmgArr = {
@@ -318,10 +334,12 @@ class AssetMakerGUIController {
             gui.lightRangeField.setText("");
         }
 
+        // ===== Item and inventory =====
         gui.isItemBox.setSelected(entity.getIsItem());
         gui.stackableBox.setSelected(entity.getStackable());
         gui.amountSpinner.setValue(entity.getAmount());
 
+        // ===== Loot table =====
         // Populate loot table
         gui.lootTableModel.setRowCount(0);
         for (lootTableItem item : entity.getLootTableList()) {
@@ -368,23 +386,77 @@ class AssetMakerGUIController {
 
     
     
+    /**
+     * Converts the visible form into the protobuf saved on disk.
+     *
+     * <p><strong>Adding a new entity field:</strong> add its Swing control in
+     * {@link AssetMakerGUI}, place it in the matching tab in
+     * {@link AssetMakerGUIPanels}, then update the matching method below and
+     * {@link #populateForm(Entity)}. Keeping read and write logic together by
+     * section makes new fields much harder to forget.</p>
+     */
     private Entity buildEntityFromForm() {
         Entity existing = gui.currentEntity != null ? gui.currentEntity : Entity.getDefaultInstance();
+        Entity.Builder builder = Entity.newBuilder(existing);
 
-        Vector pos = Vector.newBuilder()
-                .setX(parseFloat(gui.posXField.getText(), "Position X"))
-                .setY(parseFloat(gui.posYField.getText(), "Position Y"))
-                .build();
-        Vector vel = Vector.newBuilder()
-                .setX(parseFloat(gui.velXField.getText(), "Velocity X"))
-                .setY(parseFloat(gui.velYField.getText(), "Velocity Y"))
-                .build();
-        Vector size = Vector.newBuilder()
-                .setX(parseFloat(gui.sizeXField.getText(), "Size X"))
-                .setY(parseFloat(gui.sizeYField.getText(), "Size Y"))
-                .build();
+        // 1. Identity and movement fields are the fields every entity uses.
+        applyIdentityAndMovement(builder);
 
-        Damage dmg = Damage.newBuilder()
+        // 2. Combat fields: health, light, damage-over-time, and contact damage.
+        builder.setMaxHealth((Integer) gui.maxHealthSpinner.getValue())
+                .setCritHealth((Integer) gui.critHealthSpinner.getValue())
+                .setDamage(buildDamage())
+                .setHitDamage(buildHitDamage());
+        applyOptionalLightRange(builder);
+
+        // 3. Item and inventory fields. Inventory lines use: slotName=itemId.
+        builder.setIsItem(gui.isItemBox.isSelected())
+                .setStackable(gui.stackableBox.isSelected())
+                .setAmount((Integer) gui.amountSpinner.getValue())
+                .putAllInventorySlots(parseInventorySlots());
+
+        // 4. Tags and display fields.
+        builder.clearTags().addAllTags(parseTags());
+        setOptionalText(builder, gui.displayTextureField.getText(), true);
+        setOptionalText(builder, gui.hexColorField.getText(), false);
+
+        // 5. Loot table rows are converted from the table model at save time.
+        builder.clearLootTable().addAllLootTable(buildLootTable());
+
+        gui.dirty = true;
+        return builder.build();
+    }
+
+    /** Writes the identity and movement tab into the protobuf builder. */
+    private void applyIdentityAndMovement(Entity.Builder builder) {
+        Vector pos = vectorFromFields(gui.posXField, gui.posYField, "Position X", "Position Y");
+        Vector vel = vectorFromFields(gui.velXField, gui.velYField, "Velocity X", "Velocity Y");
+        Vector size = vectorFromFields(gui.sizeXField, gui.sizeYField, "Size X", "Size Y");
+        builder.setName(gui.nameField.getText().trim())
+                .setId(parseInt(gui.idField.getText(), "Entity ID"))
+                .setMap(parseInt(gui.mapField.getText(), "Map"))
+                .setDirection((Direction) gui.directionCombo.getSelectedItem())
+                .setSelectedSlot(gui.selectedSlotField.getText())
+                .setPosition(pos).setVelocity(vel).setSize(size)
+                .setSpeed(parseDouble(gui.speedField.getText(), "Speed"))
+                .setMaxSpeed(parseDouble(gui.maxSpeedField.getText(), "Max Speed"))
+                .setReach(parseDouble(gui.reachField.getText(), "Reach"))
+                .setAnchored(gui.anchoredBox.isSelected())
+                .setCanCollide(gui.canCollideBox.isSelected())
+                .setCastShadow(gui.castShadowBox.isSelected())
+                .setAlive(gui.aliveBox.isSelected());
+    }
+
+    /** Builds a vector from a pair of text fields and gives both fields useful error names. */
+    private Vector vectorFromFields(javax.swing.JTextField xField, javax.swing.JTextField yField,
+                                    String xName, String yName) {
+        return Vector.newBuilder().setX(parseFloat(xField.getText(), xName))
+                .setY(parseFloat(yField.getText(), yName)).build();
+    }
+
+    /** Builds continuous damage and its seven damage-type multipliers. */
+    private Damage buildDamage() {
+        return Damage.newBuilder()
                 .setBruteDamage(spinFloat(gui.dmgValues[0]))
                 .setAsphyxiationDamage(spinFloat(gui.dmgValues[1]))
                 .setBurnDamage(spinFloat(gui.dmgValues[2]))
@@ -399,11 +471,12 @@ class AssetMakerGUIController {
                         .setToxin(spinFloat(gui.dmgMultValues[3]))
                         .setGenetic(spinFloat(gui.dmgMultValues[4]))
                         .setStructural(spinFloat(gui.dmgMultValues[5]))
-                        .setBleeding(spinFloat(gui.dmgMultValues[6]))
-                        .build())
-                .build();
+                        .setBleeding(spinFloat(gui.dmgMultValues[6])).build()).build();
+    }
 
-        HitDamage hit = HitDamage.newBuilder()
+    /** Builds damage applied when another entity makes contact with this entity. */
+    private HitDamage buildHitDamage() {
+        return HitDamage.newBuilder()
                 .setBruteDamage(spinFloat(gui.hitDmgValues[0]))
                 .setAsphyxiationDamage(spinFloat(gui.hitDmgValues[1]))
                 .setBurnDamage(spinFloat(gui.hitDmgValues[2]))
@@ -411,105 +484,79 @@ class AssetMakerGUIController {
                 .setGeneticDamage(spinFloat(gui.hitDmgValues[4]))
                 .setStructuralDamage(spinFloat(gui.hitDmgValues[5]))
                 .setBleedingPerTick(spinFloat(gui.hitDmgValues[6]))
-                .setHitCooldown((Integer) gui.hitCooldownSpinner.getValue())
-                .build();
+                .setHitCooldown((Integer) gui.hitCooldownSpinner.getValue()).build();
+    }
 
-        Entity.Builder b = Entity.newBuilder(existing)
-                .setName(gui.nameField.getText().trim())
-                .setId(parseInt(gui.idField.getText(), "Entity ID"))
-                .setMap(parseInt(gui.mapField.getText(), "Map"))
-                .setDirection((Direction) gui.directionCombo.getSelectedItem())
-                .setSelectedSlot(gui.selectedSlotField.getText())
-                .setPosition(pos)
-                .setVelocity(vel)
-                .setSize(size)
-                .setSpeed(parseDouble(gui.speedField.getText(), "Speed"))
-                .setMaxSpeed(parseDouble(gui.maxSpeedField.getText(), "Max Speed"))
-                .setReach(parseDouble(gui.reachField.getText(), "Reach"))
-                .setAnchored(gui.anchoredBox.isSelected())
-                .setCanCollide(gui.canCollideBox.isSelected())
-                .setCastShadow(gui.castShadowBox.isSelected())
-                .setAlive(gui.aliveBox.isSelected())
-                .setMaxHealth((Integer) gui.maxHealthSpinner.getValue())
-                .setCritHealth((Integer) gui.critHealthSpinner.getValue())
-                .setDamage(dmg)
-                .setHitDamage(hit);
-
-        String lightRangeStr = gui.lightRangeField.getText().trim();
-        if (!lightRangeStr.isEmpty()) {
-            try {
-                b.setLightRange(Float.parseFloat(lightRangeStr));
-            } catch (NumberFormatException nfe) {
-                throw new NumberFormatException("Light Range: " + nfe.getMessage());
-            }
-        } else {
-            b.clearLightRange();
+    /** Light range is optional in the protobuf, so blank means clear the field. */
+    private void applyOptionalLightRange(Entity.Builder builder) {
+        String value = gui.lightRangeField.getText().trim();
+        if (value.isEmpty()) {
+            builder.clearLightRange();
+            return;
         }
-        if (gui.isItemBox.isSelected()) b.setIsItem(true); else b.clearIsItem();
-        if (gui.stackableBox.isSelected()) b.setStackable(true); else b.clearStackable();
-        b.setAmount((Integer) gui.amountSpinner.getValue());
+        try {
+            builder.setLightRange(Float.parseFloat(value));
+        } catch (NumberFormatException ex) {
+            throw new NumberFormatException("Light Range: " + ex.getMessage());
+        }
+    }
 
-        Map<String, Integer> existingSlots = new LinkedHashMap<>();
+    /** Parses the inventory text area. Invalid lines are ignored; invalid IDs are reported. */
+    private Map<String, Integer> parseInventorySlots() {
+        Map<String, Integer> slots = new LinkedHashMap<>();
         for (String line : gui.inventorySlotsField.getText().split("\\r?\\n")) {
             line = line.trim();
             if (line.isEmpty()) continue;
-            int eq = line.indexOf('=');
-            if (eq < 0) continue;
-            String slot = line.substring(0, eq).trim();
-            String val = line.substring(eq + 1).trim();
+            int equals = line.indexOf('=');
+            if (equals < 0) continue;
+            String slot = line.substring(0, equals).trim();
+            String value = line.substring(equals + 1).trim();
             if (slot.isEmpty()) continue;
-            int id;
             try {
-                id = Integer.parseInt(val.startsWith("#") ? val.substring(1) : val);
-            } catch (NumberFormatException nfe) {
-                throw new NumberFormatException("Inventory slot '" + slot + "': " + nfe.getMessage());
+                slots.put(slot, Integer.parseInt(value.startsWith("#") ? value.substring(1) : value));
+            } catch (NumberFormatException ex) {
+                throw new NumberFormatException("Inventory slot '" + slot + "': " + ex.getMessage());
             }
-            existingSlots.put(slot, id);
         }
-        b.putAllInventorySlots(existingSlots);
+        return slots;
+    }
 
+    /** Converts the comma-separated Tags field into the repeated protobuf field. */
+    private List<String> parseTags() {
         List<String> tags = new ArrayList<>();
         for (String tag : gui.tagsField.getText().split(",")) {
-            String t = tag.trim();
-            if (!t.isEmpty()) tags.add(t);
+            if (!tag.trim().isEmpty()) tags.add(tag.trim());
         }
-        b.clearTags();
-        b.addAllTags(tags);
+        return tags;
+    }
 
-        String tex = gui.displayTextureField.getText().trim();
-        if (!tex.isEmpty()) b.setDisplayTexture(tex); else b.clearDisplayTexture();
-        String hex = gui.hexColorField.getText().trim();
-        if (!hex.isEmpty()) b.setHexColor(hex); else b.clearHexColor();
-
-        // Build loot table from table model
-        List<lootTableItem> lootItems = new ArrayList<>();
+    /** Builds loot entries from the editable table. Add new loot columns here when the schema changes. */
+    private List<lootTableItem> buildLootTable() {
+        List<lootTableItem> items = new ArrayList<>();
         for (int row = 0; row < gui.lootTableModel.getRowCount(); row++) {
-            String itemName = (String) gui.lootTableModel.getValueAt(row, 0);
-            if (itemName == null || itemName.trim().isEmpty()) continue;
-            double probability = 100.0;
-            Object probVal = gui.lootTableModel.getValueAt(row, 1);
-            if (probVal instanceof Number) {
-                probability = ((Number) probVal).doubleValue();
-            }
-            int amount = 1;
-            Object amtVal = gui.lootTableModel.getValueAt(row, 2);
-            if (amtVal instanceof Number) {
-                amount = ((Number) amtVal).intValue();
-            }
-            lootTableItem.Builder itemBuilder = lootTableItem.newBuilder()
-                    .setItemName(itemName.trim())
-                    .setProbability(probability);
-            if (amount > 1) {
-                itemBuilder.setAmount(amount);
-            }
-            lootItems.add(itemBuilder.build());
+            Object nameValue = gui.lootTableModel.getValueAt(row, 0);
+            if (nameValue == null || nameValue.toString().trim().isEmpty()) continue;
+            Object probabilityValue = gui.lootTableModel.getValueAt(row, 1);
+            Object amountValue = gui.lootTableModel.getValueAt(row, 2);
+            double probability = probabilityValue instanceof Number
+                    ? ((Number) probabilityValue).doubleValue() : 100.0;
+            int amount = amountValue instanceof Number ? ((Number) amountValue).intValue() : 1;
+            lootTableItem.Builder item = lootTableItem.newBuilder()
+                    .setItemName(nameValue.toString().trim()).setProbability(probability);
+            if (amount > 1) item.setAmount(amount);
+            items.add(item.build());
         }
-        b.clearLootTable();
-        b.addAllLootTable(lootItems);
+        return items;
+    }
 
-        Entity built = b.build();
-        gui.dirty = true;
-        return built;
+    /** Applies one of the two optional string fields without duplicating blank-check logic. */
+    private void setOptionalText(Entity.Builder builder, String text, boolean texture) {
+        String value = text.trim();
+        if (texture) {
+            if (value.isEmpty()) builder.clearDisplayTexture(); else builder.setDisplayTexture(value);
+        } else {
+            if (value.isEmpty()) builder.clearHexColor(); else builder.setHexColor(value);
+        }
     }
 
     
