@@ -13,6 +13,7 @@ import file.ServerSaver;
 import gamemode.GamemodeManager;
 import generation.Generator;
 import plane.PlaneManager;
+import protonova.protobuf.DamageProto.Damage;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.VectorProto.Vector;
 import socket.Player;
@@ -129,6 +130,8 @@ public class Console {
     		print(" - kick [name]: Kicks the player with the correlated name");
     		print(" - save: Saves all data to the world root");
     		print(" - players: Shows all currently connected players");
+			print(" - getPlayerIds: Shows the entity IDs of all currently connected players");
+			print(" - FullHeal [entity ID]: Sets all damage categories on an entity to 0");
     		print(" - generate planet [generation type (optional)]: Generates a new planet optionally passing in a generation type");
     		print(" - state: shows all the players states");
     		print(" - gamemode: shows current gamemode and time");
@@ -167,7 +170,53 @@ public class Console {
     		else {
     			print("No server saver attached to console");
     		}
-    	} else if (input.equalsIgnoreCase("players")) {
+		} else if (input.equalsIgnoreCase("getPlayerIds")) {
+			ArrayList<Player> players = server.getPlayers();
+
+			if (players.isEmpty()) {
+				print("No players are currently connected.");
+			} else {
+				print("Player entity IDs:");
+				for (Player player : players) {
+					if (player.data != null) {
+						print(player.getUsername() + ": " + player.data.getEntityId());
+					} else {
+						print(player.getUsername() + ": ID not assigned yet");
+					}
+				}
+			}
+		} else if (input.equalsIgnoreCase("FullHeal")) {
+			print("Usage: FullHeal [entity ID]");
+		} else if (input.regionMatches(true, 0, "FullHeal ", 0, "FullHeal ".length())) {
+			String entityIdArgument = input.substring("FullHeal ".length()).trim();
+			int entityId;
+
+			try {
+				entityId = Integer.parseInt(entityIdArgument);
+			} catch (NumberFormatException exception) {
+				print("Invalid entity ID: " + entityIdArgument);
+				return;
+			}
+
+			Entity entity = entityManager == null ? null : entityManager.getEntity(entityId);
+			if (entity == null) {
+				print("Entity ID " + entityId + " does not exist.");
+				return;
+			}
+
+			Damage healedDamage = entity.getDamage().toBuilder()
+					.setBruteDamage(0)
+					.setAsphyxiationDamage(0)
+					.setBurnDamage(0)
+					.setToxinDamage(0)
+					.setGeneticDamage(0)
+					.setStructuralDamage(0)
+					.setBleedingPerTick(0)
+					.build();
+
+			entityManager.updateEntity(entity.toBuilder().setDamage(healedDamage).build());
+			print("Fully healed entity " + entityId + ".");
+		} else if (input.equalsIgnoreCase("players")) {
     		print("Players:");
     		ArrayList<Player> players = server.getPlayers();
     		

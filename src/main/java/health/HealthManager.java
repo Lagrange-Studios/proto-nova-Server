@@ -4,6 +4,8 @@ import entity.EntityManager;
 import entity.LootTableManager;
 import main.Console;
 import protonova.protobuf.EntityProto.Entity;
+import socket.Player;
+import socket.ServerSocketHandler;
 
 public class HealthManager {
 	
@@ -11,33 +13,43 @@ public class HealthManager {
 	private EntityManager entityManager;
 	private Console console;
 	private LootTableManager lootTableManager;
+	private ServerSocketHandler serverSocketHandler;
 	
 	public HealthManager(EntityManager entityManager, Console console, LootTableManager lootTableManager) {
 		this.entityManager = entityManager;
 		this.console = console;
 		this.lootTableManager = lootTableManager;
+		this.serverSocketHandler = serverSocketHandler;
 	}
 	
-	public void entityCheck(Entity entity) {
+	public Entity entityCheck(Entity entity) {
 		entityManager.recalculateEntity(entity);
 		entity = entityManager.getEntity(entity.getId());
-		checkDeathOfEntity(entity);
-		if (!entity.getAlive()) return;
+		Entity newEntity = entity;
+		newEntity = checkDeathOfEntity(entity);
+		if (!entity.getAlive()) return newEntity;
 		if (checkDeath(entity)) {
-			changeDeathState(entity, false);
+			newEntity = changeDeathState(entity, false);
 		}
-		checkCrit(entity);
+		Player player = entityManager.getPlayerEntityFromEntity(entity);
+		if (checkCrit(entity) && player != null) {
+			newEntity = entityManager.makeNewEntity("human", entity.getMap());
+			entityManager.setPlayerEntity(player, newEntity);
+			entityManager.dropEntityItems(entity);
+			entityManager.removeEntity(entity);
+		}
+		return newEntity;
 	}
 	
 	public boolean checkCrit(Entity entity) {
 		return (entity.getCritHealth() <= Health.getDamage(entity));
 	}
 	
-	public void changeDeathState(Entity entity, boolean alive) {
+	public Entity changeDeathState(Entity entity, boolean alive) {
 		entity = entityManager.getEntity(entity.getId());
 		Entity.Builder entityBuilder = entity.toBuilder();
 		entityBuilder.setAlive(alive);
-		entityManager.updateEntity(entityBuilder.build());
+		return entityBuilder.build();
 	}
 	
 	public boolean checkDeath(Entity entity) {
@@ -47,14 +59,13 @@ public class HealthManager {
 	private void gibEntity(Entity entity) {
 		dropOrgans(entity);
 		entityManager.removeEntity(entity);
-		return;
 	}
 	
 	private void dropOrgans(Entity entity) {
 		// TODO: Add organs droping after adding organs
 	}
 	
-	private void checkDeathOfEntity(Entity entity) {
+	private Entity checkDeathOfEntity(Entity entity) {
 		if (Health.getDamage(entity) >= entity.getMaxHealth()) {
 			if (!entity.getDropsABody()) {
 				lootTableManager.dropLoot(entity);
@@ -65,5 +76,6 @@ public class HealthManager {
 				}
 			}
 		}
+		return entity;
 	}
 }
