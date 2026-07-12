@@ -4,6 +4,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import protonova.protobuf.ChunkProto.Chunk;
 import protonova.protobuf.CoordinateProto.Coordinate;
@@ -28,8 +33,11 @@ public class EntityFinder {
 		
 		int radiusInChunks = (int) (Math.round(radius/CoordinateConverter.CHUNK_SIZE) + 1);
 		
-		ArrayList<Entity> foundEntities = new ArrayList<Entity>();
 		double radiusSquared = radius * radius; // Avoid sqrt calculation in loop
+		
+		// split each chunk search into threads for speed
+		ExecutorService executor = Executors.newSingleThreadExecutor();
+		ArrayList<Future<ArrayList<Entity>>> futureLists = new ArrayList<>();
 		
 		// Reuse coordinate builder to reduce allocations
 		Coordinate.Builder coordBuilder = Coordinate.newBuilder();
@@ -43,19 +51,37 @@ public class EntityFinder {
 				Coordinate coordinate = coordBuilder.build();
 				
 				if (chunkMap.containsKey(coordinate)) {
-					List<Integer> chunkEntities = chunkMap.get(coordinate).getEntityIdsList();
-					
-					for (int i=0;i<chunkEntities.size();i++) {
-						Entity selectedEntity = entities.get(chunkEntities.get(i));
+
+					// split each chunk search into threads for speed
+					Callable<ArrayList<Entity>> thread = () -> {
+						ArrayList<Entity> chunkEntitiesFound = new ArrayList<>();
+						List<Integer> chunkEntities = chunkMap.get(coordinate).getEntityIdsList();
 						
-						// Use squared distance to avoid expensive sqrt calculation
-						double distanceSquared = VectorMath.distanceSquared(start, selectedEntity.getPosition());
-						
-						if (distanceSquared <= radiusSquared) {
-							foundEntities.add(selectedEntity);
+						for (int i=0;i<chunkEntities.size();i++) {
+							Entity selectedEntity = entities.get(chunkEntities.get(i));
+							
+							// Use squared distance to avoid expensive sqrt calculation
+							double distanceSquared = VectorMath.distanceSquared(start, selectedEntity.getPosition());
+							
+							if (distanceSquared <= radiusSquared) {
+								chunkEntitiesFound.add(selectedEntity);
+							}
 						}
-					}
+						
+						return chunkEntitiesFound;
+					};
+					Future<ArrayList<Entity>> future = executor.submit(thread);
+					futureLists.add(future);
 				}
+			}
+		}
+
+		ArrayList<Entity> foundEntities = new ArrayList<Entity>();
+		for (Future<ArrayList<Entity>> future : futureLists) {
+			try {
+				foundEntities.addAll(future.get());
+			} catch (InterruptedException | ExecutionException e) {
+				e.printStackTrace();
 			}
 		}
 		
