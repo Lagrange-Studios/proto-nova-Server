@@ -3,6 +3,7 @@ package entity;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 import collision.EntityCollision;
 import file.ServerLoader;
@@ -15,9 +16,11 @@ import protonova.protobuf.DamageProto.DamageMultiplier;
 import protonova.protobuf.DamageProto.HitDamage;
 import protonova.protobuf.EntityProto.Direction;
 import protonova.protobuf.EntityProto.Entity;
+import protonova.protobuf.PlayerDataProto.PlayerData.Builder;
 import protonova.protobuf.VectorProto.Vector;
 import simulation.EntitySimulation;
 import socket.Player;
+import socket.ServerSocketHandler;
 import tag.TagHandler;
 import util.Id;
 
@@ -119,6 +122,21 @@ public class EntityManager {
 		return makeNewEntity(name,1);
 	}
 	
+	public Player getPlayerEntityFromEntity(Entity entity) {
+		for (Player player : playerList) {
+			if (entity.getId() == player.data.getEntityId()) {
+				return player;
+			}
+		}
+		return null;
+	}
+	
+	public void setPlayerEntity(Player player, Entity entity) {
+		Builder playerData = player.data.toBuilder();
+		playerData = playerData.setEntityId(entity.getId());
+		player.data = playerData.build();
+	}
+	
 	public Entity getEntity(int id) {
 		return entities.get(id);
 	}
@@ -129,6 +147,16 @@ public class EntityManager {
 	
 	public HashMap<Integer,Entity> getAllEntities() {
 		return entities;
+	}
+	
+	public void dropEntityItems(Entity entity) {
+		for (Map.Entry<String, Integer> entry : entity.getInventorySlotsMap().entrySet()) {
+			Entity item = getEntity(entry.getValue());
+			protonova.protobuf.EntityProto.Entity.Builder itemBuilder = item.toBuilder();
+			itemBuilder.setMap(entity.getMap());
+			itemBuilder.setPosition(entity.getPosition());
+			updateEntity(itemBuilder.build());
+		}
 	}
 	
 	/**
