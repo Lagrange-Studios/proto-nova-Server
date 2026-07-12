@@ -221,7 +221,13 @@ public class PacketMaker {
 		entitiesSent.addAll(entitiesSentThisPacket);
 		
 		// clear only the entities updates and deletes we cloned since its linked values
-		deleteList.clear();
-		updateList.clear();
+		deleteLikeValues(deleteList,player.deleteList);
+		deleteLikeValues(updateList,player.updateList);
+	}
+	
+	private void deleteLikeValues(HashSet<Integer> set1, HashSet<Integer> set2) {
+		for (Integer value : set1) {
+			if (set2.contains(value)) set2.remove(value);
+		}
 	}
 }
