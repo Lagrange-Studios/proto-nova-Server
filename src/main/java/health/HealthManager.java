@@ -12,8 +12,7 @@ public class HealthManager {
 	private Console console;
 	private LootTableManager lootTableManager;
 	
-	public HealthManager(CombatManager combatManager, EntityManager entityManager, Console console, LootTableManager lootTableManager) {
-		this.combatManager = combatManager;
+	public HealthManager(EntityManager entityManager, Console console, LootTableManager lootTableManager) {
 		this.entityManager = entityManager;
 		this.console = console;
 		this.lootTableManager = lootTableManager;
