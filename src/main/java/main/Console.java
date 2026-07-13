@@ -18,6 +18,7 @@ import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.VectorProto.Vector;
 import socket.Player;
 import space.CelestialObjectManager;
+import diagnostics.ResourceDiagnostics;
 
 public class Console {
     protected Server server;
@@ -53,7 +54,7 @@ public class Console {
     }
     
     private void startHeadlessInputThread() {
-    	Thread inputThread = new Thread(() -> {
+		Thread inputThread = ResourceDiagnostics.newThread("Console-Input", () -> {
     		try (java.util.Scanner scanner = new java.util.Scanner(System.in)) {
     			while (true) {
     				if (scanner.hasNextLine()) {
@@ -72,7 +73,8 @@ public class Console {
     
     protected void startUpdateThread() {
     	try {
-			ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+			ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1,
+					ResourceDiagnostics.threadFactory("Console-Status"));
 			
 			Runnable task = () -> {
 				try {

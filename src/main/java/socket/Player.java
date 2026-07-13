@@ -82,7 +82,7 @@ public class Player {
 	}
 	
 	public void listen() {
-	    Thread thread = new Thread(() -> {
+	    Thread thread = ResourceDiagnostics.newThread("Player-Listener-" + socket.getInetAddress().getHostAddress(), () -> {
 	        try {
 	            while (state != State.DISCONNECTED) {
 	            	
@@ -137,7 +137,6 @@ public class Player {
 	            disconnect();
 	        }
 	    });
-	    thread.setName("Player-Listener-" + socket.getInetAddress().getHostAddress());
 	    thread.start();
 	}
 

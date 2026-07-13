@@ -147,9 +147,7 @@ public class Agent {
 	
 	private Vector getGoal(ArrayList<Entity> closeEntities, boolean canFindGoal) {
 		if (canFindGoal && parameters.canFindNewTarget() && goalPosition == null && entityGoal == 0) {
-			Thread thread = new Thread(() ->{findGoal(closeEntities);});
-			thread.setName("AI goal finding: "+entityManager.getEntity(entityId).getName()+" "+entityGoal);
-			thread.run();
+			findGoal(closeEntities);
 		}
 		
 		if (entityGoal != 0 && entityManager.entityExist(entityGoal)) {

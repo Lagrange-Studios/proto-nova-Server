@@ -12,11 +12,13 @@ import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.EntityProto.Entity.Builder;
 import util.TimedTask;
 import util.VectorMath;
+import diagnostics.ResourceDiagnostics;
 
 public class CombatManager {
 	
 	private EntityManager entityManager;
-	private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
+	private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4,
+			ResourceDiagnostics.threadFactory("Combat-Scheduler"));
 	private HealthManager healthManager;
 	
 	public CombatManager(EntityManager entityManager, HealthManager healthManager) {

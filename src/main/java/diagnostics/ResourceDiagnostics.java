@@ -10,7 +10,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.sun.management.OperatingSystemMXBean;
 
@@ -21,6 +23,8 @@ import protonova.protobuf.EntityProto.Entity;
 public class ResourceDiagnostics {
     private static final ConcurrentHashMap<Long, LongAdder> THREAD_RX = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<Long, LongAdder> THREAD_TX = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Long, StackTraceElement> THREAD_CREATION = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, AtomicInteger> THREAD_NAME_SEQUENCES = new ConcurrentHashMap<>();
 
     private final EntityManager entityManager;
     private final ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
@@ -56,6 +60,31 @@ public class ResourceDiagnostics {
 
     public static void recordNetworkWrite(long bytes) {
         THREAD_TX.computeIfAbsent(Thread.currentThread().getId(), id -> new LongAdder()).add(bytes);
+    }
+
+    /** Creates a named thread and records the source line that requested it. */
+    public static Thread newThread(String name, Runnable task) {
+        StackTraceElement creationSite = callerOutsideDiagnostics();
+        return new Thread(() -> {
+            THREAD_CREATION.put(Thread.currentThread().getId(), creationSite);
+            task.run();
+        }, uniqueThreadName(name));
+    }
+
+    /** Creates an executor thread factory whose threads point back to the pool's source line. */
+    public static ThreadFactory threadFactory(String namePrefix) {
+        StackTraceElement creationSite = callerOutsideDiagnostics();
+        return task -> {
+            return new Thread(() -> {
+                THREAD_CREATION.put(Thread.currentThread().getId(), creationSite);
+                task.run();
+            }, uniqueThreadName(namePrefix));
+        };
+    }
+
+    private static String uniqueThreadName(String prefix) {
+        int sequence = THREAD_NAME_SEQUENCES.computeIfAbsent(prefix, ignored -> new AtomicInteger()).incrementAndGet();
+        return prefix + "-" + sequence;
     }
 
     public void recordEntityCpu(int entityId, long nanos) {
@@ -104,10 +133,11 @@ public class ResourceDiagnostics {
 
             result.add(new ThreadSnapshot(id, info.getThreadName(), info.getThreadState().name(),
                     cpuPercent, cpu, allocationRate, allocated,
-                    value(THREAD_RX.get(id)), value(THREAD_TX.get(id)), formatStack(info)));
+                    value(THREAD_RX.get(id)), value(THREAD_TX.get(id)), formatCreationSite(id), formatStack(info)));
         }
         previousThreadCpu.keySet().retainAll(toThreadIdList(result));
         previousThreadAllocated.keySet().retainAll(toThreadIdList(result));
+        THREAD_CREATION.keySet().retainAll(toThreadIdList(result));
         previousThreadSampleNanos = now;
         result.sort(Comparator.comparingDouble((ThreadSnapshot item) -> item.cpuPercent).reversed());
         return result;
@@ -158,6 +188,24 @@ public class ResourceDiagnostics {
         return builder.length() == 0 ? "No Java stack available (native or idle thread)." : builder.toString();
     }
 
+    private static StackTraceElement callerOutsideDiagnostics() {
+        for (StackTraceElement element : Thread.currentThread().getStackTrace()) {
+            if (!element.getClassName().equals(Thread.class.getName())
+                    && !element.getClassName().equals(ResourceDiagnostics.class.getName())) return element;
+        }
+        return new StackTraceElement("unknown", "unknown", "Unknown source", -1);
+    }
+
+    private static String formatCreationSite(long threadId) {
+        StackTraceElement site = THREAD_CREATION.get(threadId);
+        if (site == null) return "Not captured (thread was created by the JVM, a library, or before diagnostics started)";
+        String topLevelClass = site.getClassName().split("\\$", 2)[0];
+        String sourcePath = site.getFileName() == null ? "Unknown file"
+                : "src/main/java/" + topLevelClass.replace('.', '/') + ".java";
+        String line = site.getLineNumber() < 0 ? "unknown" : String.valueOf(site.getLineNumber());
+        return sourcePath + ":" + line + " — " + site.getClassName() + "." + site.getMethodName() + "()";
+    }
+
     private static long directorySize(File file) {
         if (!file.exists()) return 0;
         if (file.isFile()) return file.length();
@@ -183,14 +231,15 @@ public class ResourceDiagnostics {
 
     public static final class ThreadSnapshot {
         public final long id, cpuNanos, allocatedBytes, networkRead, networkWritten;
-        public final String name, state, stack;
+        public final String name, state, creationSite, stack;
         public final double cpuPercent, allocationBytesPerSecond;
         ThreadSnapshot(long id, String name, String state, double cpuPercent, long cpuNanos,
-                double allocationBytesPerSecond, long allocatedBytes, long networkRead, long networkWritten, String stack) {
+                double allocationBytesPerSecond, long allocatedBytes, long networkRead, long networkWritten,
+                String creationSite, String stack) {
             this.id = id; this.name = name; this.state = state; this.cpuPercent = cpuPercent;
             this.cpuNanos = cpuNanos; this.allocationBytesPerSecond = allocationBytesPerSecond;
             this.allocatedBytes = allocatedBytes; this.networkRead = networkRead;
-            this.networkWritten = networkWritten; this.stack = stack;
+            this.networkWritten = networkWritten; this.creationSite = creationSite; this.stack = stack;
         }
     }
 

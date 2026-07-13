@@ -5,10 +5,13 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
 import main.Console;
+import diagnostics.ResourceDiagnostics;
 
 /**
  * Simple HTTP server to serve the server certificate to clients.
@@ -20,6 +23,7 @@ public class CertificateServer {
     private int CERT_SERVER_PORT;
     private HttpServer httpServer;
     private Console console;
+    private ExecutorService httpExecutor;
     
     public CertificateServer(Console console) {
         this.console = console;
@@ -42,7 +46,8 @@ public class CertificateServer {
             
             // Create HTTP server with socket reuse enabled
             httpServer = HttpServer.create(new InetSocketAddress("0.0.0.0", CERT_SERVER_PORT), 0);
-            httpServer.setExecutor(null); // Set before starting
+            httpExecutor = Executors.newCachedThreadPool(ResourceDiagnostics.threadFactory("Certificate-HTTP-Worker"));
+            httpServer.setExecutor(httpExecutor);
             
             // Enable socket address reuse to handle TIME_WAIT states
             try {
@@ -151,6 +156,9 @@ public class CertificateServer {
         if (httpServer != null) {
             httpServer.stop(0);
             console.print("Certificate server stopped");
+        }
+        if (httpExecutor != null) {
+            httpExecutor.shutdownNow();
         }
     }
 }
