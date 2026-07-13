@@ -18,6 +18,7 @@ import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ScanResult;
 import main.Console;
 import main.Server;
+import diagnostics.ResourceDiagnostics;
 import plane.PlaneManager;
 import protonova.protobuf.EntityProto.Entity;
 
@@ -118,7 +119,7 @@ public class TagHandler {
 	}
 	
 	private Thread tickEntities(Integer[] ids, TagClass tagClass, int start, int end) {
-		Thread thread = new Thread(() -> {
+		Thread thread = ResourceDiagnostics.newThread("Tag-Tick-" + tagClass.getTag(), () -> {
 			for (int index = start;index<end;index++) {
 				long started = System.nanoTime();
 				
@@ -138,7 +139,7 @@ public class TagHandler {
 	}
 	
 	private Thread secondTickEntities(Integer[] ids, TagClass tagClass, int start, int end) {
-		Thread thread = new Thread(() -> {
+		Thread thread = ResourceDiagnostics.newThread("Tag-Second-Tick-" + tagClass.getTag(), () -> {
 			for (int index = start;index<end;index++) {
 				long started = System.nanoTime();
 				Entity entity = entityManager.getEntity(ids[index]);

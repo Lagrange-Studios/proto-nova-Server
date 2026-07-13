@@ -16,6 +16,7 @@ import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.VectorProto.Vector;
 import util.CoordinateConverter;
 import util.VectorMath;
+import diagnostics.ResourceDiagnostics;
 
 public class EntityFinder {
 	private HashMap<Integer, Entity> entities;
@@ -36,7 +37,8 @@ public class EntityFinder {
 		double radiusSquared = radius * radius; // Avoid sqrt calculation in loop
 		
 		// split each chunk search into threads for speed
-		ExecutorService executor = Executors.newSingleThreadExecutor();
+		ExecutorService executor = Executors.newSingleThreadExecutor(
+				ResourceDiagnostics.threadFactory("Entity-Finder"));
 		ArrayList<Future<ArrayList<Entity>>> futureLists = new ArrayList<>();
 		
 		// Reuse coordinate builder to reduce allocations

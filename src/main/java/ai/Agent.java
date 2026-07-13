@@ -144,8 +144,8 @@ public class Agent {
 	
 	private Vector getGoal(ArrayList<Entity> closeEntities) {
 		if (parameters.canFindNewTarget() && goalPosition == null && entityGoal == 0) {
-			Thread thread = new Thread(() ->{findGoal(closeEntities);});
-			thread.run();
+			// This work is intentionally synchronous; Thread.run() did not create a real worker thread.
+			findGoal(closeEntities);
 		}
 		
 		if (entityGoal != 0 && entityManager.entityExist(entityGoal)) {

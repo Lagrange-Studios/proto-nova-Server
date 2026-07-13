@@ -13,6 +13,7 @@ import file.ServerSaver;
 
 import javax.net.ssl.SSLContext;
 import main.Console;
+import diagnostics.ResourceDiagnostics;
 
 public class ServerSocketHandler {
 
@@ -36,9 +37,10 @@ public class ServerSocketHandler {
 		this.tokenManager = tokenManager;
 		this.playerList = playerList;
 		this.serverSaver = serverSaver;
-		threadPool = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
+		threadPool = Executors.newFixedThreadPool(THREAD_POOL_SIZE,
+				ResourceDiagnostics.threadFactory("Player-Worker"));
 		
-		serverThread = new Thread(() -> {
+		serverThread = ResourceDiagnostics.newThread("Server-Socket-Acceptor", () -> {
 			try {
 				// Initialize SSL context for secure connections
 				// Uses embedded keystore from resources - no file system dependency

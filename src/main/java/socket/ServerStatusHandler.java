@@ -6,7 +6,10 @@ import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import main.Console;
+import diagnostics.ResourceDiagnostics;
 import org.json.JSONObject;
 
 /**
@@ -22,6 +25,7 @@ public class ServerStatusHandler {
     private long startTime;
     private HttpServer httpServer;
     private TokenManager tokenManager;
+    private ExecutorService httpExecutor;
     
     public ServerStatusHandler(ServerSocketHandler socketHandler, Console console, TokenManager tokenManager) {
         this.socketHandler = socketHandler;
@@ -41,7 +45,8 @@ public class ServerStatusHandler {
             
             httpServer.createContext("/status", new StatusHandler());
             httpServer.createContext("/token", new TokenHandler());
-            httpServer.setExecutor(null); // Use default executor
+            httpExecutor = Executors.newCachedThreadPool(ResourceDiagnostics.threadFactory("Status-HTTP-Worker"));
+            httpServer.setExecutor(httpExecutor);
             httpServer.start();
             console.print("✓ Server HTTP status endpoint listening on port: " + HTTP_PORT + " (unencrypted)");
             console.print("✓ Game socket connection (port 7675) remains HTTPS/TLS encrypted");
@@ -60,6 +65,9 @@ public class ServerStatusHandler {
     public void stop() {
         if (httpServer != null) {
             httpServer.stop(0);
+        }
+        if (httpExecutor != null) {
+            httpExecutor.shutdownNow();
         }
     }
     
@@ -180,4 +188,3 @@ public class ServerStatusHandler {
         }
     }
 }
-

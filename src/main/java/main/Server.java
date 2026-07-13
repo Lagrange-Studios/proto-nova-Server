@@ -49,6 +49,7 @@ public class Server {
 	public Console console;
 	private ServerSocketHandler serverSocket;
 	private ServerStatusHandler statusHandler;
+	private socket.CertificateServer certificateServer;
 	public int TPS;
 	public final int CLIENT_TPS = 60;
 	public Long globalTicks = 0L;
@@ -206,8 +207,8 @@ public class Server {
 		
 		// Start certificate server for remote client connections
 		try {
-			socket.CertificateServer certServer = new socket.CertificateServer(console);
-			certServer.start();
+			certificateServer = new socket.CertificateServer(console);
+			certificateServer.start();
 		} catch (Exception e) {
 			console.print("Failed to start certificate server: " + e.getMessage());
 		}
@@ -220,7 +221,7 @@ public class Server {
 		
 		console.setCommandClasses(serverSaver,generator,entityManager,planeManager,celestialObjectManager, gamemodeManager);
 		
-		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+		Runtime.getRuntime().addShutdownHook(ResourceDiagnostics.newThread("Server-Shutdown", () -> {
 			shutdown();
 		}));
 
@@ -238,7 +239,8 @@ public class Server {
 			ramLimit = (long) ServerConfig.getInstance().getRamLimit() * 1024 * 1024; // Convert MB to bytes
 			workerThreadLimit = ServerConfig.getInstance().getWorkerThreadLimit();
 			
-			scheduler = Executors.newScheduledThreadPool(3); // 3 threads: tick, idle check, resource check
+			scheduler = Executors.newScheduledThreadPool(3,
+					ResourceDiagnostics.threadFactory("Server-Scheduler")); // tick, idle check, resource check
 			
 			Runnable task = () -> {
 				try {
@@ -438,6 +440,9 @@ public class Server {
 			console.shutdown();
 			if (statusHandler != null) {
 				statusHandler.stop();
+			}
+			if (certificateServer != null) {
+				certificateServer.stop();
 			}
 			if (serverSocket != null) {
 				serverSocket.close();

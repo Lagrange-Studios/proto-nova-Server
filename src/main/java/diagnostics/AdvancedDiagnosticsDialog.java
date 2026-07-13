@@ -126,6 +126,7 @@ public class AdvancedDiagnosticsDialog extends JDialog {
             DefaultMutableTreeNode node = new DefaultMutableTreeNode(new NodeLabel(thread.id,
                     thread.name + "  |  CPU " + percent(thread.cpuPercent) + "  |  " + thread.state));
             node.add(new DefaultMutableTreeNode("CPU time: " + duration(thread.cpuNanos)));
+            node.add(new DefaultMutableTreeNode("Created at: " + thread.creationSite));
             node.add(new DefaultMutableTreeNode("RAM allocations: " + bytes(thread.allocatedBytes)
                     + " total; " + bytes((long) thread.allocationBytesPerSecond) + "/s recently"));
             node.add(new DefaultMutableTreeNode("Disk: unavailable per JVM thread"));
