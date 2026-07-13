@@ -84,8 +84,15 @@ public class TagHandler {
 				
 				if (entity != null) {
 					TagClass tagClass = tagToClass.get(tag);
-					tagClass.tick(this,entity);
-					if (server.globalTicks % server.TPS == 0) tagClass.secondTick(this, entity);
+					long started = System.nanoTime();
+					try {
+						tagClass.tick(this,entity);
+						if (server.globalTicks % server.TPS == 0) tagClass.secondTick(this, entity);
+					} finally {
+						if (server.getDiagnostics() != null) {
+							server.getDiagnostics().recordEntityCpu(entityId, System.nanoTime() - started);
+						}
+					}
 				}
 				else tagToEntities.get(tag).remove((Integer) entityId);
 			}

@@ -148,6 +148,11 @@ public class EntityManager {
 	public HashMap<Integer,Entity> getAllEntities() {
 		return entities;
 	}
+
+	/** Returns a stable-enough array snapshot for read-only diagnostics on another thread. */
+	public Entity[] getAllEntitiesSnapshot() {
+		return entities.values().toArray(new Entity[0]);
+	}
 	
 	public void dropEntityItems(Entity entity) {
 		for (Map.Entry<String, Integer> entry : entity.getInventorySlotsMap().entrySet()) {
@@ -294,11 +299,18 @@ public class EntityManager {
 		for (int id : velocityEntities.toArray(new Integer[0])) {
 			if (entities.containsKey(id)) {
 				Entity entity = entities.get(id);
+				long started = System.nanoTime();
 				
-				// TODO: change this to check the brain for human player
-				if (!entity.getName().equals("human")) {
-					entity = simulateVelocity(entity, server.TPS);
-					updateEntity(entity);
+				try {
+					// TODO: change this to check the brain for human player
+					if (!entity.getName().equals("human")) {
+						entity = simulateVelocity(entity, server.TPS);
+						updateEntity(entity);
+					}
+				} finally {
+					if (server.getDiagnostics() != null) {
+						server.getDiagnostics().recordEntityCpu(id, System.nanoTime() - started);
+					}
 				}
 				
 			}

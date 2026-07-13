@@ -18,6 +18,7 @@ import protonova.protobuf.PlayerDataProto.PlayerData;
 import protonova.protobuf.UserDataProto;
 import protonova.protobuf.UserDataProto.UserData;
 import enums.Player.State;
+import diagnostics.ResourceDiagnostics;
 
 public class Player {
 	public Socket socket;
@@ -87,6 +88,7 @@ public class Player {
 	                
 	                byte[] data = new byte[length];
 	                input.readFully(data);
+	                ResourceDiagnostics.recordNetworkRead(length + Integer.BYTES);
 
 	                if (!tokenValidated) {
 	                    String receivedToken = new String(data, "UTF-8");
@@ -148,6 +150,7 @@ public class Player {
 			output.writeInt(bytes.length);
 			output.write(bytes);
 			output.flush();
+			ResourceDiagnostics.recordNetworkWrite(bytes.length + Integer.BYTES);
 		} catch (SocketException e) {
 	        disconnect(); // client is gone
 	    } catch (IOException e) {
@@ -155,4 +158,3 @@ public class Player {
 	    }
 	}
 }
-
