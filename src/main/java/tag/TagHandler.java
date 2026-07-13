@@ -120,10 +120,16 @@ public class TagHandler {
 	private Thread tickEntities(Integer[] ids, TagClass tagClass, int start, int end) {
 		Thread thread = new Thread(() -> {
 			for (int index = start;index<end;index++) {
+				long started = System.nanoTime();
+				
 				Entity entity = entityManager.getEntity(ids[index]);
 				
 				if (entity != null)
 					tagClass.tick(this,entity);
+				
+				if (server.getDiagnostics() != null) {
+					server.getDiagnostics().recordEntityCpu(ids[index], System.nanoTime() - started);
+				}
 			}
 		});
 		thread.start();
@@ -134,12 +140,14 @@ public class TagHandler {
 	private Thread secondTickEntities(Integer[] ids, TagClass tagClass, int start, int end) {
 		Thread thread = new Thread(() -> {
 			for (int index = start;index<end;index++) {
+				long started = System.nanoTime();
 				Entity entity = entityManager.getEntity(ids[index]);
 				
 				if (entity != null) {
 					tagClass.tick(this,entity);
 					tagClass.secondTick(this,entity);
 				}
+				server.getDiagnostics().recordEntityCpu(ids[index], System.nanoTime() - started);
 			}
 		});
 		thread.start();

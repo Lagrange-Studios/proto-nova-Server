@@ -11,12 +11,15 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 
+import diagnostics.AdvancedDiagnosticsDialog;
+
 @SuppressWarnings("serial")
 public class ConsoleGUI extends Console {
     private JTextArea outputArea;
     private JTextField inputField;
     private JLabel infoBar;
     private JFrame frame;
+    private JButton diagnosticsButton;
 
     public ConsoleGUI(Server server) {
     	// Call parent constructor with headless=false, but don't run initHeadless
@@ -64,10 +67,23 @@ public class ConsoleGUI extends Console {
         infoBar.setForeground(textColor);
         infoBar.setFont(new Font("Consolas", Font.PLAIN, 14));
         infoBar.setText("TPS: 0");
+
+        diagnosticsButton = new JButton("Advanced Diagnostics");
+        diagnosticsButton.setFocusable(false);
+        diagnosticsButton.addActionListener(event -> {
+            if (server.getDiagnostics() != null) {
+                new AdvancedDiagnosticsDialog(frame, server.getDiagnostics()).setVisible(true);
+            }
+        });
+
+        JPanel topBar = new JPanel(new BorderLayout());
+        topBar.setBackground(backgroundColor);
+        topBar.add(infoBar, BorderLayout.CENTER);
+        topBar.add(diagnosticsButton, BorderLayout.EAST);
         
         frame.add(scrollPane, BorderLayout.CENTER);
         frame.add(inputField, BorderLayout.SOUTH);
-        frame.add(infoBar, BorderLayout.NORTH);
+        frame.add(topBar, BorderLayout.NORTH);
 
         
         try {

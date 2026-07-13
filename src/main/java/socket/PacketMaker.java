@@ -22,6 +22,7 @@ import protonova.protobuf.ServerToClientPacketProto.ServerToClientPacket.Builder
 import sound.SoundFinder;
 import space.CelestialObjectManager;
 import util.VectorMath;
+import diagnostics.ResourceDiagnostics;
 
 public class PacketMaker {
 
@@ -34,6 +35,7 @@ public class PacketMaker {
 	private ChatFinder chatFinder;
 	private PlaneManager planeManager;
 	private CelestialObjectManager celestialObjectManager;
+	private ResourceDiagnostics diagnostics;
 	
 	private static final double renderDistance = 40;
 	private static final double renderDistanceSquared = Math.pow(renderDistance, 2);
@@ -41,7 +43,8 @@ public class PacketMaker {
 	private static final int TILE_RENDER_Y = 20;
 	
 	public PacketMaker(ServerSocketHandler serverSocket, ServerLoader serverLoader, ServerSaver serverSaver,
-			EntityManager entityManager, EntityFinder entityFinder, SoundFinder soundFinder, ChatFinder chatFinder, PlaneManager planeManager, CelestialObjectManager celestialObjectManager) {
+			EntityManager entityManager, EntityFinder entityFinder, SoundFinder soundFinder, ChatFinder chatFinder, PlaneManager planeManager, CelestialObjectManager celestialObjectManager,
+			ResourceDiagnostics diagnostics) {
 		this.serverSocket = serverSocket;
 		this.serverLoader = serverLoader;
 		this.serverSaver = serverSaver;
@@ -51,6 +54,7 @@ public class PacketMaker {
 		this.chatFinder = chatFinder;
 		this.planeManager = planeManager;
 		this.celestialObjectManager = celestialObjectManager;
+		this.diagnostics = diagnostics;
 	}
 	
 	public void sendPacket(Player player) {
@@ -170,6 +174,7 @@ public class PacketMaker {
 		for (Entity entity : foundEntities) {
 			if (entity != null && !entitiesSent.contains(entity.getId())) {
 				packet.addEntities(entity);
+				diagnostics.recordEntityNetwork(entity.getId(), entity.getSerializedSize());
 				entitiesSentThisPacket.add(entity.getId());
 			}
 		}
@@ -177,9 +182,10 @@ public class PacketMaker {
 		// Add inventory
 		for (int id : playerEntity.getInventorySlotsMap().values()) {
 			Entity inventoryItem = entityManager.getEntity(id);
-			if (inventoryItem != null && !entitiesSent.contains(inventoryItem.getId())
-				|| updateList.contains(id)) {
+			if (inventoryItem != null && (!entitiesSent.contains(inventoryItem.getId())
+				|| updateList.contains(id))) {
 				packet.addEntities(inventoryItem);
+				diagnostics.recordEntityNetwork(inventoryItem.getId(), inventoryItem.getSerializedSize());
 				entitiesSentThisPacket.add(inventoryItem.getId());
 			}
 			else if (deleteList.contains(id)) packet.addRemovedEntities(id);
@@ -197,7 +203,9 @@ public class PacketMaker {
 				if (entitiesSentThisPacket.contains(id)) entitiesSentThisPacket.remove(id);
 			}
 			else if (updateList.contains(id)) {
-				packet.addEntities(entityManager.getEntity(id));
+				Entity updatedEntity = entityManager.getEntity(id);
+				packet.addEntities(updatedEntity);
+				diagnostics.recordEntityNetwork(updatedEntity.getId(), updatedEntity.getSerializedSize());
 				entitiesSentThisPacket.add(id);
 			}
 		}

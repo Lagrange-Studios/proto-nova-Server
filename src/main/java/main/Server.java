@@ -21,6 +21,7 @@ import entity.ChunkManager;
 import entity.EntityFinder;
 import entity.EntityManager;
 import entity.LootTableManager;
+import diagnostics.ResourceDiagnostics;
 import enums.Player.State;
 import file.AssetManager;
 import file.ServerLoader;
@@ -76,6 +77,7 @@ public class Server {
 	private HealthManager healthManager;
 	private LootTableManager lootTableManager;
 	private PathfindingHandler pathfindingHandler;
+	private ResourceDiagnostics diagnostics;
 	private volatile boolean serverReady = false;
 	private boolean headless;
 	
@@ -143,6 +145,7 @@ public class Server {
 		serverLoader = new ServerLoader(console);
 		planeManager = new PlaneManager(serverLoader.loadWorld());
 		entityManager = new EntityManager(serverLoader,console, playerList, this);
+		diagnostics = new ResourceDiagnostics(entityManager);
 		soundManager = new SoundManager(serverLoader,console, this);
 		chatManager = new ChatManager(serverLoader,console, this);
 		
@@ -213,7 +216,7 @@ public class Server {
 		startThread();
 		serverReady = true;
 		
-		packetMaker = new PacketMaker(serverSocket,serverLoader,serverSaver,entityManager,entityFinder,soundFinder,chatFinder,planeManager,celestialObjectManager);
+		packetMaker = new PacketMaker(serverSocket,serverLoader,serverSaver,entityManager,entityFinder,soundFinder,chatFinder,planeManager,celestialObjectManager,diagnostics);
 		
 		console.setCommandClasses(serverSaver,generator,entityManager,planeManager,celestialObjectManager, gamemodeManager);
 		
@@ -424,6 +427,10 @@ public class Server {
 	
 	public ArrayList<Player> getPlayers() {
 		return serverSocket!=null?serverSocket.getPlayerList():new ArrayList<Player>();
+	}
+
+	public ResourceDiagnostics getDiagnostics() {
+		return diagnostics;
 	}
 	
 	private void shutdown() {
