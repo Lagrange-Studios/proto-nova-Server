@@ -33,6 +33,7 @@ public class TagHandler {
 	private CombatManager combatManager;
 	private PathfindingHandler pathfindingHandler;
 	private HealthManager healthManager;
+	private static final int entitiesPerThread = 200;
 
 	public TagHandler(Server server, EntityManager entityManager, AssetManager assetManager, EntityFinder entityFinder, PlaneManager planeManager, CombatManager combatManager, PathfindingHandler pathfindingHandler, HealthManager healthManager) {
 		this.server = server;
@@ -73,23 +74,77 @@ public class TagHandler {
 		}
 		addEntity(newEntity);
 	}
+	
+	public void removeEntity(Entity entity) {
+		for (Set<Integer> set : tagToEntities.values()) {
+			if (set.contains(entity.getId()))
+				set.remove(entity.getId());
+		}
+	}
 
 	public void tick() {
+		ArrayList<Thread> threads = new ArrayList<>();
+		boolean secondTick = server.globalTicks % server.TPS == 0;
 		
-		for (String tag : tagToEntities.keySet()) {
-			Integer[] entityIds = tagToEntities.get(tag).toArray(new Integer[0]);
-			
-			for (int entityId : entityIds) {
-				Entity entity = entityManager.getEntity(entityId);
+		if (secondTick) {
+			for (String tag : tagToEntities.keySet()) {
+				TagClass tagClass = tagToClass.get(tag);
+				Integer[] entityIds = tagToEntities.get(tag).toArray(new Integer[0]);
 				
-				if (entity != null) {
-					TagClass tagClass = tagToClass.get(tag);
-					tagClass.tick(this,entity);
-					if (server.globalTicks % server.TPS == 0) tagClass.secondTick(this, entity);
+				for (int i=0; i < entityIds.length; i += entitiesPerThread) {
+					threads.add(secondTickEntities(entityIds,tagClass,i,Math.min(i+entitiesPerThread, entityIds.length)));
 				}
-				else tagToEntities.get(tag).remove((Integer) entityId);
 			}
 		}
+		else {
+			for (String tag : tagToEntities.keySet()) {
+				TagClass tagClass = tagToClass.get(tag);
+				Integer[] entityIds = tagToEntities.get(tag).toArray(new Integer[0]);
+				
+				for (int i=0; i < entityIds.length; i += entitiesPerThread) {
+					threads.add(tickEntities(entityIds,tagClass,i,Math.min(i+entitiesPerThread, entityIds.length)));
+				}
+			}
+		}
+		
+		
+		for (Thread thread : threads) {
+			try {
+				thread.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	private Thread tickEntities(Integer[] ids, TagClass tagClass, int start, int end) {
+		Thread thread = new Thread(() -> {
+			for (int index = start;index<end;index++) {
+				Entity entity = entityManager.getEntity(ids[index]);
+				
+				if (entity != null)
+					tagClass.tick(this,entity);
+			}
+		});
+		thread.start();
+		
+		return thread;
+	}
+	
+	private Thread secondTickEntities(Integer[] ids, TagClass tagClass, int start, int end) {
+		Thread thread = new Thread(() -> {
+			for (int index = start;index<end;index++) {
+				Entity entity = entityManager.getEntity(ids[index]);
+				
+				if (entity != null) {
+					tagClass.tick(this,entity);
+					tagClass.secondTick(this,entity);
+				}
+			}
+		});
+		thread.start();
+		
+		return thread;
 	}
 	
 	public Entity interact(Entity interactingEntity, Entity tagEntity) {

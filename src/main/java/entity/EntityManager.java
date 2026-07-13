@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
+import ai.PathfindingHandler;
 import collision.EntityCollision;
 import file.ServerLoader;
 import health.Health;
@@ -34,6 +35,7 @@ public class EntityManager {
 	private EntityFinder entityFinder;
 	private final HashSet<Integer> velocityEntities = new HashSet<>();
 	private Server server;
+	private PathfindingHandler pathfindingHandler;
 
 	public EntityManager(ServerLoader serverLoader,Console console, ArrayList<Player> playerList, Server server) {
 		entities = serverLoader.loadEntities();
@@ -105,14 +107,7 @@ public class EntityManager {
 				.setReach(1.5)
 				.build();
 		
-		entities.put(currentId, entity);
-		
-		if (chunkManager != null) {
-			chunkManager.addEntity(entity);
-		}
-		else {
-			console.print("WARNING: created entity without adding it to the chunk manager");
-		}
+		updateEntity(entity);
 		
 		return entity;
 		
@@ -242,14 +237,17 @@ public class EntityManager {
 	public void removeEntity(Entity entity) {
 		if (velocityEntities.contains(entity.getId())) velocityEntities.remove(entity.getId());
 		sendDeletion(entity);
+		tagHandler.removeEntity(entity);
 		chunkManager.removeEntityFromChunk(entity);
+		pathfindingHandler.removeEntity(entity);
 		entities.remove(entity.getId());
 	}
 
-	public void setClasses(ChunkManager chunkManager, TagHandler tagHandler, EntityFinder entityFinder) {
+	public void setClasses(ChunkManager chunkManager, TagHandler tagHandler, EntityFinder entityFinder, PathfindingHandler pathfindingHandler) {
 		this.chunkManager = chunkManager;
 		this.tagHandler = tagHandler;
 		this.entityFinder = entityFinder;
+		this.pathfindingHandler = pathfindingHandler;
 	}
 	
 	/**

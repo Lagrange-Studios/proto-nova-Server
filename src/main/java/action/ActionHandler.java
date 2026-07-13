@@ -147,13 +147,9 @@ public class ActionHandler {
 				playerEntity = craftingManager.attemptCraftingRecipe(playerEntity, interactingEntity);
 				break;
 			case(InteractionType.Hit_VALUE):
+				System.out.println("Player combat attempted");
 				combatManager.attemptToDamage(playerEntity, interactingEntity);
-				playerEntity = entityManager.getEntity(playerEntity.getId());
-				if (interactingEntity != null) interactingEntity = entityManager.getEntity(interactingEntity.getId());
-				if (interactingEntity != null) {
-					playerEntity = healthManager.entityCheck(interactingEntity);
-					console.print(interactingEntity.getName()+" total damage: "+ Health.getDamage(interactingEntity));
-				}
+				playerEntity = entityManager.getEntity(player);
 				break;
 			case(InteractionType.Standard_VALUE):
 				playerEntity = tagHandler.interact(playerEntity, interactingEntity);

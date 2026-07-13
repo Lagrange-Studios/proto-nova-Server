@@ -1,7 +1,10 @@
 package socket;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import chat.ChatFinder;
 import entity.EntityFinder;
@@ -132,8 +135,8 @@ public class PacketMaker {
 		// clone the delete and update list so we only remove the updates we actualy sent
 		// this is a possible fix for desyncs but could also just use more cpu and ram for no reason
 		// further testing required
-		HashSet<Integer> updateList = (HashSet<Integer>) player.updateList.clone();
-		HashSet<Integer> deleteList = (HashSet<Integer>) player.deleteList.clone();
+		HashSet<Integer> updateList = new HashSet<>(player.updateList);
+		HashSet<Integer> deleteList = new HashSet<>(player.deleteList);
 		
 		int startX = Math.round(playerEntity.getPosition().getX());
 		int startY = Math.round(playerEntity.getPosition().getY());
@@ -225,7 +228,7 @@ public class PacketMaker {
 		deleteLikeValues(updateList,player.updateList);
 	}
 	
-	private void deleteLikeValues(HashSet<Integer> set1, HashSet<Integer> set2) {
+	private void deleteLikeValues(HashSet<Integer> set1, Set<Integer> set2) {
 		for (Integer value : set1) {
 			if (set2.contains(value)) set2.remove(value);
 		}

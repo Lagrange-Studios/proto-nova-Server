@@ -8,6 +8,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
+
+import file.ServerSaver;
+
 import javax.net.ssl.SSLContext;
 import main.Console;
 
@@ -22,15 +25,17 @@ public class ServerSocketHandler {
 	private Thread serverThread;
 	private PacketMaker packetMaker;
 	private socket.TokenManager tokenManager;
+	private ServerSaver serverSaver;
 	
-	public ServerSocketHandler(Console console, PacketReciver packetReciver, ArrayList<Player> playerList) {
-		this(console, packetReciver, null, playerList);
+	public ServerSocketHandler(Console console, PacketReciver packetReciver, ArrayList<Player> playerList,ServerSaver serverSaver) {
+		this(console, packetReciver, null, playerList, serverSaver);
 	}
 	
-	public ServerSocketHandler(Console console, PacketReciver packetReciver, socket.TokenManager tokenManager, ArrayList<Player> playerList) {
+	public ServerSocketHandler(Console console, PacketReciver packetReciver, socket.TokenManager tokenManager, ArrayList<Player> playerList, ServerSaver serverSaver) {
 		this.console = console;
 		this.tokenManager = tokenManager;
 		this.playerList = playerList;
+		this.serverSaver = serverSaver;
 		threadPool = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
 		
 		serverThread = new Thread(() -> {
@@ -60,8 +65,13 @@ public class ServerSocketHandler {
 			
 				
 			} catch (Exception e) {
-				e.printStackTrace();
-				console.print("SSL Error: " + e.getMessage());
+				if (e.getMessage().equals("Socket closed")) 
+					System.out.println("Server Socket closed");
+				else {
+					e.printStackTrace();
+					console.print("SSL Error: " + e.getMessage());
+				}
+				
 			}
 		});
 		serverThread.setDaemon(true);
@@ -81,8 +91,9 @@ public class ServerSocketHandler {
 	 */
 	public void removePlayer(Player player) {
 		playerList.remove(player);
-		if (player.getUsername() != null) {
-			console.print("Player left: " + player.getUsername());
+		console.print("Removed player: " + (player.getUsername() != null ? player.getUsername() : "unknown"));
+		if (player.data != null) {
+			serverSaver.savePlayer(player);
 		}
 	}
 	
@@ -109,6 +120,7 @@ public class ServerSocketHandler {
 		
 		for (Player player : playerList) {
 			player.disconnect();
+			removePlayer(player);
 		}
 		playerList.clear();
 	}

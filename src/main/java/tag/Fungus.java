@@ -48,7 +48,10 @@ public class Fungus extends TagClass {
 	public void secondTick(TagHandler tagHandler, Entity entity) {
 		
 		// check to see if parent is still alive
-		if (tagHandler.getEntityManager().getEntity(entity.getInventorySlotsMap().get("parentSpore")) != null ) {
+		if (!entity.containsInventorySlots("parentSpore")) return;
+		
+		Entity parentSpore = tagHandler.getEntityManager().getEntity(entity.getInventorySlotsMap().get("parentSpore"));
+		if (parentSpore != null  && parentSpore.getName().equals("fungus spore")) {
 			
 			if (Random.randomInt(1, chanceOfGrowthPerSecond) == 1 &&
 					!entity.getName().equals("fortifeid fungus vein")) {
@@ -80,10 +83,8 @@ public class Fungus extends TagClass {
 					for (Entity foundEntity : tagHandler.getEntityFinder().getAllEntitiesInRadius(newPosition, entity.getMap(), .99)) {
 						if (!foundEntity.getIsItem() && foundEntity.getId() != entity.getId()) {
 							
-							if (foundEntity.getTagsList().contains("plant")) {	
+							if (foundEntity.getTagsList().contains("plant"))
 								tagHandler.getCombatManager().attemptToDamage(entity,foundEntity);
-								tagHandler.getHealthManager().entityCheck(foundEntity);
-							}
 							
 							open = false;
 							break;

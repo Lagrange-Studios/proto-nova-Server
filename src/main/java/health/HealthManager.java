@@ -5,7 +5,6 @@ import entity.LootTableManager;
 import main.Console;
 import protonova.protobuf.EntityProto.Entity;
 import socket.Player;
-import socket.ServerSocketHandler;
 
 public class HealthManager {
 	
@@ -13,13 +12,11 @@ public class HealthManager {
 	private EntityManager entityManager;
 	private Console console;
 	private LootTableManager lootTableManager;
-	private ServerSocketHandler serverSocketHandler;
 	
 	public HealthManager(EntityManager entityManager, Console console, LootTableManager lootTableManager) {
 		this.entityManager = entityManager;
 		this.console = console;
 		this.lootTableManager = lootTableManager;
-		this.serverSocketHandler = serverSocketHandler;
 	}
 	
 	public Entity entityCheck(Entity entity) {
@@ -34,6 +31,7 @@ public class HealthManager {
 		Player player = entityManager.getPlayerEntityFromEntity(entity);
 		if (checkCrit(entity) && player != null) {
 			newEntity = entityManager.makeNewEntity("human", entity.getMap());
+			System.out.println("new id: "+newEntity.getId());
 			entityManager.setPlayerEntity(player, newEntity);
 			entityManager.dropEntityItems(entity);
 			entityManager.removeEntity(entity);

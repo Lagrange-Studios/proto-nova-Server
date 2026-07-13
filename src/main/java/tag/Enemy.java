@@ -1,22 +1,12 @@
 package tag;
 
-import java.util.ArrayList;
 
 import protonova.protobuf.EntityProto.Entity;
-import util.VectorMath;
 
 public class Enemy extends TagClass {
 
 	public String getTag() {
 		return "enemy";
-	}
-	
-	public double getRange() {
-		return 25;
-	}
-	
-	public boolean canTarget(Entity target) {
-		return target.getName().equals("human");
 	}
 	
 	
@@ -33,27 +23,8 @@ public class Enemy extends TagClass {
 	
 	public void secondTick(TagHandler tagHandler, Entity entity) {
 		
-		if (entity.getAlive()) {
-			ArrayList<Entity> entities = tagHandler.getEntityFinder().getAllEntitiesInRadis(entity, getRange());
-			
-			Entity closestTarget = null;
-			double closestDistanceSquared = 0;
-			
-			for (Entity target : entities) {
-				if (canTarget(target)) {
-					double distanceSquared = VectorMath.distance(entity.getPosition(), target.getPosition());
-					
-					if (closestTarget == null || closestDistanceSquared > distanceSquared) {
-						closestTarget = target;
-						closestDistanceSquared = distanceSquared;
-					}
-				}
-			}
-			
-			if (closestTarget != null) {
-				tagHandler.getPathfindingHandler().pathTo(entity.getId(), closestTarget.getId());
-			}
-		}
+		if (entity.getAlive() && !tagHandler.getPathfindingHandler().hasAgent(entity.getId()))
+			tagHandler.getPathfindingHandler().newAgent(entity.getId(), getTag());
 		
 	}
 	

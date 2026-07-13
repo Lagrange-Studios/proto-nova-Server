@@ -10,6 +10,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
 import main.Console;
@@ -36,8 +38,8 @@ public class Player {
 	private boolean tokenValidated = false; // Track if client has been authenticated
 	
 	public final HashSet<Integer> entitiesSent = new HashSet<>();
-	public final HashSet<Integer> updateList = new HashSet<>();
-	public final HashSet<Integer> deleteList = new HashSet<>();
+	public final Set<Integer> updateList =  ConcurrentHashMap.newKeySet();
+	public final Set<Integer> deleteList = ConcurrentHashMap.newKeySet();
 	
 	public Player(Socket socket, Console console, PacketReciver packetReciver, ServerSocketHandler serverSocketHandler) {
 		this.socket = socket;
@@ -121,7 +123,6 @@ public class Player {
 	                        serverSocketHandler.addPlayerToGame(this);
 	                    }
 	                    
-	                    console.print("Received user: " + user.getUsername());
 	                }
 	                else {
 	                    packetReciver.recivePacket(this, ClientToServerPacket.parseFrom(data));

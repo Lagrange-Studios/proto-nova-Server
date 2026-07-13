@@ -17,9 +17,11 @@ public class CombatManager {
 	
 	private EntityManager entityManager;
 	private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
+	private HealthManager healthManager;
 	
-	public CombatManager(EntityManager entityManager) {
+	public CombatManager(EntityManager entityManager, HealthManager healthManager) {
 		this.entityManager = entityManager;
+		this.healthManager = healthManager;
 	}
 	
 	public boolean attemptToDamage(Entity attacker, Entity defender) {
@@ -27,6 +29,9 @@ public class CombatManager {
 			return false;
 		}
 		if (attacker.getReach() >= VectorMath.distance(attacker.getPosition(), defender.getPosition()) && attacker.getHitDamage().getCanAttack()) {
+			//System.out.println("attacker: "+attacker.getName()+" health: "+Health.getDamage(attacker));
+			//System.out.println("defender: "+defender.getName()+" health: "+Health.getDamage(defender));
+			
 			startEntityHitCooldown(attacker);
 			damage(attacker, defender);
 			return true;
@@ -73,7 +78,7 @@ public class CombatManager {
 	private void damage(Entity attacker, Entity defender) {
 		defender = entityManager.getEntity(defender.getId());
 		attacker = entityManager.getEntity(attacker.getId());
-		System.out.println(Health.getDamage(defender));
+		//System.out.println(Health.getDamage(defender));
 		checkDamageMults(defender);
 		
 		HitDamage hitDamage = attacker.getHitDamage();
@@ -133,7 +138,7 @@ public class CombatManager {
 		
 		Entity defenderFinal = defenderBuilder.setDamage(entityDamage.build()).build();
 		entityManager.updateEntity(defenderFinal);
-		System.out.println(Health.getDamage(defenderFinal));
+		healthManager.entityCheck(defenderFinal);
 		
 	}
 	

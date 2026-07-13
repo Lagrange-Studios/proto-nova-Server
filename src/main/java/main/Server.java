@@ -154,9 +154,9 @@ public class Server {
 		chatManager.setChunkManager(chunkManager);
 		
 		lootTableManager = new LootTableManager(entityManager, console, assetManager);
-		
-		combatManager = new CombatManager(entityManager);
-		healthManager = new HealthManager(combatManager, entityManager, console, lootTableManager);
+
+		healthManager = new HealthManager(entityManager, console, lootTableManager);
+		combatManager = new CombatManager(entityManager, healthManager);
 		
 		entityFinder = new EntityFinder(entityManager.getAllEntities(),chunkManager);
 		soundFinder = new SoundFinder(entityManager.getAllEntities(),soundManager.getAllSounds(),chunkManager);
@@ -167,10 +167,10 @@ public class Server {
 		generator = new Generator(console, planeManager, entityManager, assetManager, entityFinder, celestialObjectManager);
 
 		craftingManager = new CraftingManager(entityManager, serverLoader.loadCraftingRecipes(), console, assetManager, planeManager);
-		pathfindingHandler = new PathfindingHandler(entityManager, entityFinder, this);
+		pathfindingHandler = new PathfindingHandler(entityManager, entityFinder, this, combatManager);
 		
 		tagHandler = new TagHandler(this, entityManager, assetManager, entityFinder, planeManager, combatManager, pathfindingHandler, healthManager);
-		entityManager.setClasses(chunkManager,tagHandler, entityFinder);
+		entityManager.setClasses(chunkManager,tagHandler, entityFinder, pathfindingHandler);
 		
 		if (shouldGenerate) {
 			generator.generatePlanet("continents");
@@ -184,12 +184,13 @@ public class Server {
 		
 		gamemodeManager = new GamemodeManager(this, console, entityManager, entityFinder, planeManager, assetManager, serverLoader.getGamemode(), tagHandler);
 		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager, craftingManager, tagHandler, combatManager, healthManager);
+		serverSaver = new ServerSaver(this, entityManager, planeManager, celestialObjectManager, gamemodeManager);
 		
 		packetReciver = new PacketReciver(entityManager, soundManager, chatManager, console, actionHandler, entityFinder, healthManager, this);
 		
 		// Create TokenManager and pass it to ServerSocketHandler
 		tokenManager = new socket.TokenManager(console);
-		serverSocket = new ServerSocketHandler(console, packetReciver, tokenManager, playerList);
+		serverSocket = new ServerSocketHandler(console, packetReciver, tokenManager, playerList, serverSaver);
 		statusHandler = new ServerStatusHandler(serverSocket, console, tokenManager);
 		
 		tagHandler.loadAllTagEntities();
@@ -208,7 +209,6 @@ public class Server {
 			console.print("Failed to start certificate server: " + e.getMessage());
 		}
 		
-		serverSaver = new ServerSaver(this, entityManager, planeManager, celestialObjectManager, gamemodeManager);
 		
 		startThread();
 		serverReady = true;
@@ -345,9 +345,7 @@ public class Server {
 		
 		for (Player player : playerList) {
 			if (player.getState() == State.DISCONNECTED) {
-				serverSocket.getPlayerList().remove(player);
-				console.print("Removed player: " + (player.getUsername() != null ? player.getUsername() : "unknown"));
-				serverSaver.savePlayer(player);
+				serverSocket.removePlayer(player);
 			}
 			else {
 				packetMaker.sendPacket(player);
