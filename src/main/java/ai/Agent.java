@@ -27,7 +27,7 @@ public class Agent {
 	
 	private Vector goalPosition = null;
 	private int entityGoal = 0;
-
+	private double minimumSearch = 0;
 
 	
 	public Agent(int entityId, EntityManager entityManager, EntityFinder entityFinder, Server server, CombatManager combatManager, AgentParameter parameters) {
@@ -37,22 +37,25 @@ public class Agent {
 		this.server = server;
 		this.parameters = parameters;
 		this.combatManager = combatManager;
+		
+		Entity entity = entityManager.getEntity(entityId);
+		minimumSearch = entity.getSize().getX() + entity.getSize().getY();
 	}
 	
 	/**
 	 * Updates the agent which computates a linear path and moves the entity
 	 * @param supplier a class that implements the {@link ai.AgentSupplier} interface
 	 */
-	public void tick() {
+	public void tick(boolean canFindGoal) {
 		Entity entity = entityManager.getEntity(entityId);
 		
 		// checking to see if our entity still exits and is alive
 		if (entity != null && (!parameters.mustBeAlive() || parameters.mustBeAlive() && entity.getAlive())) {
-			ArrayList<Entity> entities = entityFinder.getAllEntitiesInRadis(entity, parameters.getRange());
+			ArrayList<Entity> entities = canFindGoal?entityFinder.getAllEntitiesInRadis(entity, parameters.getRange()):entityFinder.getAllEntitiesInRadis(entity, minimumSearch);
 			
 			Vector oldPosition = entity.getPosition();
 			
-			Vector goal = getGoal(entities);
+			Vector goal = getGoal(entities, canFindGoal);
 			
 			// math for direction and speed
 			Vector difference = VectorMath.minus(goal, entity.getPosition());
@@ -142,9 +145,10 @@ public class Agent {
 		return completed;
 	}
 	
-	private Vector getGoal(ArrayList<Entity> closeEntities) {
-		if (parameters.canFindNewTarget() && goalPosition == null && entityGoal == 0) {
+	private Vector getGoal(ArrayList<Entity> closeEntities, boolean canFindGoal) {
+		if (canFindGoal && parameters.canFindNewTarget() && goalPosition == null && entityGoal == 0) {
 			Thread thread = new Thread(() ->{findGoal(closeEntities);});
+			thread.setName("AI goal finding: "+entityManager.getEntity(entityId).getName()+" "+entityGoal);
 			thread.run();
 		}
 		

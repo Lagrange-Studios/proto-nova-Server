@@ -132,6 +132,7 @@ public class TagHandler {
 				}
 			}
 		});
+		thread.setName(tagClass.getTag()+" "+start+"-"+end);
 		thread.start();
 		
 		return thread;
@@ -150,6 +151,7 @@ public class TagHandler {
 				server.getDiagnostics().recordEntityCpu(ids[index], System.nanoTime() - started);
 			}
 		});
+		thread.setName(tagClass.getTag()+" "+start+"-"+end);
 		thread.start();
 		
 		return thread;
