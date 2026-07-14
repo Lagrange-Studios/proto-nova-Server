@@ -28,7 +28,7 @@ public class Plant extends TagClass {
 	 */
 	
 	public void secondTick(TagHandler tagHandler, Entity entity) {
-		return;
+		
 		// check to see if it has the right tags for growing
 		if (entity.containsInventorySlots("totalPlantGrowTime") && 
 				entity.containsInventorySlots("currentPlantAge")) {

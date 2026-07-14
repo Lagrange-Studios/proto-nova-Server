@@ -86,16 +86,16 @@ public class Fungi extends CataclysmClass {
 		tile = Fungus.convertTile(tile);
 		planeManager.updateTile(tile, 1);;
 		
-		Entity newSpore = assetManager.getEntity("fungus spore", 1);
+		/*Entity newSpore = assetManager.getEntity("fungus spore", 1);
 		newSpore = Random.randomizeDirection(newSpore);
 		newSpore = newSpore.toBuilder()
 				.setPosition(vector)
 				.putInventorySlots("parentSpore", newSpore.getId())
-				.build();
+				.build();*/
 		
 		System.out.println("[Fungi] "+CoordinateConverter.convert(vector));
 		
-		entityManager.updateEntity(newSpore);
+		//entityManager.updateEntity(newSpore);
 		return true;
 	}
 }

@@ -48,10 +48,10 @@ public class Fungus extends TagClass {
 	 */
 	
 	public void secondTick(TagHandler tagHandler, Entity entity) {
-		
+		if (true) return;
 		// check to see if parent is still alive
 		if (!entity.containsInventorySlots("parentSpore")) return;
-		
+
 		Entity parentSpore = tagHandler.getEntityManager().getEntity(entity.getInventorySlotsMap().get("parentSpore"));
 		if (parentSpore != null  && parentSpore.getName().equals("fungus spore")) {
 			
