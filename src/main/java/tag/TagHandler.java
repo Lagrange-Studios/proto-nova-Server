@@ -121,13 +121,15 @@ public class TagHandler {
 	}
 	
 	private void tickEntities(Integer[] ids, TagClass tagClass, int start, int end) {
+		String tag = tagClass.getTag();
 		threads.add(server.executor.submit(() -> {
 			for (int index = start;index<end;index++) {
 				//long started = System.nanoTime();
 				
 				Entity entity = entityManager.getEntity(ids[index]);
 				
-				if (entity != null)
+				// have to check the tag due to possible modification during threading
+				if (entity != null && entity.getTagsList().contains(tag))
 					tagClass.tick(this,entity);
 				
 				/*if (server.getDiagnostics() != null) {
@@ -138,12 +140,14 @@ public class TagHandler {
 	}
 	
 	private void secondTickEntities(Integer[] ids, TagClass tagClass, int start, int end) {
+		String tag = tagClass.getTag();
 		threads.add(server.executor.submit(() -> {
 			for (int index = start;index<end;index++) {
 				//long started = System.nanoTime();
 				Entity entity = entityManager.getEntity(ids[index]);
-				
-				if (entity != null) {
+
+				// have to check the tag due to possible modification during threading
+				if (entity != null && entity.getTagsList().contains(tag)) {
 					tagClass.tick(this,entity);
 					tagClass.secondTick(this,entity);
 				}
