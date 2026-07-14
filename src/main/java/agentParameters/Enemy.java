@@ -5,10 +5,6 @@ import protonova.protobuf.EntityProto.Entity;
 
 public class Enemy implements AgentParameter {
 
-	public String getTag() {
-		return "enemy";
-	}
-
 	@Override
 	public String getName() {
 		return "enemy";
@@ -31,7 +27,7 @@ public class Enemy implements AgentParameter {
 	
 	@Override
 	public double getRange() {
-		return 25;
+		return 15;
 	}
 
 	@Override

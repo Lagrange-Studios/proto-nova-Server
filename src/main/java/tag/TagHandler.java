@@ -34,7 +34,7 @@ public class TagHandler {
 	private CombatManager combatManager;
 	private PathfindingHandler pathfindingHandler;
 	private HealthManager healthManager;
-	private static final int entitiesPerThread = 200;
+	private static final int entitiesPerThread = 50;
 
 	public TagHandler(Server server, EntityManager entityManager, AssetManager assetManager, EntityFinder entityFinder, PlaneManager planeManager, CombatManager combatManager, PathfindingHandler pathfindingHandler, HealthManager healthManager) {
 		this.server = server;
@@ -84,6 +84,7 @@ public class TagHandler {
 	}
 
 	public void tick() {
+		System.out.println("tag tick");
 		ArrayList<Thread> threads = new ArrayList<>();
 		boolean secondTick = server.globalTicks % server.TPS == 0;
 		
@@ -93,7 +94,7 @@ public class TagHandler {
 				Integer[] entityIds = tagToEntities.get(tag).toArray(new Integer[0]);
 				
 				for (int i=0; i < entityIds.length; i += entitiesPerThread) {
-					threads.add(secondTickEntities(entityIds,tagClass,i,Math.min(i+entitiesPerThread, entityIds.length)));
+					threads.add(secondTickEntities(entityIds,tagClass,i,Math.min(i+entitiesPerThread, entityIds.length-1)));
 				}
 			}
 		}
@@ -103,7 +104,7 @@ public class TagHandler {
 				Integer[] entityIds = tagToEntities.get(tag).toArray(new Integer[0]);
 				
 				for (int i=0; i < entityIds.length; i += entitiesPerThread) {
-					threads.add(tickEntities(entityIds,tagClass,i,Math.min(i+entitiesPerThread, entityIds.length)));
+					threads.add(tickEntities(entityIds,tagClass,i,Math.min(i+entitiesPerThread, entityIds.length-1)));
 				}
 			}
 		}
@@ -121,16 +122,16 @@ public class TagHandler {
 	private Thread tickEntities(Integer[] ids, TagClass tagClass, int start, int end) {
 		Thread thread = ResourceDiagnostics.newThread("Tag-Tick-" + tagClass.getTag(), () -> {
 			for (int index = start;index<end;index++) {
-				long started = System.nanoTime();
+				//long started = System.nanoTime();
 				
 				Entity entity = entityManager.getEntity(ids[index]);
 				
 				if (entity != null)
 					tagClass.tick(this,entity);
 				
-				if (server.getDiagnostics() != null) {
+				/*if (server.getDiagnostics() != null) {
 					server.getDiagnostics().recordEntityCpu(ids[index], System.nanoTime() - started);
-				}
+				}*/
 			}
 		});
 		thread.setName(tagClass.getTag()+" "+start+"-"+end);
@@ -142,14 +143,14 @@ public class TagHandler {
 	private Thread secondTickEntities(Integer[] ids, TagClass tagClass, int start, int end) {
 		Thread thread = ResourceDiagnostics.newThread("Tag-Second-Tick-" + tagClass.getTag(), () -> {
 			for (int index = start;index<end;index++) {
-				long started = System.nanoTime();
+				//long started = System.nanoTime();
 				Entity entity = entityManager.getEntity(ids[index]);
 				
 				if (entity != null) {
 					tagClass.tick(this,entity);
 					tagClass.secondTick(this,entity);
 				}
-				server.getDiagnostics().recordEntityCpu(ids[index], System.nanoTime() - started);
+				//server.getDiagnostics().recordEntityCpu(ids[index], System.nanoTime() - started);
 			}
 		});
 		thread.setName(tagClass.getTag()+" "+start+"-"+end);

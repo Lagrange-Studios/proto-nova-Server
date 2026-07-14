@@ -1,5 +1,6 @@
 package tag;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 
@@ -16,6 +17,7 @@ public class Fungus extends TagClass {
 	private final int chanceOfGrowthPerSecond = 15; // one in ten chance
 	private final int evolveChancePerSecond = chanceOfGrowthPerSecond*2; // one in ten chance
 	private final int fungusMonsterChance = 20; // 1 in x amount 
+	private final int SEARCH_RANGE = 50;
 	
 	// tile info
 	public static final HashSet<String> allowedTiles = new HashSet<>(Arrays.asList("grass", "stone", "sand"));
@@ -53,6 +55,42 @@ public class Fungus extends TagClass {
 		Entity parentSpore = tagHandler.getEntityManager().getEntity(entity.getInventorySlotsMap().get("parentSpore"));
 		if (parentSpore != null  && parentSpore.getName().equals("fungus spore")) {
 			
+			// update the hivemind target if its a spore
+			if (entity.getName().equals("fungus spore")) {
+				ArrayList<Entity> closeEntities = tagHandler.getEntityFinder().getAllEntitiesInRadis(entity, SEARCH_RANGE);
+				
+				Entity closestTarget = null;
+				double closestDistanceSquared = 0;
+				
+				// find closest possible target
+				for (Entity target : closeEntities) {
+					if (target.getName().equals("human")) {
+						double distanceSquared = VectorMath.distance(entity.getPosition(), target.getPosition());
+						
+						if (closestTarget == null || closestDistanceSquared > distanceSquared) {
+							closestTarget = target;
+							closestDistanceSquared = distanceSquared;
+						}
+					}
+				}
+				
+				if (closestTarget != null) {
+					entity = entity.toBuilder()
+							.putInventorySlots("target", closestTarget.getId())
+							.build();
+					
+					tagHandler.updateEntity(entity);
+				}
+				else if (entity.containsInventorySlots("target")) {
+					entity = entity.toBuilder()
+							.removeInventorySlots("target")
+							.build();
+					
+					tagHandler.updateEntity(entity);
+				}
+			}
+			
+			// growth chance
 			if (Random.randomInt(1, chanceOfGrowthPerSecond) == 1 &&
 					!entity.getName().equals("fortifeid fungus vein")) {
 				Vector offset = Vector.newBuilder().build();
@@ -91,6 +129,7 @@ public class Fungus extends TagClass {
 						}
 					}
 
+					// growth and cloning
 					if (open) {
 						Entity newClone = tagHandler.getAssetManager().getEntity("fungus vein", entity.getMap());
 						
@@ -117,6 +156,7 @@ public class Fungus extends TagClass {
 					
 					newMonster = newMonster.toBuilder()
 							.setPosition(entity.getPosition())
+							.putInventorySlots("parentSpore", entity.getInventorySlotsMap().get("parentSpore"))
 							.build();
 					
 					tagHandler.updateEntity(newMonster);
@@ -133,6 +173,7 @@ public class Fungus extends TagClass {
 				
 			}
 		}
+		// death code
 		else {
 			Entity.Builder entityBuilder = entity.toBuilder()
 					.setName("dead fungus vein")

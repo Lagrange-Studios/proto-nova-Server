@@ -56,50 +56,54 @@ public class Agent {
 			Vector oldPosition = entity.getPosition();
 			
 			Vector goal = getGoal(entities, canFindGoal);
-			
-			// math for direction and speed
-			Vector difference = VectorMath.minus(goal, entity.getPosition());
-			difference = VectorMath.unitVector(difference);
-			
-			difference = Vector.newBuilder()
-					.setX((float) (difference.getX()*entity.getSpeed()/server.TPS))
-					.setY((float) (difference.getY()*entity.getSpeed()/server.TPS))
-					.build();
-			
-			difference = VectorMath.add(entity.getPosition(), difference);
-			
-			entity = entity.toBuilder()
-					.setPosition(difference)
-					.build();
-			
-			boolean revertPosition = false;
-			
-			// Collision and damage check
-			for (Entity closeEntity : entities) {
-				if (EntityCollision.checkCollision(closeEntity, entity)) {
-					if (parameters.canDamage(closeEntity))
-						combatManager.attemptToDamage(entity, closeEntity);
-					
-					if (closeEntity.getCanCollide())
-						revertPosition = true;
+			if (goal != null) {
+
+				// math for direction and speed
+				Vector difference = VectorMath.minus(goal, entity.getPosition());
+				difference = VectorMath.unitVector(difference);
+				
+				difference = Vector.newBuilder()
+						.setX((float) (difference.getX()*entity.getSpeed()/server.TPS))
+						.setY((float) (difference.getY()*entity.getSpeed()/server.TPS))
+						.build();
+				
+				difference = VectorMath.add(entity.getPosition(), difference);
+				
+				entity = entity.toBuilder()
+						.setPosition(difference)
+						.build();
+				
+				boolean revertPosition = false;
+				
+				// Collision and damage check
+				for (Entity closeEntity : entities) {
+					if (EntityCollision.checkCollision(closeEntity, entity)) {
+						if (parameters.canDamage(closeEntity))
+							combatManager.attemptToDamage(entity, closeEntity);
+						
+						if (closeEntity.getCanCollide())
+							revertPosition = true;
+					}
+				}
+				
+				if (revertPosition)
+					entity = entity.toBuilder()
+						.setPosition(oldPosition)
+						.build();
+				
+				
+				entityManager.updateEntity(entity);
+				double distanceSqaured = VectorMath.distanceSquared(difference, goal);
+				
+				// complete path
+				if (distanceSqaured <= minimumDistanceSquared && parameters.closeOnPathEnd()) completed = true;
+				
+				// loose target
+				if (distanceSqaured > Math.pow(parameters.getRange(),2)) {
+					setGoal(0);
+					setGoal(null);
 				}
 			}
-			
-			if (revertPosition)
-				entity = entity.toBuilder()
-					.setPosition(oldPosition)
-					.build();
-			
-			
-			entityManager.updateEntity(entity);
-			double distanceSqaured = VectorMath.distanceSquared(difference, goal);
-			
-			// complete path
-			if (distanceSqaured <= minimumDistanceSquared && parameters.closeOnPathEnd()) completed = true;
-			
-			// loose target
-			if (distanceSqaured > Math.pow(parameters.getRange(),2)) setGoal(0);
-			
 		}
 		else {
 			completed = true;

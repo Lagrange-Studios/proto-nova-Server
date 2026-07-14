@@ -21,10 +21,15 @@ import diagnostics.ResourceDiagnostics;
 public class EntityFinder {
 	private HashMap<Integer, Entity> entities;
 	private ChunkManager chunkManager;
+	private final int CHUNKS_PER_THREAD = 10;
 	
 	public EntityFinder(HashMap<Integer, Entity> allEntities, ChunkManager chunkManager) {
 		entities = allEntities;
 		this.chunkManager = chunkManager;
+	}
+
+	public ArrayList<Entity> getAllEntitiesInRadis(Entity startingEntity, double radius) {
+		return getAllEntitiesInRadius(startingEntity.getPosition(), startingEntity.getMap(), radius);
 	}
 	
 	public ArrayList<Entity> getAllEntitiesInRadius(Vector start, int mapId, double radius) {
@@ -39,11 +44,13 @@ public class EntityFinder {
 		// split each chunk search into threads for speed
 		ExecutorService executor = Executors.newSingleThreadExecutor(
 				ResourceDiagnostics.threadFactory("Entity-Finder"));
+		ArrayList<Chunk> chunkList = new ArrayList<Chunk>();
 		ArrayList<Future<ArrayList<Entity>>> futureLists = new ArrayList<>();
 		
 		// Reuse coordinate builder to reduce allocations
 		Coordinate.Builder coordBuilder = Coordinate.newBuilder();
 		
+		// find all chunks to search
 		for (int x=-radiusInChunks;x<radiusInChunks;x++) {
 			for (int y=-radiusInChunks;y<radiusInChunks;y++) {
 				
@@ -52,32 +59,20 @@ public class EntityFinder {
 				coordBuilder.setY(y + chunkCoordinate.getY());
 				Coordinate coordinate = coordBuilder.build();
 				
-				if (chunkMap.containsKey(coordinate)) {
-
-					// split each chunk search into threads for speed
-					Callable<ArrayList<Entity>> thread = () -> {
-						ArrayList<Entity> chunkEntitiesFound = new ArrayList<>();
-						List<Integer> chunkEntities = chunkMap.get(coordinate).getEntityIdsList();
-						
-						for (int i=0;i<chunkEntities.size();i++) {
-							Entity selectedEntity = entities.get(chunkEntities.get(i));
-							
-							// Use squared distance to avoid expensive sqrt calculation
-							double distanceSquared = VectorMath.distanceSquared(start, selectedEntity.getPosition());
-							
-							if (distanceSquared <= radiusSquared) {
-								chunkEntitiesFound.add(selectedEntity);
-							}
-						}
-						
-						return chunkEntitiesFound;
-					};
-					Future<ArrayList<Entity>> future = executor.submit(thread);
-					futureLists.add(future);
-				}
+				if (chunkMap.containsKey(coordinate))
+					chunkList.add(chunkMap.get(coordinate));
 			}
 		}
-
+		
+		// search through chunks
+		for (int i=0;i<chunkList.size();i+=CHUNKS_PER_THREAD) {
+			Future<ArrayList<Entity>> future = executor.submit(findEntitiesInChunk(chunkList,i,Math.min(i+CHUNKS_PER_THREAD, chunkList.size()-1),
+					start,radiusSquared));
+			
+			futureLists.add(future);
+		}
+		
+		// collect results
 		ArrayList<Entity> foundEntities = new ArrayList<Entity>();
 		for (Future<ArrayList<Entity>> future : futureLists) {
 			try {
@@ -90,8 +85,30 @@ public class EntityFinder {
 		return foundEntities;
 	}
 	
-	public ArrayList<Entity> getAllEntitiesInRadis(Entity startingEntity, double radius) {
-		return getAllEntitiesInRadius(startingEntity.getPosition(), startingEntity.getMap(), radius);
+	private Callable<ArrayList<Entity>> findEntitiesInChunk(ArrayList<Chunk> list,int indexStart, int indexEnd, Vector start, double radiusSquared  ) {
+		// split each group chunk search into threads for speed
+		Callable<ArrayList<Entity>> thread = () -> {
+			ArrayList<Entity> chunkEntitiesFound = new ArrayList<>();
+			
+			for (int i=indexStart;i<indexEnd;i++) {
+				Chunk chunk = list.get(i);
+				
+				for (int id : chunk.getEntityIdsList()) {
+					Entity selectedEntity = entities.get(id);
+					
+					// Use squared distance to avoid expensive sqrt calculation
+					double distanceSquared = VectorMath.distanceSquared(start, selectedEntity.getPosition());
+					
+					if (distanceSquared <= radiusSquared) {
+						chunkEntitiesFound.add(selectedEntity);
+					}
+				}
+			}
+			
+			return chunkEntitiesFound;
+		};
+		
+		return thread;
 	}
 
 	public void DEBUG_METHOD() {
