@@ -4,6 +4,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import com.sun.management.OperatingSystemMXBean;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -81,6 +82,7 @@ public class Server {
 	private ResourceDiagnostics diagnostics;
 	private volatile boolean serverReady = false;
 	private boolean headless;
+	public ExecutorService executor;
 	
 	private int saveCounter = 0;
 	private long saveInterval = 15 * 60 * 1000; // 15 minutes in milliseconds (real time, not TPS-dependent)
@@ -162,7 +164,7 @@ public class Server {
 		healthManager = new HealthManager(entityManager, console, lootTableManager);
 		combatManager = new CombatManager(entityManager, healthManager);
 		
-		entityFinder = new EntityFinder(entityManager.getAllEntities(),chunkManager);
+		entityFinder = new EntityFinder(entityManager.getAllEntities(),chunkManager,this);
 		soundFinder = new SoundFinder(entityManager.getAllEntities(),soundManager.getAllSounds(),chunkManager);
 		chatFinder = new ChatFinder(entityManager.getAllEntities(), chatManager.getAllChats(), chunkManager);
 		
@@ -241,6 +243,9 @@ public class Server {
 			
 			scheduler = Executors.newScheduledThreadPool(3,
 					ResourceDiagnostics.threadFactory("Server-Scheduler")); // tick, idle check, resource check
+			
+			// public thread executor
+			executor = Executors.newFixedThreadPool(workerThreadLimit);
 			
 			Runnable task = () -> {
 				try {

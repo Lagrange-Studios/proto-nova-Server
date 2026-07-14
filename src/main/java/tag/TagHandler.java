@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import ai.PathfindingHandler;
 import entity.EntityFinder;
@@ -35,6 +37,7 @@ public class TagHandler {
 	private PathfindingHandler pathfindingHandler;
 	private HealthManager healthManager;
 	private static final int entitiesPerThread = 50;
+	private final ArrayList<Future<?>> threads = new ArrayList<>();
 
 	public TagHandler(Server server, EntityManager entityManager, AssetManager assetManager, EntityFinder entityFinder, PlaneManager planeManager, CombatManager combatManager, PathfindingHandler pathfindingHandler, HealthManager healthManager) {
 		this.server = server;
@@ -84,8 +87,6 @@ public class TagHandler {
 	}
 
 	public void tick() {
-		System.out.println("tag tick");
-		ArrayList<Thread> threads = new ArrayList<>();
 		boolean secondTick = server.globalTicks % server.TPS == 0;
 		
 		if (secondTick) {
@@ -94,7 +95,7 @@ public class TagHandler {
 				Integer[] entityIds = tagToEntities.get(tag).toArray(new Integer[0]);
 				
 				for (int i=0; i < entityIds.length; i += entitiesPerThread) {
-					threads.add(secondTickEntities(entityIds,tagClass,i,Math.min(i+entitiesPerThread, entityIds.length-1)));
+					secondTickEntities(entityIds,tagClass,i,Math.min(i+entitiesPerThread, entityIds.length));
 				}
 			}
 		}
@@ -104,23 +105,23 @@ public class TagHandler {
 				Integer[] entityIds = tagToEntities.get(tag).toArray(new Integer[0]);
 				
 				for (int i=0; i < entityIds.length; i += entitiesPerThread) {
-					threads.add(tickEntities(entityIds,tagClass,i,Math.min(i+entitiesPerThread, entityIds.length-1)));
+					tickEntities(entityIds,tagClass,i,Math.min(i+entitiesPerThread, entityIds.length));
 				}
 			}
 		}
 		
 		
-		for (Thread thread : threads) {
+		for (Future<?> thread : threads) {
 			try {
-				thread.join();
-			} catch (InterruptedException e) {
+				thread.get();
+			} catch (InterruptedException | ExecutionException e) {
 				e.printStackTrace();
 			}
 		}
 	}
 	
-	private Thread tickEntities(Integer[] ids, TagClass tagClass, int start, int end) {
-		Thread thread = ResourceDiagnostics.newThread("Tag-Tick-" + tagClass.getTag(), () -> {
+	private void tickEntities(Integer[] ids, TagClass tagClass, int start, int end) {
+		threads.add(server.executor.submit(() -> {
 			for (int index = start;index<end;index++) {
 				//long started = System.nanoTime();
 				
@@ -133,15 +134,11 @@ public class TagHandler {
 					server.getDiagnostics().recordEntityCpu(ids[index], System.nanoTime() - started);
 				}*/
 			}
-		});
-		thread.setName(tagClass.getTag()+" "+start+"-"+end);
-		thread.start();
-		
-		return thread;
+		}));
 	}
 	
-	private Thread secondTickEntities(Integer[] ids, TagClass tagClass, int start, int end) {
-		Thread thread = ResourceDiagnostics.newThread("Tag-Second-Tick-" + tagClass.getTag(), () -> {
+	private void secondTickEntities(Integer[] ids, TagClass tagClass, int start, int end) {
+		threads.add(server.executor.submit(() -> {
 			for (int index = start;index<end;index++) {
 				//long started = System.nanoTime();
 				Entity entity = entityManager.getEntity(ids[index]);
@@ -152,11 +149,7 @@ public class TagHandler {
 				}
 				//server.getDiagnostics().recordEntityCpu(ids[index], System.nanoTime() - started);
 			}
-		});
-		thread.setName(tagClass.getTag()+" "+start+"-"+end);
-		thread.start();
-		
-		return thread;
+		}));
 	}
 	
 	public Entity interact(Entity interactingEntity, Entity tagEntity) {

@@ -17,15 +17,18 @@ import protonova.protobuf.VectorProto.Vector;
 import util.CoordinateConverter;
 import util.VectorMath;
 import diagnostics.ResourceDiagnostics;
+import main.Server;
 
 public class EntityFinder {
 	private HashMap<Integer, Entity> entities;
 	private ChunkManager chunkManager;
 	private final int CHUNKS_PER_THREAD = 10;
+	private Server server;
 	
-	public EntityFinder(HashMap<Integer, Entity> allEntities, ChunkManager chunkManager) {
+	public EntityFinder(HashMap<Integer, Entity> allEntities, ChunkManager chunkManager, Server server) {
 		entities = allEntities;
 		this.chunkManager = chunkManager;
+		this.server = server;
 	}
 
 	public ArrayList<Entity> getAllEntitiesInRadis(Entity startingEntity, double radius) {
@@ -37,13 +40,11 @@ public class EntityFinder {
 		HashMap<Coordinate,Chunk> chunkMap = chunkManager.getPlaneChunks(mapId);
 		Coordinate chunkCoordinate = CoordinateConverter.toChunkCoordinates(start);
 		
-		int radiusInChunks = (int) (Math.round(radius/CoordinateConverter.CHUNK_SIZE) + 1);
+		int radiusInChunks = (int) (Math.ceil(radius/CoordinateConverter.CHUNK_SIZE));
 		
 		double radiusSquared = radius * radius; // Avoid sqrt calculation in loop
 		
 		// split each chunk search into threads for speed
-		ExecutorService executor = Executors.newSingleThreadExecutor(
-				ResourceDiagnostics.threadFactory("Entity-Finder"));
 		ArrayList<Chunk> chunkList = new ArrayList<Chunk>();
 		ArrayList<Future<ArrayList<Entity>>> futureLists = new ArrayList<>();
 		
@@ -59,33 +60,40 @@ public class EntityFinder {
 				coordBuilder.setY(y + chunkCoordinate.getY());
 				Coordinate coordinate = coordBuilder.build();
 				
-				if (chunkMap.containsKey(coordinate))
-					chunkList.add(chunkMap.get(coordinate));
+				Chunk chunk = chunkMap.get(coordinate);
+				if (chunk != null)
+					chunkList.add(chunk);
 			}
 		}
 		
-		// search through chunks
-		for (int i=0;i<chunkList.size();i+=CHUNKS_PER_THREAD) {
-			Future<ArrayList<Entity>> future = executor.submit(findEntitiesInChunk(chunkList,i,Math.min(i+CHUNKS_PER_THREAD, chunkList.size()-1),
-					start,radiusSquared));
+		// if its a low amount of chunks then just do a linear search
+		if (Math.pow(radiusInChunks, 2) < 10) {
+			return findEntitiesInChunk(chunkList, start, radiusSquared);
+		}
+		else {
+			// else we do threaded search
+			// search through chunks
+			for (int i=0;i<chunkList.size();i+=CHUNKS_PER_THREAD) {
+				Future<ArrayList<Entity>> future = server.executor.submit(findEntitiesInChunkThread(chunkList,i,Math.min(i+CHUNKS_PER_THREAD, chunkList.size()),
+						start,radiusSquared));
+				
+				futureLists.add(future);
+			}
 			
-			futureLists.add(future);
-		}
-		
-		// collect results
-		ArrayList<Entity> foundEntities = new ArrayList<Entity>();
-		for (Future<ArrayList<Entity>> future : futureLists) {
-			try {
-				foundEntities.addAll(future.get());
-			} catch (InterruptedException | ExecutionException e) {
-				e.printStackTrace();
+			// collect results
+			ArrayList<Entity> foundEntities = new ArrayList<Entity>();
+			for (Future<ArrayList<Entity>> future : futureLists) {
+				try {
+					foundEntities.addAll(future.get());
+				} catch (InterruptedException | ExecutionException e) {
+					e.printStackTrace();
+				}
 			}
+			return foundEntities;
 		}
-		
-		return foundEntities;
 	}
 	
-	private Callable<ArrayList<Entity>> findEntitiesInChunk(ArrayList<Chunk> list,int indexStart, int indexEnd, Vector start, double radiusSquared  ) {
+	private Callable<ArrayList<Entity>> findEntitiesInChunkThread(ArrayList<Chunk> list,int indexStart, int indexEnd, Vector start, double radiusSquared  ) {
 		// split each group chunk search into threads for speed
 		Callable<ArrayList<Entity>> thread = () -> {
 			ArrayList<Entity> chunkEntitiesFound = new ArrayList<>();
@@ -109,6 +117,27 @@ public class EntityFinder {
 		};
 		
 		return thread;
+	}
+	
+	private ArrayList<Entity> findEntitiesInChunk(ArrayList<Chunk> list, Vector start, double radiusSquared) {
+		// split each group chunk search into threads for speed
+		ArrayList<Entity> entitiesFound = new ArrayList<>();
+		
+		for (Chunk chunk : list) {
+			
+			for (int id : chunk.getEntityIdsList()) {
+				Entity selectedEntity = entities.get(id);
+				
+				// Use squared distance to avoid expensive sqrt calculation
+				double distanceSquared = VectorMath.distanceSquared(start, selectedEntity.getPosition());
+				
+				if (distanceSquared <= radiusSquared) {
+					entitiesFound.add(selectedEntity);
+				}
+			}
+		}
+		
+		return entitiesFound;
 	}
 
 	public void DEBUG_METHOD() {
