@@ -57,7 +57,7 @@ public class ServerSaver {
 			Files.write(newPath, entityData.build().toByteArray());
 		}
 		catch(Exception e) {
-			e.printStackTrace();
+			System.err.println("ERROR: Failed to save entity data.");
 			return e.getMessage();
 		}
 		
@@ -72,7 +72,7 @@ public class ServerSaver {
 			}
 		}
 		catch(Exception e) {
-			e.printStackTrace();
+			System.err.println("ERROR: Failed to save plane data.");
 			return e.getMessage();
 		}
 		
@@ -87,7 +87,7 @@ public class ServerSaver {
 			}
 		}
 		catch(Exception e) {
-			e.printStackTrace();
+			System.err.println("ERROR: Failed to save celestial object data.");
 			return e.getMessage();
 		}
 		
@@ -96,7 +96,7 @@ public class ServerSaver {
 			JSONObject gamemode = gamemodeManager.getGamemode();
 			Files.write(Path.of("worldroot/gamemode.json"), gamemode.toString().getBytes());
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.err.println("ERROR: Failed to save gamemode data.");
 		}
 		
 		
@@ -110,18 +110,14 @@ public class ServerSaver {
 				Path playerDataDir = Paths.get("worldRoot/playerData");
 				if (!Files.exists(playerDataDir)) {
 					Files.createDirectories(playerDataDir);
-					System.out.println("[ServerSaver] Created playerData directory");
 				}
 				
 				Path path = playerDataDir.resolve(player.getUsername() + ".data");
 				byte[] data = player.data.toByteArray();
 				
 				Files.write(path, data);
-				System.out.println("[ServerSaver] ✓ Saved player: " + player.getUsername() + 
-					" (entityId: " + player.data.getEntityId() + ") to " + path);
 			} catch (IOException e) {
-				System.err.println("[ServerSaver] ✗ ERROR saving player " + player.getUsername());
-				e.printStackTrace();
+				System.err.println("ERROR: Failed to save player " + player.getUsername() + ".");
 			}
 		}
 	}

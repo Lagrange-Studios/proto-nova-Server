@@ -5,19 +5,16 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.net.InetAddress;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
+import javax.net.ssl.SSLSocket;
 
 import main.Console;
 import protonova.protobuf.ClientToServerPacketProto.ClientToServerPacket;
 import protonova.protobuf.PlayerDataProto.PlayerData;
-import protonova.protobuf.UserDataProto;
 import protonova.protobuf.UserDataProto.UserData;
 import enums.Player.State;
 import diagnostics.ResourceDiagnostics;
@@ -25,7 +22,8 @@ import diagnostics.ResourceDiagnostics;
 public class Player {
 	public Socket socket;
 	private String username;
-	private String clientToken; // Token provided by client for authentication
+	private static final int MAX_PACKET_BYTES = 8 * 1024 * 1024;
+	private static final int MAX_USERNAME_LENGTH = 32;
 	
 	private DataInputStream input;
 	private DataOutputStream output;
@@ -36,7 +34,6 @@ public class Player {
 	public boolean shouldReconcile = false;
 	private ServerSocketHandler serverSocketHandler;
 	private boolean addedToGame = false;
-	private boolean tokenValidated = false; // Track if client has been authenticated
 	
 	public final HashSet<Integer> entitiesSent = new HashSet<>();
 	public final Set<Integer> updateList =  ConcurrentHashMap.newKeySet();
@@ -53,7 +50,7 @@ public class Player {
 			output = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
 			state = State.AWAITING_CLIENT_PACKET;
 		} catch (IOException e) {
-			e.printStackTrace();
+			console.print("ERROR: Failed to initialize a client connection.");
 		}
 	}
 	
@@ -67,9 +64,9 @@ public class Player {
 		}
 
 	    try {
-	    	input.close();
-			output.close();
-			socket.close();
+	    	if (input != null) input.close();
+			if (output != null) output.close();
+			if (socket != null) socket.close();
 	    } catch (IOException ignored) {}
 	}
 	
@@ -82,42 +79,33 @@ public class Player {
 	}
 	
 	public void listen() {
-	    Thread thread = ResourceDiagnostics.newThread("Player-Listener-" + socket.getInetAddress().getHostAddress(), () -> {
 	        try {
+	            socket.setSoTimeout(10_000);
+	            if (socket instanceof SSLSocket) {
+	                ((SSLSocket) socket).startHandshake();
+	            }
 	            while (state != State.DISCONNECTED) {
 	            	
 	                int length = input.readInt();
-	                
+	                if (length <= 0 || length > MAX_PACKET_BYTES) {
+	                    console.print("WARNING: Rejected an invalid packet size from a client.");
+	                    disconnect();
+	                    return;
+	                }
 	                byte[] data = new byte[length];
 	                input.readFully(data);
 	                ResourceDiagnostics.recordNetworkRead(length + Integer.BYTES);
 
-	                if (!tokenValidated) {
-	                    String receivedToken = new String(data, "UTF-8");
-	                    
-	                    if (serverSocketHandler != null && serverSocketHandler.getTokenManager() != null) {
-	                        if (serverSocketHandler.getTokenManager().validateClientToken(receivedToken)) {
-	                            tokenValidated = true;
-	                            clientToken = receivedToken;
-	                            
-	                            String newToken = serverSocketHandler.getTokenManager().generateRenewedToken(receivedToken);
-	                            if (newToken != null) {
-	                                console.print("✓ Client authenticated successfully - Token renewed for 30 days");
-	                            } else {
-	                                console.print("✓ Client authenticated successfully");
-	                            }
-	                        } else {
-	                            console.print("✗ Invalid token received, disconnecting client");
-	                            disconnect();
-	                            return;
-	                        }
-	                    } else {
-	                        tokenValidated = true;
-	                    }
-	                }
-	                else if (username == null) {
+	                if (username == null) {
 	                    UserData user = UserData.parseFrom(data);
-	                    username = user.getUsername();
+	                    String requestedUsername = user.getUsername().trim();
+	                    if (!isValidUsername(requestedUsername)) {
+	                        console.print("WARNING: Rejected a client with an invalid username.");
+	                        disconnect();
+	                        return;
+	                    }
+	                    username = requestedUsername;
+	                    socket.setSoTimeout(0);
 	                    state = State.AWAITING_SERVER_PACKET;
 	                    
 	                    if (serverSocketHandler != null) {
@@ -131,13 +119,13 @@ public class Player {
 	                }
 	            }
 	        } catch (IOException e) {
-	            if (addedToGame && username != null) {
-	                console.print("Connection closed or error: " + e.getMessage());
-	            }
 	            disconnect();
 	        }
-	    });
-	    thread.start();
+	}
+
+	private static boolean isValidUsername(String value) {
+		return !value.isEmpty() && value.length() <= MAX_USERNAME_LENGTH
+				&& value.matches("[A-Za-z0-9 _.-]+");
 	}
 
 	public String getUsername() {
@@ -154,7 +142,7 @@ public class Player {
 		} catch (SocketException e) {
 	        disconnect(); // client is gone
 	    } catch (IOException e) {
-	        e.printStackTrace();
+	        disconnect();
 	    }
 	}
 }

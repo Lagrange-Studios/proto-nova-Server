@@ -13,9 +13,7 @@ import diagnostics.ResourceDiagnostics;
 import org.json.JSONObject;
 
 /**
- * HTTP server for server status queries and token requests.
- * Simple HTTP endpoint for health checks and token generation.
- * Note: The game socket connection (port 7675) remains encrypted with HTTPS/TLS.
+ * Optional HTTP server for non-sensitive status queries.
  */
 public class ServerStatusHandler {
     
@@ -24,14 +22,12 @@ public class ServerStatusHandler {
     private Console console;
     private long startTime;
     private HttpServer httpServer;
-    private TokenManager tokenManager;
     private ExecutorService httpExecutor;
     
-    public ServerStatusHandler(ServerSocketHandler socketHandler, Console console, TokenManager tokenManager) {
+    public ServerStatusHandler(ServerSocketHandler socketHandler, Console console) {
         this.socketHandler = socketHandler;
         this.console = console;
         this.startTime = System.currentTimeMillis();
-        this.tokenManager = tokenManager;
         this.HTTP_PORT = main.ServerConfig.getInstance().getStatusHttpPort();
     }
     
@@ -44,17 +40,12 @@ public class ServerStatusHandler {
             httpServer = HttpServer.create(new InetSocketAddress("0.0.0.0", HTTP_PORT), 0);
             
             httpServer.createContext("/status", new StatusHandler());
-            httpServer.createContext("/token", new TokenHandler());
             httpExecutor = Executors.newCachedThreadPool(ResourceDiagnostics.threadFactory("Status-HTTP-Worker"));
             httpServer.setExecutor(httpExecutor);
             httpServer.start();
-            console.print("✓ Server HTTP status endpoint listening on port: " + HTTP_PORT + " (unencrypted)");
-            console.print("✓ Game socket connection (port 7675) remains HTTPS/TLS encrypted");
         } catch (IOException e) {
-            console.print("ERROR: Failed to start HTTP status server on port " + HTTP_PORT + ": " + e.getMessage());
             throw e;
         } catch (Exception e) {
-            console.print("ERROR: Failed to initialize HTTP server: " + e.getMessage());
             throw new IOException(e);
         }
     }
@@ -124,54 +115,13 @@ public class ServerStatusHandler {
                 
             } catch (Exception e) {
                 try {
-                    sendError(exchange, 500, "Internal Server Error: " + e.getMessage());
+                    sendError(exchange, 500, "Internal Server Error");
                 } catch (IOException ignored) {}
-                e.printStackTrace();
+                console.print("WARNING: A status request failed.");
             }
         }
     }
 
-    /**
-     * Handler for /token endpoint - GET to request a new client token
-     */
-    private class TokenHandler implements HttpHandler {
-        @Override
-        public void handle(HttpExchange exchange) throws IOException {
-            try {
-                // Only allow GET requests for now
-                if (!exchange.getRequestMethod().equals("GET")) {
-                    sendError(exchange, 405, "Method Not Allowed");
-                    return;
-                }
-                
-                // Generate a new client token
-                String clientToken = tokenManager.generateClientToken();
-                
-                // Create JSON response
-                JSONObject response = new JSONObject();
-                response.put("token", clientToken);
-                response.put("expiresIn", 604800); // Token expires in 7 days (604800 seconds)
-                
-                String jsonResponse = response.toString();
-                
-                // Send response
-                exchange.getResponseHeaders().set("Content-Type", "application/json");
-                exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
-                exchange.sendResponseHeaders(200, jsonResponse.getBytes().length);
-                
-                try (OutputStream os = exchange.getResponseBody()) {
-                    os.write(jsonResponse.getBytes());
-                }
-                
-            } catch (Exception e) {
-                try {
-                    sendError(exchange, 500, "Internal Server Error: " + e.getMessage());
-                } catch (IOException ignored) {}
-                e.printStackTrace();
-            }
-        }
-    }
-    
     /**
      * Send error response
      */

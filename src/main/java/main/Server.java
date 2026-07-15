@@ -49,7 +49,6 @@ public class Server {
 	public Console console;
 	private ServerSocketHandler serverSocket;
 	private ServerStatusHandler statusHandler;
-	private socket.CertificateServer certificateServer;
 	public int TPS;
 	public final int CLIENT_TPS = 60;
 	public Long globalTicks = 0L;
@@ -71,7 +70,6 @@ public class Server {
 	private AssetManager assetManager;
 	private ActionHandler actionHandler;
 	private CraftingManager craftingManager;
-	private socket.TokenManager tokenManager;
 	private TagHandler tagHandler;
 	private GamemodeManager gamemodeManager;
 	private CombatManager combatManager;
@@ -131,6 +129,7 @@ public class Server {
 		try {
 			ServerConfig.initialize(console);
 			this.TPS = ServerConfig.getInstance().getTicksPerSecond();
+			console.print("Configuration loaded.");
 		} catch (Exception e) {
 			console.print("✗ Failed to load configuration: " + e.getMessage());
 			e.printStackTrace();
@@ -140,8 +139,11 @@ public class Server {
 		ArrayList<Player> playerList = new ArrayList<>();
 		
 		validater = new Validater(console);
-		
+		console.print("Checking world files...");
 		boolean shouldGenerate = validater.validateWorldFiles();
+		console.print(shouldGenerate
+				? "No existing world was found. Preparing a new world..."
+				: "Existing world found. Loading world data...");
 		
 		serverLoader = new ServerLoader(console);
 		planeManager = new PlaneManager(serverLoader.loadWorld());
@@ -151,6 +153,7 @@ public class Server {
 		chatManager = new ChatManager(serverLoader,console, this);
 		
 		assetManager = new AssetManager(entityManager,serverLoader.loadEntityAssets(), console, serverLoader.loadTypes());
+		console.print("World data and game assets loaded.");
 		
 		chunkManager = new ChunkManager(entityManager.getAllEntities(), planeManager);
 		chunkManager.groupAllEntites();
@@ -177,13 +180,14 @@ public class Server {
 		entityManager.setClasses(chunkManager,tagHandler, entityFinder, pathfindingHandler);
 		
 		if (shouldGenerate) {
+			console.print("Generating a new world. This may take a few minutes...");
 			generator.generatePlanet("continents");
 			
 			// remove any entities at 0,0
 			for (Entity entity : entityFinder.getAllEntitiesInRadius(Vector.newBuilder().setX(0).setY(0).build(),1,2)) {
 				entityManager.removeEntity(entity);
 			}
-			
+			console.print("World generation complete.");
 		}
 		
 		gamemodeManager = new GamemodeManager(this, console, entityManager, entityFinder, planeManager, assetManager, serverLoader.getGamemode(), tagHandler);
@@ -192,27 +196,19 @@ public class Server {
 		
 		packetReciver = new PacketReciver(entityManager, soundManager, chatManager, console, actionHandler, entityFinder, healthManager, this);
 		
-		// Create TokenManager and pass it to ServerSocketHandler
-		tokenManager = new socket.TokenManager(console);
-		serverSocket = new ServerSocketHandler(console, packetReciver, tokenManager, playerList, serverSaver);
-		statusHandler = new ServerStatusHandler(serverSocket, console, tokenManager);
+		console.print("Starting the secure game listener...");
+		serverSocket = new ServerSocketHandler(console, packetReciver, playerList, serverSaver);
 		
 		tagHandler.loadAllTagEntities();
 		
-		try {
-			statusHandler.start();
-		} catch (Exception e) {
-			console.print("Failed to start status HTTP server: " + e.getMessage());
+		if (ServerConfig.getInstance().isStatusHttpEnabled()) {
+			statusHandler = new ServerStatusHandler(serverSocket, console);
+			try {
+				statusHandler.start();
+			} catch (Exception e) {
+				console.print("Failed to start status HTTP server: " + e.getMessage());
+			}
 		}
-		
-		// Start certificate server for remote client connections
-		try {
-			certificateServer = new socket.CertificateServer(console);
-			certificateServer.start();
-		} catch (Exception e) {
-			console.print("Failed to start certificate server: " + e.getMessage());
-		}
-		
 		
 		startThread();
 		serverReady = true;
@@ -440,9 +436,6 @@ public class Server {
 			console.shutdown();
 			if (statusHandler != null) {
 				statusHandler.stop();
-			}
-			if (certificateServer != null) {
-				certificateServer.stop();
 			}
 			if (serverSocket != null) {
 				serverSocket.close();

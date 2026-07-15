@@ -14,15 +14,15 @@ public class ServerConfig {
     private Console console;
     
     private int gameSocketPort;
+    private boolean statusHttpEnabled;
     private int statusHttpPort;
-    private int certificateServerPort;
     private int ticksPerSecond;
     private int threadPoolSize;
     private int processorLimit;
     private int ramLimit;
     private int workerThreadLimit;
     private String keystorePath;
-    private String keystorePassword;
+    private String legacyKeystorePassword;
     private int keystoreValidityDays;
     
     private ServerConfig(Console console) throws IOException {
@@ -52,17 +52,13 @@ public class ServerConfig {
         File configFile = new File(CONFIG_FILE);
         
         if (!configFile.exists()) {
-            console.print("✓ Creating default proto-nova.properties file...");
             createDefaultConfig();
-        } else {
-            console.print("✓ Loading proto-nova.properties...");
         }
         
         try (FileInputStream fis = new FileInputStream(CONFIG_FILE)) {
             properties.load(fis);
         }
         
-        console.print("✓ Configuration loaded successfully");
     }
     
     // Create default configuration file with all settings
@@ -70,15 +66,14 @@ public class ServerConfig {
         Properties defaultProps = new Properties();
         
         defaultProps.setProperty("game.socket.port", "7675");
+        defaultProps.setProperty("http.status.enabled", "false");
         defaultProps.setProperty("http.status.port", "7674");
-        defaultProps.setProperty("http.certificate.port", "7673");
         defaultProps.setProperty("server.tps", "60");
         defaultProps.setProperty("server.thread.pool.size", "50");
         defaultProps.setProperty("server.processor.limit", "0");
         defaultProps.setProperty("server.ram.limit", "0");
         defaultProps.setProperty("server.worker.thread.limit", "32");
         defaultProps.setProperty("keystore.path", "keystore.jks");
-        defaultProps.setProperty("keystore.password", "proto-nova-secure");
         defaultProps.setProperty("keystore.validity.days", "365");
         
         try (FileOutputStream fos = new FileOutputStream(CONFIG_FILE)) {
@@ -91,27 +86,17 @@ public class ServerConfig {
     // Parse all properties from file into memory variables
     private void parseProperties() {
         this.gameSocketPort = getIntProperty("game.socket.port", 7675);
+        this.statusHttpEnabled = getBooleanProperty("http.status.enabled", false);
         this.statusHttpPort = getIntProperty("http.status.port", 7674);
-        this.certificateServerPort = getIntProperty("http.certificate.port", 7673);
         this.ticksPerSecond = getIntProperty("server.tps", 60);
         this.threadPoolSize = getIntProperty("server.thread.pool.size", 50);
         this.processorLimit = getIntProperty("server.processor.limit", 0);
         this.ramLimit = getIntProperty("server.ram.limit", 0);
         this.workerThreadLimit = getIntProperty("server.worker.thread.limit", 32);
         this.keystorePath = getStringProperty("keystore.path", "keystore.jks");
-        this.keystorePassword = getStringProperty("keystore.password", "proto-nova-secure");
+        this.legacyKeystorePassword = getStringProperty("keystore.password", "");
         this.keystoreValidityDays = getIntProperty("keystore.validity.days", 365);
         
-        console.print("═══ Server Configuration ═══");
-        console.print("Game Socket Port: " + gameSocketPort);
-        console.print("Status HTTP Port: " + statusHttpPort);
-        console.print("Certificate Server Port: " + certificateServerPort);
-        console.print("Ticks Per Second: " + ticksPerSecond);
-        console.print("Thread Pool Size: " + threadPoolSize);
-        console.print("Processor Limit: " + (processorLimit == 0 ? "Unlimited" : processorLimit + " cores"));
-        console.print("RAM Limit: " + (ramLimit == 0 ? "Unlimited" : ramLimit + " MB"));
-        console.print("Worker Thread Limit: " + workerThreadLimit);
-        console.print("════════════════════════════");
     }
     
     // Get integer property with default fallback
@@ -129,15 +114,23 @@ public class ServerConfig {
     private String getStringProperty(String key, String defaultValue) {
         return properties.getProperty(key, defaultValue);
     }
+
+    private boolean getBooleanProperty(String key, boolean defaultValue) {
+        String value = properties.getProperty(key);
+        if (value == null) return defaultValue;
+        if (value.equalsIgnoreCase("true")) return true;
+        if (value.equalsIgnoreCase("false")) return false;
+        console.print("⚠ Invalid boolean for property '" + key + "', using default: " + defaultValue);
+        return defaultValue;
+    }
     
     // Port for SSL/TLS encrypted game connections
     public int getGameSocketPort() { return gameSocketPort; }
     
-    // Port for HTTP status and token endpoints
+    // Optional plain HTTP server-status endpoint. Do not expose it unless needed.
+    public boolean isStatusHttpEnabled() { return statusHttpEnabled; }
+
     public int getStatusHttpPort() { return statusHttpPort; }
-    
-    // Port for certificate download endpoint
-    public int getCertificateServerPort() { return certificateServerPort; }
     
     // Game simulation speed in ticks per second
     public int getTicksPerSecond() { return ticksPerSecond; }
@@ -157,8 +150,8 @@ public class ServerConfig {
     // Path to SSL keystore file
     public String getKeystorePath() { return keystorePath; }
     
-    // Password for SSL keystore
-    public String getKeystorePassword() { return keystorePassword; }
+    // Migration support for old installations. New installs use an environment variable or password sidecar.
+    public String getLegacyKeystorePassword() { return legacyKeystorePassword; }
     
     // Validity period for self-signed certificates in days
     public int getKeystoreValidityDays() { return keystoreValidityDays; }

@@ -147,7 +147,6 @@ public class ActionHandler {
 				playerEntity = craftingManager.attemptCraftingRecipe(playerEntity, interactingEntity);
 				break;
 			case(InteractionType.Hit_VALUE):
-				System.out.println("Player combat attempted");
 				combatManager.attemptToDamage(playerEntity, interactingEntity);
 				playerEntity = entityManager.getEntity(player);
 				break;
