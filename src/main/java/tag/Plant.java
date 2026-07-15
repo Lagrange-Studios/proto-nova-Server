@@ -13,8 +13,8 @@ public class Plant extends TagClass {
 		return "plant";
 	}
 	
-	private static final int defaultRandomSproutChance = 200;
-	private static final int defaultTotalPlantGrowTime = 300;
+	private static final int defaultRandomSproutChance = 10000;
+	private static final int defaultTotalPlantGrowTime = 6000;
 	
 	/*
 	 * This class makes the entity act as a plant. it will spread and grow

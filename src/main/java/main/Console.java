@@ -296,6 +296,8 @@ public class Console {
     		for (String key : gamemode.keySet()) {
     			print(key+": "+gamemode.get(key));
     		}
+    		
+    		print("time seconds: "+gamemode.getInt("time")/server.TPS);
     	} else {
     		print("Unknown command. Type 'help' for options.");
     		print("");

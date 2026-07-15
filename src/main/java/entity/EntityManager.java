@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import ai.PathfindingHandler;
 import collision.EntityCollision;
@@ -33,7 +35,7 @@ public class EntityManager {
 	private TagHandler tagHandler;
 	private ArrayList<Player> playerList;
 	private EntityFinder entityFinder;
-	private final HashSet<Integer> velocityEntities = new HashSet<>();
+	private final Set<Integer> velocityEntities = ConcurrentHashMap.newKeySet();
 	private Server server;
 	private PathfindingHandler pathfindingHandler;
 
@@ -294,7 +296,7 @@ public class EntityManager {
 	 * @return stop reading this
 	 */
 	public void tick() {
-		for (int id : velocityEntities.toArray(new Integer[0])) {
+		for (int id : velocityEntities) {
 			if (entities.containsKey(id)) {
 				Entity entity = entities.get(id);
 				long started = System.nanoTime();

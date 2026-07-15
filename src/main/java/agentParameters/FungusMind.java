@@ -3,11 +3,11 @@ package agentParameters;
 import ai.AgentParameter;
 import protonova.protobuf.EntityProto.Entity;
 
-public class Enemy implements AgentParameter {
+public class FungusMind implements AgentParameter {
 
 	@Override
 	public String getName() {
-		return "enemy";
+		return "fungusMind";
 	}
 	
 	@Override
@@ -17,12 +17,12 @@ public class Enemy implements AgentParameter {
 
 	@Override
 	public boolean canFindNewTarget() {
-		return true;
+		return false;
 	}
 
 	@Override
 	public boolean canLooseTarget() {
-		return true;
+		return false;
 	}
 	
 	@Override

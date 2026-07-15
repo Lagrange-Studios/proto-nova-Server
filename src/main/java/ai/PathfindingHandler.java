@@ -34,10 +34,12 @@ public class PathfindingHandler {
 	}
 	
 	public void tick() {
+		boolean second = server.globalTicks % server.TPS == 0;
+		
 		for (int id : agents.keySet()) {
 			Agent agent = agents.get(id);
 			
-			agent.tick();
+			agent.tick(second);
 			
 			if (agent.isCompleted()) agents.remove(id);
 		}

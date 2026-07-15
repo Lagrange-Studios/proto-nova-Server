@@ -27,7 +27,7 @@ public class Agent {
 	
 	private Vector goalPosition = null;
 	private int entityGoal = 0;
-
+	private double minimumSearch = 0;
 
 	
 	public Agent(int entityId, EntityManager entityManager, EntityFinder entityFinder, Server server, CombatManager combatManager, AgentParameter parameters) {
@@ -37,66 +37,73 @@ public class Agent {
 		this.server = server;
 		this.parameters = parameters;
 		this.combatManager = combatManager;
+		
+		Entity entity = entityManager.getEntity(entityId);
+		minimumSearch = entity.getSize().getX() + entity.getSize().getY();
 	}
 	
 	/**
 	 * Updates the agent which computates a linear path and moves the entity
 	 * @param supplier a class that implements the {@link ai.AgentSupplier} interface
 	 */
-	public void tick() {
+	public void tick(boolean canFindGoal) {
 		Entity entity = entityManager.getEntity(entityId);
 		
 		// checking to see if our entity still exits and is alive
 		if (entity != null && (!parameters.mustBeAlive() || parameters.mustBeAlive() && entity.getAlive())) {
-			ArrayList<Entity> entities = entityFinder.getAllEntitiesInRadis(entity, parameters.getRange());
+			ArrayList<Entity> entities = canFindGoal?entityFinder.getAllEntitiesInRadis(entity, parameters.getRange()):entityFinder.getAllEntitiesInRadis(entity, minimumSearch);
 			
 			Vector oldPosition = entity.getPosition();
 			
-			Vector goal = getGoal(entities);
-			
-			// math for direction and speed
-			Vector difference = VectorMath.minus(goal, entity.getPosition());
-			difference = VectorMath.unitVector(difference);
-			
-			difference = Vector.newBuilder()
-					.setX((float) (difference.getX()*entity.getSpeed()/server.TPS))
-					.setY((float) (difference.getY()*entity.getSpeed()/server.TPS))
-					.build();
-			
-			difference = VectorMath.add(entity.getPosition(), difference);
-			
-			entity = entity.toBuilder()
-					.setPosition(difference)
-					.build();
-			
-			boolean revertPosition = false;
-			
-			// Collision and damage check
-			for (Entity closeEntity : entities) {
-				if (EntityCollision.checkCollision(closeEntity, entity)) {
-					if (parameters.canDamage(closeEntity))
-						combatManager.attemptToDamage(entity, closeEntity);
-					
-					if (closeEntity.getCanCollide())
-						revertPosition = true;
+			Vector goal = getGoal(entities, canFindGoal);
+			if (goal != null) {
+
+				// math for direction and speed
+				Vector difference = VectorMath.minus(goal, entity.getPosition());
+				difference = VectorMath.unitVector(difference);
+				
+				difference = Vector.newBuilder()
+						.setX((float) (difference.getX()*entity.getSpeed()/server.TPS))
+						.setY((float) (difference.getY()*entity.getSpeed()/server.TPS))
+						.build();
+				
+				difference = VectorMath.add(entity.getPosition(), difference);
+				
+				entity = entity.toBuilder()
+						.setPosition(difference)
+						.build();
+				
+				boolean revertPosition = false;
+				
+				// Collision and damage check
+				for (Entity closeEntity : entities) {
+					if (EntityCollision.checkCollision(closeEntity, entity)) {
+						if (parameters.canDamage(closeEntity))
+							combatManager.attemptToDamage(entity, closeEntity);
+						
+						if (closeEntity.getCanCollide())
+							revertPosition = true;
+					}
+				}
+				
+				if (revertPosition)
+					entity = entity.toBuilder()
+						.setPosition(oldPosition)
+						.build();
+				
+				
+				entityManager.updateEntity(entity);
+				double distanceSqaured = VectorMath.distanceSquared(difference, goal);
+				
+				// complete path
+				if (distanceSqaured <= minimumDistanceSquared && parameters.closeOnPathEnd()) completed = true;
+				
+				// loose target
+				if (distanceSqaured > Math.pow(parameters.getRange(),2)) {
+					setGoal(0);
+					setGoal(null);
 				}
 			}
-			
-			if (revertPosition)
-				entity = entity.toBuilder()
-					.setPosition(oldPosition)
-					.build();
-			
-			
-			entityManager.updateEntity(entity);
-			double distanceSqaured = VectorMath.distanceSquared(difference, goal);
-			
-			// complete path
-			if (distanceSqaured <= minimumDistanceSquared && parameters.closeOnPathEnd()) completed = true;
-			
-			// loose target
-			if (distanceSqaured > Math.pow(parameters.getRange(),2)) setGoal(0);
-			
 		}
 		else {
 			completed = true;
@@ -142,9 +149,8 @@ public class Agent {
 		return completed;
 	}
 	
-	private Vector getGoal(ArrayList<Entity> closeEntities) {
-		if (parameters.canFindNewTarget() && goalPosition == null && entityGoal == 0) {
-			// This work is intentionally synchronous; Thread.run() did not create a real worker thread.
+	private Vector getGoal(ArrayList<Entity> closeEntities, boolean canFindGoal) {
+		if (canFindGoal && parameters.canFindNewTarget() && goalPosition == null && entityGoal == 0) {
 			findGoal(closeEntities);
 		}
 		
