@@ -6,8 +6,11 @@ import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import main.Console;
 import diagnostics.ResourceDiagnostics;
 import org.json.JSONObject;
@@ -36,13 +39,19 @@ public class ServerStatusHandler {
      */
     public void start() throws IOException {
         try {
-            // Create simple HTTP server (no SSL needed for status endpoints)
-            httpServer = HttpServer.create(new InetSocketAddress("0.0.0.0", HTTP_PORT), 0);
+            String bindAddress = main.ServerConfig.getInstance().getStatusHttpBindAddress();
+            httpServer = HttpServer.create(new InetSocketAddress(bindAddress, HTTP_PORT), 16);
             
             httpServer.createContext("/status", new StatusHandler());
-            httpExecutor = Executors.newCachedThreadPool(ResourceDiagnostics.threadFactory("Status-HTTP-Worker"));
+            int workerThreads = main.ServerConfig.getInstance().getStatusHttpWorkerThreads();
+            int queueSize = main.ServerConfig.getInstance().getStatusHttpQueueSize();
+            httpExecutor = new ThreadPoolExecutor(workerThreads, workerThreads, 0L, TimeUnit.MILLISECONDS,
+                    new ArrayBlockingQueue<>(queueSize),
+                    ResourceDiagnostics.threadFactory("Status-HTTP-Worker"),
+                    new ThreadPoolExecutor.CallerRunsPolicy());
             httpServer.setExecutor(httpExecutor);
             httpServer.start();
+            console.print("Status listener active on http://" + bindAddress + ":" + HTTP_PORT + "/status");
         } catch (IOException e) {
             throw e;
         } catch (Exception e) {
@@ -102,15 +111,15 @@ public class ServerStatusHandler {
                 response.put("uptime", uptimeString);
                 response.put("uptimeSeconds", uptimeSeconds);
                 
-                String jsonResponse = response.toString();
+                byte[] jsonResponse = response.toString().getBytes(StandardCharsets.UTF_8);
                 
                 // Send response
-                exchange.getResponseHeaders().set("Content-Type", "application/json");
-                exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
-                exchange.sendResponseHeaders(200, jsonResponse.getBytes().length);
+                exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
+                exchange.getResponseHeaders().set("Connection", "close");
+                exchange.sendResponseHeaders(200, jsonResponse.length);
                 
                 try (OutputStream os = exchange.getResponseBody()) {
-                    os.write(jsonResponse.getBytes());
+                    os.write(jsonResponse);
                 }
                 
             } catch (Exception e) {
@@ -118,6 +127,8 @@ public class ServerStatusHandler {
                     sendError(exchange, 500, "Internal Server Error");
                 } catch (IOException ignored) {}
                 console.print("WARNING: A status request failed.");
+            } finally {
+                exchange.close();
             }
         }
     }
@@ -128,13 +139,14 @@ public class ServerStatusHandler {
     private void sendError(HttpExchange exchange, int code, String message) throws IOException {
         JSONObject error = new JSONObject();
         error.put("error", message);
-        String response = error.toString();
+        byte[] response = error.toString().getBytes(StandardCharsets.UTF_8);
         
-        exchange.getResponseHeaders().set("Content-Type", "application/json");
-        exchange.sendResponseHeaders(code, response.getBytes().length);
+        exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
+        exchange.getResponseHeaders().set("Connection", "close");
+        exchange.sendResponseHeaders(code, response.length);
         
         try (OutputStream os = exchange.getResponseBody()) {
-            os.write(response.getBytes());
+            os.write(response);
         }
     }
 }
