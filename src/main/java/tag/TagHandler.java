@@ -118,6 +118,8 @@ public class TagHandler {
 				e.printStackTrace();
 			}
 		}
+		
+		threads.clear();
 	}
 	
 	private void tickEntities(Integer[] ids, TagClass tagClass, int start, int end) {
