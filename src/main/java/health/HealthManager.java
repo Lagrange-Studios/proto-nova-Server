@@ -31,7 +31,6 @@ public class HealthManager {
 		Player player = entityManager.getPlayerEntityFromEntity(entity);
 		if (checkCrit(entity) && player != null) {
 			newEntity = entityManager.makeNewEntity("human", entity.getMap());
-			System.out.println("new id: "+newEntity.getId());
 			entityManager.setPlayerEntity(player, newEntity);
 			entityManager.dropEntityItems(entity);
 			entityManager.removeEntity(entity);

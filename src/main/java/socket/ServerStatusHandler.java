@@ -6,16 +6,17 @@ import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import main.Console;
 import diagnostics.ResourceDiagnostics;
 import org.json.JSONObject;
 
 /**
- * HTTP server for server status queries and token requests.
- * Simple HTTP endpoint for health checks and token generation.
- * Note: The game socket connection (port 7675) remains encrypted with HTTPS/TLS.
+ * Optional HTTP server for non-sensitive status queries.
  */
 public class ServerStatusHandler {
     
@@ -24,14 +25,12 @@ public class ServerStatusHandler {
     private Console console;
     private long startTime;
     private HttpServer httpServer;
-    private TokenManager tokenManager;
     private ExecutorService httpExecutor;
     
-    public ServerStatusHandler(ServerSocketHandler socketHandler, Console console, TokenManager tokenManager) {
+    public ServerStatusHandler(ServerSocketHandler socketHandler, Console console) {
         this.socketHandler = socketHandler;
         this.console = console;
         this.startTime = System.currentTimeMillis();
-        this.tokenManager = tokenManager;
         this.HTTP_PORT = main.ServerConfig.getInstance().getStatusHttpPort();
     }
     
@@ -40,21 +39,22 @@ public class ServerStatusHandler {
      */
     public void start() throws IOException {
         try {
-            // Create simple HTTP server (no SSL needed for status endpoints)
-            httpServer = HttpServer.create(new InetSocketAddress("0.0.0.0", HTTP_PORT), 0);
+            String bindAddress = main.ServerConfig.getInstance().getStatusHttpBindAddress();
+            httpServer = HttpServer.create(new InetSocketAddress(bindAddress, HTTP_PORT), 16);
             
             httpServer.createContext("/status", new StatusHandler());
-            httpServer.createContext("/token", new TokenHandler());
-            httpExecutor = Executors.newCachedThreadPool(ResourceDiagnostics.threadFactory("Status-HTTP-Worker"));
+            int workerThreads = main.ServerConfig.getInstance().getStatusHttpWorkerThreads();
+            int queueSize = main.ServerConfig.getInstance().getStatusHttpQueueSize();
+            httpExecutor = new ThreadPoolExecutor(workerThreads, workerThreads, 0L, TimeUnit.MILLISECONDS,
+                    new ArrayBlockingQueue<>(queueSize),
+                    ResourceDiagnostics.threadFactory("Status-HTTP-Worker"),
+                    new ThreadPoolExecutor.CallerRunsPolicy());
             httpServer.setExecutor(httpExecutor);
             httpServer.start();
-            console.print("✓ Server HTTP status endpoint listening on port: " + HTTP_PORT + " (unencrypted)");
-            console.print("✓ Game socket connection (port 7675) remains HTTPS/TLS encrypted");
+            console.print("Status listener active on http://" + bindAddress + ":" + HTTP_PORT + "/status");
         } catch (IOException e) {
-            console.print("ERROR: Failed to start HTTP status server on port " + HTTP_PORT + ": " + e.getMessage());
             throw e;
         } catch (Exception e) {
-            console.print("ERROR: Failed to initialize HTTP server: " + e.getMessage());
             throw new IOException(e);
         }
     }
@@ -111,80 +111,42 @@ public class ServerStatusHandler {
                 response.put("uptime", uptimeString);
                 response.put("uptimeSeconds", uptimeSeconds);
                 
-                String jsonResponse = response.toString();
+                byte[] jsonResponse = response.toString().getBytes(StandardCharsets.UTF_8);
                 
                 // Send response
-                exchange.getResponseHeaders().set("Content-Type", "application/json");
-                exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
-                exchange.sendResponseHeaders(200, jsonResponse.getBytes().length);
+                exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
+                exchange.getResponseHeaders().set("Connection", "close");
+                exchange.sendResponseHeaders(200, jsonResponse.length);
                 
                 try (OutputStream os = exchange.getResponseBody()) {
-                    os.write(jsonResponse.getBytes());
+                    os.write(jsonResponse);
                 }
                 
             } catch (Exception e) {
                 try {
-                    sendError(exchange, 500, "Internal Server Error: " + e.getMessage());
+                    sendError(exchange, 500, "Internal Server Error");
                 } catch (IOException ignored) {}
-                e.printStackTrace();
+                console.print("WARNING: A status request failed.");
+            } finally {
+                exchange.close();
             }
         }
     }
 
-    /**
-     * Handler for /token endpoint - GET to request a new client token
-     */
-    private class TokenHandler implements HttpHandler {
-        @Override
-        public void handle(HttpExchange exchange) throws IOException {
-            try {
-                // Only allow GET requests for now
-                if (!exchange.getRequestMethod().equals("GET")) {
-                    sendError(exchange, 405, "Method Not Allowed");
-                    return;
-                }
-                
-                // Generate a new client token
-                String clientToken = tokenManager.generateClientToken();
-                
-                // Create JSON response
-                JSONObject response = new JSONObject();
-                response.put("token", clientToken);
-                response.put("expiresIn", 604800); // Token expires in 7 days (604800 seconds)
-                
-                String jsonResponse = response.toString();
-                
-                // Send response
-                exchange.getResponseHeaders().set("Content-Type", "application/json");
-                exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
-                exchange.sendResponseHeaders(200, jsonResponse.getBytes().length);
-                
-                try (OutputStream os = exchange.getResponseBody()) {
-                    os.write(jsonResponse.getBytes());
-                }
-                
-            } catch (Exception e) {
-                try {
-                    sendError(exchange, 500, "Internal Server Error: " + e.getMessage());
-                } catch (IOException ignored) {}
-                e.printStackTrace();
-            }
-        }
-    }
-    
     /**
      * Send error response
      */
     private void sendError(HttpExchange exchange, int code, String message) throws IOException {
         JSONObject error = new JSONObject();
         error.put("error", message);
-        String response = error.toString();
+        byte[] response = error.toString().getBytes(StandardCharsets.UTF_8);
         
-        exchange.getResponseHeaders().set("Content-Type", "application/json");
-        exchange.sendResponseHeaders(code, response.getBytes().length);
+        exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
+        exchange.getResponseHeaders().set("Connection", "close");
+        exchange.sendResponseHeaders(code, response.length);
         
         try (OutputStream os = exchange.getResponseBody()) {
-            os.write(response.getBytes());
+            os.write(response);
         }
     }
 }

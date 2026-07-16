@@ -53,7 +53,6 @@ public class Fungi extends CataclysmClass {
 		}
 		
 		checkStateSwitch();
-		if (!state.equals(gamemode.get("cataclysmState"))) System.out.println("[Fungi]"+gamemode.get("cataclysmState"));
 	}
 	
 	public String getWinner() {
@@ -64,8 +63,6 @@ public class Fungi extends CataclysmClass {
 			int tileCount = planeManager.getTileCount(1);
 			
 			double currentRatio = (double) fungusCount/tileCount;
-			System.out.println("[Fungi] fungi percentage: ");
-			System.out.printf("%.10f%n",currentRatio);
 			
 			if (currentRatio >= FUNGUS_WIN_PERCENTAGE) return getName();
 			else if (currentRatio <= FUNGUS_LOOSE_PERCENTAGE) return "players";
@@ -92,8 +89,6 @@ public class Fungi extends CataclysmClass {
 				.setPosition(vector)
 				.putInventorySlots("parentSpore", newSpore.getId())
 				.build();
-		
-		System.out.println("[Fungi] "+CoordinateConverter.convert(vector));
 		
 		entityManager.updateEntity(newSpore);
 		return true;

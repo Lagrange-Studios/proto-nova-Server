@@ -78,30 +78,20 @@ public class PacketMaker {
 						player.data = serverLoader.getPlayerData(player.getUsername());
 						boolean isNewPlayer = player.data.getEntityId() == 0;
 						
-						System.out.println("[PacketMaker] Player: " + player.getUsername() + 
-							" | isNewPlayer: " + isNewPlayer + 
-							" | savedEntityId: " + player.data.getEntityId());
-						
 						// If player data was loaded and has a valid entity ID, check if entity still exists
 						if (!isNewPlayer && entityManager.getEntity(player.data.getEntityId()) == null) {
 							// Entity doesn't exist but player data exists - recreate the entity
 							// This handles the case where entities were cleared but player data persists
-							System.out.println("[PacketMaker] Recreating lost entity for " + player.getUsername());
 							Entity newEntity = entityManager.makeNewEntity("human");
 							player.data = player.data.toBuilder()
 								.setEntityId(newEntity.getId())
 								.build();
 						} else if (isNewPlayer) {
 							// This is a new player, create their first character
-							System.out.println("[PacketMaker] Creating new character for " + player.getUsername());
 							Entity newEntity = entityManager.makeNewEntity("human");
 							player.data = player.data.toBuilder()
 								.setEntityId(newEntity.getId())
 								.build();
-						} else {
-							// Player is reconnecting with existing entity
-							System.out.println("[PacketMaker] Restoring existing entity #" + player.data.getEntityId() + 
-								" for returning player " + player.getUsername());
 						}
 						// If player data exists and entity exists, just reuse it (player is reconnecting)
 						

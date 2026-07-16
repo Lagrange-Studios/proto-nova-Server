@@ -113,9 +113,7 @@ public class Console {
     }
 
     protected void printWelcomeMessage() {
-        print("Welcome to Proto Nova Server Console 0.0.1");
-        print("Type 'help' for a list of commands, 'exit' to quit.");
-        print("");
+        print("Proto Nova Server starting...");
     }
 
     protected void processInput(String input) {

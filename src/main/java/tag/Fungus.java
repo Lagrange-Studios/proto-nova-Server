@@ -160,7 +160,6 @@ public class Fungus extends TagClass {
 					
 					tagHandler.updateEntity(newMonster);
 					
-					System.out.println("new monster spawned at: ");
 					DebugPrinter.print(entity.getPosition());
 				}
 				entity = entity.toBuilder()

@@ -43,7 +43,6 @@ public class Cataclysm extends GamemodeClass {
 			String[] keyArray = nameToStaticCataclysm.keySet().toArray(new String[0]);
 			String randomKey = keyArray[Random.randomInt(0, keyArray.length-1)];
 
-			System.out.println("[Cataclysm] random key: "+randomKey);
 			gamemode.put("cataclysm", randomKey);
 		}
 		
