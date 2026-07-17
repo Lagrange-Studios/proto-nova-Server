@@ -73,9 +73,9 @@ public class ServerConfig {
         defaultProps.setProperty("game.socket.port", "7675");
         defaultProps.setProperty("game.socket.idle.timeout.seconds", "300");
         defaultProps.setProperty("game.socket.outbound.queue.size", "8");
-        defaultProps.setProperty("http.status.enabled", "false");
+        defaultProps.setProperty("http.status.enabled", "true");
         defaultProps.setProperty("http.status.port", "7674");
-        defaultProps.setProperty("http.status.bind.address", "127.0.0.1");
+        defaultProps.setProperty("http.status.bind.address", "0.0.0.0");
         defaultProps.setProperty("http.status.worker.threads", "2");
         defaultProps.setProperty("http.status.queue.size", "32");
         defaultProps.setProperty("server.tps", "60");
@@ -98,9 +98,9 @@ public class ServerConfig {
         this.gameSocketPort = getPortProperty("game.socket.port", 7675);
         this.gameSocketIdleTimeoutSeconds = getBoundedPositiveIntProperty("game.socket.idle.timeout.seconds", 300, 86_400);
         this.gameSocketOutboundQueueSize = getBoundedPositiveIntProperty("game.socket.outbound.queue.size", 8, 1_024);
-        this.statusHttpEnabled = getBooleanProperty("http.status.enabled", false);
+        this.statusHttpEnabled = getBooleanProperty("http.status.enabled", true);
         this.statusHttpPort = getPortProperty("http.status.port", 7674);
-        this.statusHttpBindAddress = getStringProperty("http.status.bind.address", "127.0.0.1").trim();
+        this.statusHttpBindAddress = getStringProperty("http.status.bind.address", "0.0.0.0").trim();
         this.statusHttpWorkerThreads = getBoundedPositiveIntProperty("http.status.worker.threads", 2, 64);
         this.statusHttpQueueSize = getBoundedPositiveIntProperty("http.status.queue.size", 32, 10_000);
         this.ticksPerSecond = getIntProperty("server.tps", 60);
@@ -175,7 +175,7 @@ public class ServerConfig {
     public int getStatusHttpPort() { return statusHttpPort; }
 
     public String getStatusHttpBindAddress() {
-        return statusHttpBindAddress.isEmpty() ? "127.0.0.1" : statusHttpBindAddress;
+        return statusHttpBindAddress.isEmpty() ? "0.0.0.0" : statusHttpBindAddress;
     }
 
     public int getStatusHttpWorkerThreads() { return statusHttpWorkerThreads; }
