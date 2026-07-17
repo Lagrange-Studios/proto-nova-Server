@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.json.JSONObject;
 
+import chat.ChatManager;
 import entity.EntityManager;
 import file.ServerSaver;
 import gamemode.GamemodeManager;
@@ -32,6 +33,7 @@ public class Console {
 	private PlaneManager planeManager;
 	protected space.CelestialObjectManager celestialObjectManager;
 	private GamemodeManager gamemodeManager;
+	private ChatManager chatManager;
 
     public Console(Server server) {
     	this(server, true);
@@ -135,6 +137,7 @@ public class Console {
     		print(" - generate planet [generation type (optional)]: Generates a new planet optionally passing in a generation type");
     		print(" - state: shows all the players states");
     		print(" - gamemode: shows current gamemode and time");
+    		print(" - message all players [message]: Messages all players the supplied message");
     		print("");
     	} else if (input.equalsIgnoreCase("time")) {
     		print("Current time: " + LocalTime.now());
@@ -298,6 +301,17 @@ public class Console {
     		}
     		
     		print("time seconds: "+gamemode.getInt("time")/server.TPS);
+    	} else if (input.startsWith("message all players ")) {
+    		try {
+    			String message = input.substring(20);
+    		
+    			chatManager.messageAllPlayers(message);
+    		}
+    		catch(Exception argumentError) {
+    			print(argumentError.getMessage());
+    			return;
+    		}
+    		
     	} else {
     		print("Unknown command. Type 'help' for options.");
     		print("");
@@ -324,13 +338,14 @@ public class Console {
 		countedTicks++;		
 	}
 	
-	public void setCommandClasses(ServerSaver serverSaver, Generator generator, EntityManager entityManager, PlaneManager planeManager, CelestialObjectManager celestialObjectManager, GamemodeManager gamemodeManager) {
+	public void setCommandClasses(ServerSaver serverSaver, Generator generator, EntityManager entityManager, PlaneManager planeManager, CelestialObjectManager celestialObjectManager, GamemodeManager gamemodeManager, ChatManager chatManager) {
 		this.serverSaver = serverSaver;
 		this.generator = generator;
 		this.entityManager = entityManager;
 		this.planeManager = planeManager;
 		this.celestialObjectManager = celestialObjectManager;
 		this.gamemodeManager = gamemodeManager;
+		this.chatManager = chatManager;
 	}
 	
 	private void setGameTime(String timeType) {

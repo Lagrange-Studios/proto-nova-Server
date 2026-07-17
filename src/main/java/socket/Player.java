@@ -8,6 +8,7 @@ import java.io.BufferedOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -48,6 +49,7 @@ public class Player {
 	public final HashSet<Integer> entitiesSent = new HashSet<>();
 	public final Set<Integer> updateList =  ConcurrentHashMap.newKeySet();
 	public final Set<Integer> deleteList = ConcurrentHashMap.newKeySet();
+	public final ArrayList<String> messageList = new ArrayList<>();
 	
 	public Player(Socket socket, Console console, PacketReciver packetReciver, ServerSocketHandler serverSocketHandler) throws IOException {
 		this.socket = socket;

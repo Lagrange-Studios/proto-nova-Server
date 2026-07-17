@@ -11,7 +11,8 @@ import main.Console;
 import main.Server;
 import protonova.protobuf.AudioProto.Audio;
 import protonova.protobuf.ChatProto.ChatMessage;
-import protonova.protobuf.EntityProto.Entity;;
+import protonova.protobuf.EntityProto.Entity;
+import socket.Player;;
 
 public class ChatManager {
 	
@@ -24,10 +25,12 @@ public class ChatManager {
 	private Server server;
 	private long chatID = 0;
 	private final long CHAT_LIFETIME_MS = 100000; // 100 seconds in milliseconds
+	private ArrayList<Player> playerList;
 	
-	public ChatManager(ServerLoader serverLoader,Console console, Server server) {
+	public ChatManager(ServerLoader serverLoader,Console console, Server server, ArrayList<Player> playerList) {
 		this.serverLoader = serverLoader;
 		this.server = server;
+		this.playerList = playerList;
 		chatQueue = new ArrayList<ChatMessage>();
 		chats = new ArrayList<ChatMessage>();
 		chatCreationTime = new HashMap<>();
@@ -49,6 +52,26 @@ public class ChatManager {
 		
 		// Clean up old chat messages to prevent memory leak
 		cleanupOldChats();
+	}
+	
+	public void messagePlayer(String name, String message) {
+		for (Player player : playerList) {
+			if (player.getUsername().equals(name)) {
+				player.messageList.add(message);
+				console.print("Sent message to: "+name);
+				return;
+			}
+		}
+		
+		console.print("Could'nt find player: "+name);
+	}
+	
+	public void messageAllPlayers(String message) {
+		for (Player player : playerList) {
+			player.messageList.add(message);
+		}
+		
+		console.print("Messaged all players: "+message);
 	}
 	
 	private ChatMessage makeNewChat(ChatMessage message) {

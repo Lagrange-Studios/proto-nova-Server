@@ -214,6 +214,11 @@ public class PacketMaker {
 		
 		packet.setCurrentCelestialObject(celestialObjectManager.getCelestialObjectFromPlane(currentPlane));
 		
+		ArrayList<String> messages = new ArrayList<>(player.messageList);
+		
+		// add any server messages for this player
+		packet.addAllServerMessages(messages);
+		
 		packet.setReconcile(player.shouldReconcile);
 		
 		player.send(packet.build().toByteArray());
@@ -221,14 +226,22 @@ public class PacketMaker {
 		// Add all entities sent this packet to entitiesSent so updates are tracked next tick
 		entitiesSent.addAll(entitiesSentThisPacket);
 		
+		
 		// clear only the entities updates and deletes we cloned since its linked values
 		deleteLikeValues(deleteList,player.deleteList);
 		deleteLikeValues(updateList,player.updateList);
+		deleteLikeValues(messages,player.messageList);
 	}
 	
-	private void deleteLikeValues(HashSet<Integer> set1, Set<Integer> set2) {
-		for (Integer value : set1) {
-			if (set2.contains(value)) set2.remove(value);
+	private void deleteLikeValues(HashSet<?> set1, Set<?> set2) {
+		for (Object value : set1) {
+			set2.remove(value);
+		}
+	}
+	
+	private void deleteLikeValues(ArrayList<?> list1, ArrayList<?> list2) {
+		for (Object value : list1) {
+			list2.remove(value);
 		}
 	}
 }
