@@ -94,7 +94,7 @@ public class ServerSaver {
 		// saving gamemode
 		try {
 			JSONObject gamemode = gamemodeManager.getGamemode();
-			Files.write(Path.of("worldroot/gamemode.json"), gamemode.toString().getBytes());
+			Files.write(Path.of("worldRoot/gamemode.json"), gamemode.toString().getBytes());
 		} catch (IOException e) {
 			System.err.println("ERROR: Failed to save gamemode data.");
 		}

@@ -210,7 +210,7 @@ public class ServerLoader {
 	}
 	
 	public JSONObject getGamemode() {
-		File gamemodeFile = new File("worldroot/gamemode.json");
+		File gamemodeFile = new File("worldRoot/gamemode.json");
 		
 		try {
 			return new JSONObject(Files.readString(Path.of(gamemodeFile.getPath())));
