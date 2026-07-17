@@ -85,7 +85,8 @@ public class CombatManager {
 		
 		HitDamage hitDamage = attacker.getHitDamage();
 		if (attacker.getInventorySlotsMap().containsKey(attacker.getSelectedSlot())) {
-			hitDamage = attacker.getHitDamage();
+			int itemID = attacker.getInventorySlotsMap().get(attacker.getSelectedSlot());
+			hitDamage = entityManager.getEntity(itemID).getHitDamage();
 		}
 		
 		defender = entityManager.getEntity(defender.getId());
