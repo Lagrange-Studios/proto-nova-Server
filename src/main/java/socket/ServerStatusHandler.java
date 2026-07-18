@@ -1,6 +1,8 @@
 package socket;
 
 import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpsConfigurator;
+import com.sun.net.httpserver.HttpsServer;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
@@ -11,12 +13,13 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import javax.net.ssl.SSLContext;
 import main.Console;
 import diagnostics.ResourceDiagnostics;
 import org.json.JSONObject;
 
 /**
- * Optional HTTP server for non-sensitive status queries.
+ * Optional HTTPS server for non-sensitive status queries.
  */
 public class ServerStatusHandler {
     
@@ -35,12 +38,15 @@ public class ServerStatusHandler {
     }
     
     /**
-     * Start the HTTP status server
+     * Start the HTTPS status server
      */
     public void start() throws IOException {
         try {
             String bindAddress = main.ServerConfig.getInstance().getStatusHttpBindAddress();
-            httpServer = HttpServer.create(new InetSocketAddress(bindAddress, HTTP_PORT), 16);
+            SSLContext sslContext = security.ServerTlsContext.create();
+            HttpsServer httpsServer = HttpsServer.create(new InetSocketAddress(bindAddress, HTTP_PORT), 16);
+            httpsServer.setHttpsConfigurator(new HttpsConfigurator(sslContext));
+            httpServer = httpsServer;
             
             httpServer.createContext("/status", new StatusHandler());
             int workerThreads = main.ServerConfig.getInstance().getStatusHttpWorkerThreads();
@@ -51,7 +57,7 @@ public class ServerStatusHandler {
                     new ThreadPoolExecutor.CallerRunsPolicy());
             httpServer.setExecutor(httpExecutor);
             httpServer.start();
-            console.print("Status listener active on http://" + bindAddress + ":" + HTTP_PORT + "/status");
+            console.print("Status listener active on https://" + bindAddress + ":" + HTTP_PORT + "/status");
         } catch (IOException e) {
             throw e;
         } catch (Exception e) {
@@ -60,7 +66,7 @@ public class ServerStatusHandler {
     }
     
     /**
-     * Stop the HTTP status server
+     * Stop the HTTPS status server
      */
     public void stop() {
         if (httpServer != null) {

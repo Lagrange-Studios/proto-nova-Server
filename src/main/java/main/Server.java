@@ -208,7 +208,7 @@ public class Server {
 			try {
 				statusHandler.start();
 			} catch (Exception e) {
-				console.print("Failed to start status HTTP server: " + e.getMessage());
+				console.print("Failed to start status HTTPS server: " + e.getMessage());
 			}
 		}
 		
