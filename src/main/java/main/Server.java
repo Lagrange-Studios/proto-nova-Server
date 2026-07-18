@@ -152,7 +152,7 @@ public class Server {
 		entityManager = new EntityManager(serverLoader,console, playerList, this);
 		diagnostics = new ResourceDiagnostics(entityManager);
 		soundManager = new SoundManager(serverLoader,console, this);
-		chatManager = new ChatManager(serverLoader,console, this);
+		chatManager = new ChatManager(serverLoader,console, this, playerList);
 		
 		assetManager = new AssetManager(entityManager,serverLoader.loadEntityAssets(), console, serverLoader.loadTypes());
 		console.print("World data and game assets loaded.");
@@ -192,7 +192,7 @@ public class Server {
 			console.print("World generation complete.");
 		}
 		
-		gamemodeManager = new GamemodeManager(this, console, entityManager, entityFinder, planeManager, assetManager, serverLoader.getGamemode(), tagHandler);
+		gamemodeManager = new GamemodeManager(this, console, entityManager, entityFinder, planeManager, assetManager, serverLoader.getGamemode(), tagHandler, chatManager);
 		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager, craftingManager, tagHandler, combatManager, healthManager);
 		serverSaver = new ServerSaver(this, entityManager, planeManager, celestialObjectManager, gamemodeManager);
 		
@@ -217,7 +217,7 @@ public class Server {
 		
 		packetMaker = new PacketMaker(serverSocket,serverLoader,serverSaver,entityManager,entityFinder,soundFinder,chatFinder,planeManager,celestialObjectManager,diagnostics);
 		
-		console.setCommandClasses(serverSaver,generator,entityManager,planeManager,celestialObjectManager, gamemodeManager);
+		console.setCommandClasses(serverSaver,generator,entityManager,planeManager,celestialObjectManager, gamemodeManager, chatManager);
 		
 		Runtime.getRuntime().addShutdownHook(ResourceDiagnostics.newThread("Server-Shutdown", () -> {
 			shutdown();

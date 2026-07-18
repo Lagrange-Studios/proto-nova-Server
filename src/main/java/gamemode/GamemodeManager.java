@@ -7,6 +7,7 @@ import java.util.HashMap;
 
 import org.json.JSONObject;
 
+import chat.ChatManager;
 import entity.EntityFinder;
 import entity.EntityManager;
 import file.AssetManager;
@@ -32,9 +33,10 @@ public class GamemodeManager {
 	private AssetManager assetManager;
 	private TagHandler tagHandler;
 	private boolean printedGameOver = false;
+	private ChatManager chatManager;
 
 	public GamemodeManager(Server server, Console console, EntityManager entityManager, EntityFinder entityFinder,
-			PlaneManager planeManager, AssetManager assetManager, JSONObject gamemode, TagHandler tagHandler) {
+			PlaneManager planeManager, AssetManager assetManager, JSONObject gamemode, TagHandler tagHandler, ChatManager chatManager) {
 		this.console = console;
 		this.entityManager = entityManager;
 		this.entityFinder = entityFinder;
@@ -43,6 +45,7 @@ public class GamemodeManager {
 		this.server = server;
 		this.assetManager = assetManager;
 		this.tagHandler = tagHandler;
+		this.chatManager = chatManager;
 		
 		loadAllGamemodes();
 		loadGamemode(gamemode.getString("name"));
@@ -70,6 +73,10 @@ public class GamemodeManager {
 			console.print("Winner: "+gamemode.getString("winner"));
 			console.print("Time: "+hours+"h, "+minutes+"m");
 			console.print("Currently the only way to reset for a new game is to close the server and delete the world root folder");
+			
+			chatManager.messageAllPlayers("[Server]: The game has ended");
+			chatManager.messageAllPlayers("Winner: "+gamemode.getString("winner"));
+			chatManager.messageAllPlayers("Time: "+hours+"h, "+minutes+"m");
 		}
 	}
 	
