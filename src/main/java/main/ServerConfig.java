@@ -169,7 +169,7 @@ public class ServerConfig {
     // Maximum number of unsent server packets retained for one client.
     public int getGameSocketOutboundQueueSize() { return gameSocketOutboundQueueSize; }
     
-    // Optional plain HTTP server-status endpoint. Do not expose it unless needed.
+    // Optional HTTPS server-status endpoint. Do not expose it unless needed.
     public boolean isStatusHttpEnabled() { return statusHttpEnabled; }
 
     public int getStatusHttpPort() { return statusHttpPort; }
