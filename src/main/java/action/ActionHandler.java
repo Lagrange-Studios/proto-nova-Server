@@ -55,7 +55,7 @@ public class ActionHandler {
 					Entity heldItem = entityManager.getEntity(playerEntity.getInventorySlotsMap().get(playerEntity.getSelectedSlot()));
 					
 					// check for same item and stacking
-					if (interactingEntity.getName().equals(heldItem.getName()) && heldItem.getStackable()) {
+					if (interactingEntity.getName().equals(heldItem.getName()) && heldItem.getStackable() && interactingEntity.getId() != heldItem.getId()) {
 						int newAmount = heldItem.getAmount() + interactingEntity.getAmount(); // for held item
 						int leftOver = newAmount - 30; // for interacting entity
 						newAmount = Math.min(newAmount, 30);
