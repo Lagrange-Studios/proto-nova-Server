@@ -58,7 +58,7 @@ public class Fungi extends CataclysmClass {
 	public String getWinner() {
 		String state = gamemode.getString("cataclysmState");
 		
-		if (state.equals("end") || true ) {
+		if (state.equals("end")) {
 			int fungusCount = tagHandler.getTagAmount("fungus");
 			int tileCount = planeManager.getTileCount(1);
 			
