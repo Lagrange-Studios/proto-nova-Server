@@ -29,9 +29,14 @@ dependencies {
     // JSON and data
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'org.json:json:20240303'
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.84'
+    implementation 'org.bouncycastle:bcpkix-jdk18on:1.84'
     
     // Testing
     testImplementation 'junit:junit:4.13.2'
+    
+    // Class Graph
+    implementation 'io.github.classgraph:classgraph:4.8.180'
 }
 
 application {
@@ -41,6 +46,7 @@ application {
 // Create Fat JAR with all dependencies
 jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    exclude 'META-INF/*.SF', 'META-INF/*.RSA', 'META-INF/*.DSA'
     manifest {
         attributes(
             'Implementation-Title': project.name,

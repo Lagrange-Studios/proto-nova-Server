@@ -1,0 +1,17 @@
+{
+  "item1": {
+    "mustBeHeld": true,
+    "name":"stick",
+    "consumed": true
+  },
+  "item2": {
+    "name":"campfire",
+    "consumed": false	,
+	"minimumSlotValue": {
+		"fuelTimer": 1
+	},
+	"tagsRequired": ["campfire"]
+  },
+
+  "result":"lit torch"
+}

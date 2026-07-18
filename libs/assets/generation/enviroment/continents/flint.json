@@ -1,0 +1,6 @@
+{
+	"name": "flint",
+	"tiles": ["stone","grass"],
+	"tileDensity": 50,
+	"grid": false
+}

@@ -1,4 +1,44 @@
+# Build and compiled files
 /bin/
-/.gradle/
 /build/
+*.class
+*.jar
+*.war
+
+# Gradle
+.gradle/
+.gradle
+gradle-app.setting
+!gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDE
+.idea/
+.vscode/
+.classpath
+.project
+.settings/
+*.swp
+*.swo
+*~
+
+# Credentials and keys
+keystore.jks
+keystore.p12
+credentials.json
+*.cer
+proto-nova-cert.cer
+proto-nova-truststore.jks
+proto-nova.properties
+
+# Generated files
+/extracted-include-protos/
+/extracted-protos/
+
+# Runtime/World files
 /worldRoot/
+
+# OS
+.DS_Store
+Thumbs.db
+*.log

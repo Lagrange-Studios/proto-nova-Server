@@ -38,7 +38,7 @@ public class Generator {
 		this.celestialObjectManager = celestialObjectManager;
 		
 		enviromentGenerator = new EnviromentGenerator(assetManager,entityManager,console, entityFinder);
-		planeGenerator = new PlaneGenerator(planeManager.getPlanes(),console);
+		planeGenerator = new PlaneGenerator(planeManager.getPlanes(),console, assetManager, entityManager);
 	}
 	
 	private String getRandomWorldType() {
@@ -50,15 +50,16 @@ public class Generator {
 	}
 	
 	private Plane generatePlane(String worldType, int size) {
-		
+		console.print("Generating " + size + "x" + size + " terrain using '" + worldType + "'...");
 		Plane plane = planeGenerator.generatePlane(size, size, worldType);
 		
 		if (plane != null) {
 			planeManager.updatePlane(plane.getId(), plane);
 			
+			console.print("Populating terrain with the world environment...");
 			enviromentGenerator.generateEnviroment(plane, worldType);
 			
-			console.print("Generated new plane with id: "+plane.getId()+ " Type: "+worldType);
+			console.print("Terrain and environment generated.");
 			
 			return plane;
 		}
@@ -81,7 +82,7 @@ public class Generator {
 			
 			celestialObjectManager.updateCelestialObject(planet);
 
-			console.print("Generated new planet with id: "+planet.getId());
+			console.print("Planet created successfully.");
 		}
 	}
 	

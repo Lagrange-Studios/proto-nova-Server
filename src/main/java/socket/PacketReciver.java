@@ -1,14 +1,12 @@
 package socket;
 
-import java.util.ArrayList;
-
 import action.ActionHandler;
 import chat.ChatManager;
-import collision.EntityCollision;
-import entity.ChunkManager;
 import entity.EntityFinder;
 import entity.EntityManager;
+import health.HealthManager;
 import main.Console;
+import main.Server;
 import protonova.protobuf.ActionProto.Action;
 import protonova.protobuf.ActionProto.ActionType;
 import protonova.protobuf.ClientToServerPacketProto.ClientToServerPacket;
@@ -23,40 +21,53 @@ public class PacketReciver {
 	private EntityManager entityManager;
 	private SoundManager soundManager;
 	private ChatManager chatManager;
-	private final double reconcileDistance = 1; // nessecary distance to reconcile
 	private Console console;
 	private ActionHandler actionHandler;
 	private EntityFinder entityFinder;
+	private HealthManager healthManager;
+	private final double reconcileCoefficient = 5; // this is very tight could cuase rubber banding in the future
+	private Server server;
 	
-	public PacketReciver(EntityManager entityManager, SoundManager soundManager, ChatManager chatManager, Console console, ActionHandler actionHandler, EntityFinder entityFinder) {
+	public PacketReciver(EntityManager entityManager, SoundManager soundManager, ChatManager chatManager, Console console, ActionHandler actionHandler, EntityFinder entityFinder, HealthManager healthManager, Server server) {
 		this.entityManager = entityManager;
 		this.soundManager = soundManager;
 		this.chatManager = chatManager;
 		this.console = console;
 		this.actionHandler = actionHandler;
 		this.entityFinder = entityFinder;
+		this.healthManager = healthManager;
+		this.server = server;
 	}
 	
 	public void recivePacket(Player player, ClientToServerPacket packet) {
 		
 		Entity clientEntity = packet.getUpdatedEntity();
 		Entity serverEntity = entityManager.getEntity(player);
-		// simulate the entity serverside
 		
-		// update all the client trusted values
 		serverEntity = serverEntity.toBuilder()
 				.setSelectedSlot(clientEntity.getSelectedSlot())
 				.build();
 		
-		// simulate keyPresses
-		for (Action action : packet.getActionsList()) {
-			
-			if (action.getActionType() != ActionType.Interact) {
-				serverEntity = EntitySimulation.simulateMovement(serverEntity, action);
+		if (!healthManager.checkCrit(serverEntity)) {
+			for (Action action : packet.getActionsList()) {
+				
+				if (action.getActionType() != ActionType.Interact) {
+					serverEntity = EntitySimulation.simulateMovement(serverEntity, action);
+				}
+				else {
+					// so we need the velocity changes persisted first to prevent the re-fetch from getting stale data.
+					entityManager.updateEntity(serverEntity);
+					serverEntity = actionHandler.executeAction(player, action, serverEntity);
+				}
 			}
-			else {
-				serverEntity = actionHandler.executeAction(player, action);
-			}
+		} else {
+			Vector clearedVelocity = serverEntity.getVelocity().toBuilder()
+					.setX(0)
+					.setY(0)
+					.build();
+			serverEntity = serverEntity.toBuilder()
+					.setVelocity(clearedVelocity)
+					.build();
 		}
 		
 		for (int i=0;i<packet.getSoundsCount();i++) {
@@ -67,65 +78,16 @@ public class PacketReciver {
 			chatManager.addChatToQueue(packet.getChatMessage(i));
 		}
 		
-		// Simulate final velocity
-		entityManager.updateEntity(simulateVelocity(serverEntity));
+		serverEntity = entityManager.simulateVelocity(serverEntity, server.CLIENT_TPS);
+		entityManager.updateEntity(serverEntity);
 		
-		if (VectorMath.distance(clientEntity.getPosition(), serverEntity.getPosition()) >= reconcileDistance) {
+		healthManager.entityCheck(serverEntity);
+		
+		
+		if (VectorMath.distance(clientEntity.getPosition(), serverEntity.getPosition()) >= (serverEntity.getSpeed()/server.CLIENT_TPS)*reconcileCoefficient) {
 			player.shouldReconcile = true;
-			console.print("WARNING: Player "+player.getUsername()+" is moving too fast!");
+			console.print("WARNING: Player "+player.getUsername()+" rubberbanded");
 			
 		}
-	}
-	
-	private Entity simulateVelocity(Entity entity) {
-		
-		ArrayList<Entity> closeEntities = entityFinder.getAllEntitiesInRadis(entity, 10);
-		
-		Entity entityXAxis = checkCollision(EntitySimulation.simulateVelocityXAxis(entity),entity,closeEntities);
-		
-		// check if we actualy did anything
-		if (entityXAxis.getPosition().equals(entity.getPosition())) {
-			// if not then just remove the veloicty
-			
-			Vector newVeloicty = entity.getVelocity().toBuilder()
-					.setX(0)
-					.build();
-			
-			entity = entity.toBuilder()
-					.setVelocity(newVeloicty)
-					.build();
-		}
-		else entity = entityXAxis;
-		
-		Entity entityYAxis = checkCollision(EntitySimulation.simulateVelocityYAxis(entity),entity,closeEntities);
-		
-		// check if we actualy did anything
-		if (entityYAxis.getPosition().equals(entity.getPosition())) {
-			// if not then just remove the veloicty
-			
-			Vector newVeloicty = entity.getVelocity().toBuilder()
-					.setY(0)
-					.build();
-			
-			entity = entity.toBuilder()
-					.setVelocity(newVeloicty)
-					.build();
-		}
-		else entity = entityYAxis;
-
-		return entity;
-	}
-	
-	private Entity checkCollision(Entity updatedEntity, Entity originalEntity, ArrayList<Entity> closeEntities) {
-		if (originalEntity.getPosition().equals(updatedEntity.getPosition())) return originalEntity;
-		
-		for (Entity entity : closeEntities) {
-			if (entity.getId() != originalEntity.getId()) {
-				//if (EntityCollision.checkCollision(updatedEntity, entity)) System.out.println(true);
-				if (EntityCollision.checkCollision(updatedEntity, entity)) return originalEntity;
-			}
-		}
-		
-		return updatedEntity;
 	}
 }

@@ -11,23 +11,26 @@ import main.Console;
 import main.Server;
 import protonova.protobuf.AudioProto.Audio;
 import protonova.protobuf.ChatProto.ChatMessage;
-import protonova.protobuf.EntityProto.Entity;;
+import protonova.protobuf.EntityProto.Entity;
+import socket.Player;;
 
 public class ChatManager {
 	
 	private ArrayList<ChatMessage> chatQueue;
 	private ArrayList<ChatMessage> chats;
-	private HashMap<Long, Long> chatCreationTime; // chatID -> creation time in ticks
+	private HashMap<Long, Long> chatCreationTime;
 	private ServerLoader serverLoader;
 	private ChunkManager chunkManager;
 	private Console console;
 	private Server server;
 	private long chatID = 0;
-	private final int CHAT_LIFETIME_TICKS = 6000; // ~100 seconds at 60 TPS
+	private final long CHAT_LIFETIME_MS = 100000; // 100 seconds in milliseconds
+	private ArrayList<Player> playerList;
 	
-	public ChatManager(ServerLoader serverLoader,Console console, Server server) {
+	public ChatManager(ServerLoader serverLoader,Console console, Server server, ArrayList<Player> playerList) {
 		this.serverLoader = serverLoader;
 		this.server = server;
+		this.playerList = playerList;
 		chatQueue = new ArrayList<ChatMessage>();
 		chats = new ArrayList<ChatMessage>();
 		chatCreationTime = new HashMap<>();
@@ -51,10 +54,30 @@ public class ChatManager {
 		cleanupOldChats();
 	}
 	
+	public void messagePlayer(String name, String message) {
+		for (Player player : playerList) {
+			if (player.getUsername().equals(name)) {
+				player.messageList.add(message);
+				console.print("Sent message to: "+name);
+				return;
+			}
+		}
+		
+		console.print("Could'nt find player: "+name);
+	}
+	
+	public void messageAllPlayers(String message) {
+		for (Player player : playerList) {
+			player.messageList.add(message);
+		}
+		
+		console.print("Messaged all players: "+message);
+	}
+	
 	private ChatMessage makeNewChat(ChatMessage message) {
 		
 		chats.add(message);
-		chatCreationTime.put(message.getChatID(), server.globalTicks);
+		chatCreationTime.put(message.getChatID(), System.currentTimeMillis());
 		
 		if (chunkManager != null) {
 			chunkManager.addChatMessage(message);
@@ -67,15 +90,13 @@ public class ChatManager {
 		
 	}
 	
-	/**
-	 * Removes chat messages older than CHAT_LIFETIME_TICKS
-	 */
+	// Removes chat messages older than CHAT_LIFETIME_MS
 	private void cleanupOldChats() {
-		long currentTick = server.globalTicks;
+		long currentTime = System.currentTimeMillis();
 		ArrayList<Long> keysToRemove = new ArrayList<>();
 		
 		for (Long chatID : chatCreationTime.keySet()) {
-			if (currentTick - chatCreationTime.get(chatID) > CHAT_LIFETIME_TICKS) {
+			if (currentTime - chatCreationTime.get(chatID) > CHAT_LIFETIME_MS) {
 				keysToRemove.add(chatID);
 			}
 		}

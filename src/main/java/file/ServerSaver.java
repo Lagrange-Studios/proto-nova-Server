@@ -9,7 +9,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.json.JSONObject;
+
 import entity.EntityManager;
+import gamemode.GamemodeManager;
 import main.Server;
 import plane.PlaneManager;
 import protonova.protobuf.CelestialObjectProto.CelestialObject;
@@ -26,12 +29,14 @@ public class ServerSaver {
 	private EntityManager entityManager;
 	private PlaneManager planeManager;
 	private CelestialObjectManager celestialObjectManager;
+	private GamemodeManager gamemodeManager;
 	
-	public ServerSaver(Server server, EntityManager entityManager, PlaneManager planeManager, CelestialObjectManager celestialObjectManager) {
+	public ServerSaver(Server server, EntityManager entityManager, PlaneManager planeManager, CelestialObjectManager celestialObjectManager, GamemodeManager gamemodeManager) {
 		this.server = server;
 		this.entityManager = entityManager;
 		this.planeManager = planeManager;
 		this.celestialObjectManager = celestialObjectManager;
+		this.gamemodeManager = gamemodeManager;
 	}
 	
 	public String save() {
@@ -52,7 +57,7 @@ public class ServerSaver {
 			Files.write(newPath, entityData.build().toByteArray());
 		}
 		catch(Exception e) {
-			e.printStackTrace();
+			System.err.println("ERROR: Failed to save entity data.");
 			return e.getMessage();
 		}
 		
@@ -67,7 +72,7 @@ public class ServerSaver {
 			}
 		}
 		catch(Exception e) {
-			e.printStackTrace();
+			System.err.println("ERROR: Failed to save plane data.");
 			return e.getMessage();
 		}
 		
@@ -82,8 +87,16 @@ public class ServerSaver {
 			}
 		}
 		catch(Exception e) {
-			e.printStackTrace();
+			System.err.println("ERROR: Failed to save celestial object data.");
 			return e.getMessage();
+		}
+		
+		// saving gamemode
+		try {
+			JSONObject gamemode = gamemodeManager.getGamemode();
+			Files.write(Path.of("worldRoot/gamemode.json"), gamemode.toString().getBytes());
+		} catch (IOException e) {
+			System.err.println("ERROR: Failed to save gamemode data.");
 		}
 		
 		
@@ -91,14 +104,20 @@ public class ServerSaver {
 	}
 	
 	public void savePlayer(Player player) {
-		if (player.data != null) {
-			Path path = Paths.get("worldRoot/playerData/"+player.getUsername()+".data");
-			byte[] data = player.data.toByteArray();
-			
+		if (player.data != null && player.getUsername() != null) {
 			try {
+				// Ensure playerData directory exists
+				Path playerDataDir = Paths.get("worldRoot/playerData");
+				if (!Files.exists(playerDataDir)) {
+					Files.createDirectories(playerDataDir);
+				}
+				
+				Path path = playerDataDir.resolve(player.getUsername() + ".data");
+				byte[] data = player.data.toByteArray();
+				
 				Files.write(path, data);
 			} catch (IOException e) {
-				e.printStackTrace();
+				System.err.println("ERROR: Failed to save player " + player.getUsername() + ".");
 			}
 		}
 	}

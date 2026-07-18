@@ -21,8 +21,10 @@ public class ChunkManager {
 
 	private HashMap<Integer, HashMap<Coordinate, Chunk>> chunks;
 	private HashMap<Integer, Entity> entities;
+	private PlaneManager planeManager;
 	
-	public ChunkManager(HashMap<Integer, Entity> allEntities) {
+	public ChunkManager(HashMap<Integer, Entity> allEntities, PlaneManager planeManager) {
+		this.planeManager = planeManager;
 		entities = allEntities;
 		chunks = new HashMap<Integer, HashMap<Coordinate, Chunk>>();
 	}
@@ -30,6 +32,7 @@ public class ChunkManager {
 	public HashMap<Coordinate, Chunk> getPlaneChunks(int mapId) {
 		
 		if (!chunks.containsKey(mapId)) {
+			if (!planeManager.planeExists(mapId) && mapId != 0) System.err.println("Warning: just tried to make chunks for plane id: "+mapId+" which does not exist");
 			chunks.put(mapId, new HashMap<Coordinate, Chunk>());
 		}
 		
@@ -168,9 +171,7 @@ public class ChunkManager {
 				}
 			}
 		}
-		else {
-			System.out.println("Tried to remove entity from chunk that dosent exist");
-		}
+		// Silent fail - chunk doesn't exist (expected in some edge cases)
 	}
 	
 	private void groupEntity(Entity entity) {

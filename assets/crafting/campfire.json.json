@@ -1,0 +1,13 @@
+{
+  "item1": {
+    "mustBeHeld": true,
+    "name":"stick",
+    "consumed": true
+  },
+  "item2": {
+    "name":"stick",
+    "consumed": true
+  },
+
+  "result":"campfire"
+}
