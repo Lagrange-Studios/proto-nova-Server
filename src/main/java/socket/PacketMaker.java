@@ -164,22 +164,14 @@ public class PacketMaker {
 		for (Entity entity : foundEntities) {
 			if (entity != null && !entitiesSent.contains(entity.getId())) {
 				packet.addEntities(entity);
-				diagnostics.recordEntityNetwork(entity.getId(), entity.getSerializedSize());
+				//diagnostics.recordEntityNetwork(entity.getId(), entity.getSerializedSize());
 				entitiesSentThisPacket.add(entity.getId());
 			}
+			
+			if (entity.getName().equals("human"))
+				updateInventory(entity, packet, deleteList, updateList, entitiesSent, entitiesSentThisPacket);
 		}
 		
-		// Add inventory
-		for (int id : playerEntity.getInventorySlotsMap().values()) {
-			Entity inventoryItem = entityManager.getEntity(id);
-			if (inventoryItem != null && (!entitiesSent.contains(inventoryItem.getId())
-				|| updateList.contains(id))) {
-				packet.addEntities(inventoryItem);
-				diagnostics.recordEntityNetwork(inventoryItem.getId(), inventoryItem.getSerializedSize());
-				entitiesSentThisPacket.add(inventoryItem.getId());
-			}
-			else if (deleteList.contains(id)) packet.addRemovedEntities(id);
-		}
 		
 		//check for updates
 		for (int id : entitiesSent.toArray(new Integer[0])) {
@@ -195,7 +187,7 @@ public class PacketMaker {
 			else if (updateList.contains(id)) {
 				Entity updatedEntity = entityManager.getEntity(id);
 				packet.addEntities(updatedEntity);
-				diagnostics.recordEntityNetwork(updatedEntity.getId(), updatedEntity.getSerializedSize());
+				//diagnostics.recordEntityNetwork(updatedEntity.getId(), updatedEntity.getSerializedSize());
 				entitiesSentThisPacket.add(id);
 			}
 		}
@@ -231,6 +223,19 @@ public class PacketMaker {
 		deleteLikeValues(deleteList,player.deleteList);
 		deleteLikeValues(updateList,player.updateList);
 		deleteLikeValues(messages,player.messageList);
+	}
+	
+	private void updateInventory(Entity entity, Builder packet, HashSet<Integer> deleteList, HashSet<Integer> updateList, HashSet<Integer> entitiesSent, HashSet<Integer> entitiesSentThisPacket) {
+		for (int id : entity.getInventorySlotsMap().values()) {
+			Entity inventoryItem = entityManager.getEntity(id);
+			if (inventoryItem != null && (!entitiesSent.contains(inventoryItem.getId())
+				|| updateList.contains(id))) {
+				packet.addEntities(inventoryItem);
+				//diagnostics.recordEntityNetwork(inventoryItem.getId(), inventoryItem.getSerializedSize());
+				entitiesSentThisPacket.add(inventoryItem.getId());
+			}
+			else if (deleteList.contains(id)) packet.addRemovedEntities(id);
+		}
 	}
 	
 	private void deleteLikeValues(HashSet<?> set1, Set<?> set2) {
