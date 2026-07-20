@@ -296,10 +296,12 @@ public class EntityManager {
 	 * @return stop reading this
 	 */
 	public void tick() {
+		diagnostics.ResourceDiagnostics resourceDiagnostics = server.getDiagnostics();
+		boolean measureCpu = resourceDiagnostics != null && resourceDiagnostics.isCapturing();
 		for (int id : velocityEntities) {
 			if (entities.containsKey(id)) {
 				Entity entity = entities.get(id);
-				long started = System.nanoTime();
+				long started = measureCpu ? System.nanoTime() : 0;
 				
 				try {
 					// TODO: change this to check the brain for human player
@@ -308,8 +310,8 @@ public class EntityManager {
 						updateEntity(entity);
 					}
 				} finally {
-					if (server.getDiagnostics() != null) {
-						server.getDiagnostics().recordEntityCpu(id, System.nanoTime() - started);
+					if (measureCpu) {
+						resourceDiagnostics.recordEntityCpu(id, System.nanoTime() - started);
 					}
 				}
 				

@@ -1,7 +1,6 @@
 package main;
 
 import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
 import com.sun.management.OperatingSystemMXBean;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
@@ -88,7 +87,6 @@ public class Server {
 	
 	// Resource limit monitoring
 	private OperatingSystemMXBean osBean;
-	private ThreadMXBean threadBean;
 	private int processorLimit;
 	private long ramLimit;
 	private int workerThreadLimit;
@@ -232,7 +230,6 @@ public class Server {
 			if (osBeamBase instanceof com.sun.management.OperatingSystemMXBean) {
 				osBean = (com.sun.management.OperatingSystemMXBean) osBeamBase;
 			}
-			threadBean = ManagementFactory.getThreadMXBean();
 			processorLimit = ServerConfig.getInstance().getProcessorLimit();
 			ramLimit = (long) ServerConfig.getInstance().getRamLimit() * 1024 * 1024; // Convert MB to bytes
 			workerThreadLimit = ServerConfig.getInstance().getWorkerThreadLimit();
@@ -240,8 +237,9 @@ public class Server {
 			scheduler = Executors.newScheduledThreadPool(3,
 					ResourceDiagnostics.threadFactory("Server-Scheduler")); // tick, idle check, resource check
 			
-			// public thread executor
-			executor = Executors.newFixedThreadPool(workerThreadLimit);
+			// Public worker executor. The configured size already enforces the worker-thread limit.
+			executor = Executors.newFixedThreadPool(workerThreadLimit,
+					ResourceDiagnostics.threadFactory("Server-Worker"));
 			
 			Runnable task = () -> {
 				try {
@@ -401,14 +399,6 @@ public class Server {
 			}
 		}
 		
-		// Check thread count
-		if (workerThreadLimit > 0) {
-			long threadCount = threadBean.getThreadCount();
-			
-			if (threadCount > workerThreadLimit) {
-				console.print("⚠ Thread count exceeds limit: " + threadCount + " (Limit: " + workerThreadLimit + ")");
-			}
-		}
 	}
 	
 	private void saveCheck() {
