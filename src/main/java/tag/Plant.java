@@ -27,6 +27,10 @@ public class Plant extends TagClass {
 	 * 
 	 */
 	
+	public boolean hasSecondTick() {
+		return true;
+	}
+	
 	public void secondTick(TagHandler tagHandler, Entity entity) {
 		
 		// check to see if it has the right tags for growing

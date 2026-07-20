@@ -27,6 +27,7 @@ public class CombatManager {
 	}
 	
 	public boolean attemptToDamage(Entity attacker, Entity defender) {
+		System.out.println(attacker.getHitDamage().getCanAttack());
 		if (!entityManager.entityExist(attacker) || !entityManager.entityExist(defender)) {
 			return false;
 		}

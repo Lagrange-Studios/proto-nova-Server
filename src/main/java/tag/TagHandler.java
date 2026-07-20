@@ -4,8 +4,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentHashMap.KeySetView;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -27,7 +29,8 @@ import protonova.protobuf.EntityProto.Entity;
 public class TagHandler {
 	
 	private EntityManager entityManager;
-	private ConcurrentHashMap<String, Set<Integer>> tagToEntities;
+	private ConcurrentHashMap<Integer,String[]> tickMap;
+	private HashMap<Integer,ConcurrentHashMap<Integer,String[]>> secondTickMap;
 	private ConcurrentHashMap<String, TagClass> tagToClass;
 	private Server server; 
 	private AssetManager assetManager;
@@ -36,8 +39,6 @@ public class TagHandler {
 	private CombatManager combatManager;
 	private PathfindingHandler pathfindingHandler;
 	private HealthManager healthManager;
-	private static final int entitiesPerThread = 50;
-	private final ArrayList<Future<?>> threads = new ArrayList<>();
 
 	public TagHandler(Server server, EntityManager entityManager, AssetManager assetManager, EntityFinder entityFinder, PlaneManager planeManager, CombatManager combatManager, PathfindingHandler pathfindingHandler, HealthManager healthManager) {
 		this.server = server;
@@ -48,68 +49,118 @@ public class TagHandler {
 		this.combatManager = combatManager;
 		this.pathfindingHandler = pathfindingHandler;
 		this.healthManager = healthManager;
-		tagToEntities = new ConcurrentHashMap<>();
 		tagToClass = new ConcurrentHashMap<>();
+
+		tickMap = new ConcurrentHashMap<>();
+		secondTickMap = new HashMap<>();
+		
+		//making intial tick values
+		for (int i=0;i<server.TPS;i++) {
+			secondTickMap.put(i, new ConcurrentHashMap<>());
+		}
+		
 		loadAllTagClasses();
 	}
 	
-	
-	public void addEntity(Entity entity) {
-		if (entity.getTagsCount() > 0) {
-			for (String tag : entity.getTagsList()) {
-				if (!tagToClass.containsKey(tag)) {
-					//String errorMessage = "Error: entity named "+entity.getName()+" has a tag called "+tag+" without a matching class";
-					//System.err.print(errorMessage);
-					//server.console.print(errorMessage);
-					continue;
-				}
-				
-				if (!tagToEntities.containsKey(tag)) tagToEntities.put(tag, ConcurrentHashMap.newKeySet());
-				 tagToEntities.get(tag).add(entity.getId());
-			}
-		}
+	/**
+	 * Updates wether the entity has tags to preform actions for
+	 * should be called anytime the entity is updated from entity manager
+	 * @param entity
+	 */
+	public void updateEntityTag(Entity entity) {
+		removeEntity(entity);
+		addEntity(entity);	
 	}
 	
-	public void updateEntity(Entity oldEntity, Entity newEntity) {
-		if (oldEntity.getTagsCount() > 0) {
-			for (String oldTag : oldEntity.getTagsList()) {
-				if (tagToEntities.containsKey(oldTag) && tagToEntities.get(oldTag).contains(oldEntity.getId())) tagToEntities.get(oldTag).remove(oldEntity.getId());
+	public void addEntity(Entity entity) {
+		// array lists for collecting all tags with tick functions
+		ArrayList<String> tick = new ArrayList<>();
+		ArrayList<String> secondTick = new ArrayList<>();
+		
+		// looping through the entities tags to find the ones with tick functions
+		for (String tag : entity.getTagsList()) {
+			TagClass tagClass = tagToClass.get(tag);
+			
+			if (tagClass != null) {
+				if (tagClass.hasTick()) tick.add(tag);
+				if (tagClass.hasSecondTick()) secondTick.add(tag);
+			}
+			
+		}
+		
+		// add the tick to the general map
+		if (!tick.isEmpty()) tickMap.put(entity.getId(), tick.toArray(new String[0]));
+		
+		// find the smallest second tick map
+		int smallestIndex = 0;
+		int smallestSize = secondTickMap.get(0).size();
+		
+		for (int i=1;i<server.TPS;i++) {
+			int size = secondTickMap.get(i).size();
+			
+			if (size < smallestSize) {
+				smallestIndex = i;
+				smallestSize = size;
 			}
 		}
-		addEntity(newEntity);
+		
+		// add the entity and its tags to the second tick map
+		if (!secondTick.isEmpty()) secondTickMap.get(smallestIndex).put(entity.getId(), secondTick.toArray(new String[0]));
 	}
 	
 	public void removeEntity(Entity entity) {
-		for (Set<Integer> set : tagToEntities.values()) {
-			if (set.contains(entity.getId()))
-				set.remove(entity.getId());
+		// remove from tick map
+		tickMap.remove(entity.getId());
+		
+		// remove from second tick map
+		for (int i=0;i<server.TPS;i++) {
+			if (secondTickMap.get(i).remove(entity.getId()) != null) 
+				break;
 		}
 	}
 
 	public void tick() {
-		boolean secondTick = server.globalTicks % server.TPS == 0;
+		ArrayList<Future<?>> threads = new ArrayList<>();
 		
-		if (secondTick) {
-			for (String tag : tagToEntities.keySet()) {
-				TagClass tagClass = tagToClass.get(tag);
-				Integer[] entityIds = tagToEntities.get(tag).toArray(new Integer[0]);
-				
-				for (int i=0; i < entityIds.length; i += entitiesPerThread) {
-					secondTickEntities(entityIds,tagClass,i,Math.min(i+entitiesPerThread, entityIds.length));
-				}
-			}
-		}
-		else {
-			for (String tag : tagToEntities.keySet()) {
-				TagClass tagClass = tagToClass.get(tag);
-				Integer[] entityIds = tagToEntities.get(tag).toArray(new Integer[0]);
-				
-				for (int i=0; i < entityIds.length; i += entitiesPerThread) {
-					tickEntities(entityIds,tagClass,i,Math.min(i+entitiesPerThread, entityIds.length));
-				}
-			}
+		// get the tick number for determining which group of second ticks to update
+		int tickNumber = (int) (server.globalTicks % server.TPS);
+		
+		// get a total count of entities we are updating this tick to split them into threads
+		int tickEntitiesCount = tickMap.size();
+		// get all open threads
+		int idleThreads = Math.max(1, server.getOpenThreads());
+		
+		// calcualte how many entities we will put in each thread
+		int entitiesPerThread = (int)Math.ceil((double)tickEntitiesCount / idleThreads);
+		entitiesPerThread = Math.max(1, entitiesPerThread);
+		
+		Integer[] tickKeyArray = tickMap.keySet().toArray(new Integer[0]);
+		
+		for (int i=0;i<tickEntitiesCount;i+=entitiesPerThread) {
+			threads.add(tickEntities(tickKeyArray,i,i+entitiesPerThread,tickEntitiesCount));
 		}
 		
+		for (Future<?> thread : threads) {
+			try {
+				thread.get();
+			} catch (InterruptedException | ExecutionException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		threads.clear();
+		
+		// repeat same process for this tick second tick updates
+		int secondTickEntitiesCount = secondTickMap.get(tickNumber).size();
+		
+		int secondEntitiesPerThread = (int)Math.ceil((double)secondTickEntitiesCount / idleThreads);
+		secondEntitiesPerThread = Math.max(1, secondEntitiesPerThread);
+		
+		Integer[] secondTickKeyArray = secondTickMap.get(tickNumber).keySet().toArray(new Integer[0]);
+		
+		for (int i=0;i<secondTickEntitiesCount;i+=secondEntitiesPerThread) {
+			threads.add(secondTickEntities(secondTickKeyArray,i,i+secondEntitiesPerThread,secondTickEntitiesCount,tickNumber));
+		}
 		
 		for (Future<?> thread : threads) {
 			try {
@@ -122,40 +173,33 @@ public class TagHandler {
 		threads.clear();
 	}
 	
-	private void tickEntities(Integer[] ids, TagClass tagClass, int start, int end) {
-		String tag = tagClass.getTag();
-		threads.add(server.executor.submit(() -> {
-			for (int index = start;index<end;index++) {
-				//long started = System.nanoTime();
+	private Future<?> tickEntities(Integer[] ids,int start, int end, int tickEntitiesCount) {
+		return server.threadPool.submit(() -> {
+			for (int keyIndex=start;keyIndex<Math.min(tickEntitiesCount, end);keyIndex++) {
 				
-				Entity entity = entityManager.getEntity(ids[index]);
-				
-				// have to check the tag due to possible modification during threading
-				if (entity != null && entity.getTagsList().contains(tag))
-					tagClass.tick(this,entity);
-				
-				/*if (server.getDiagnostics() != null) {
-					server.getDiagnostics().recordEntityCpu(ids[index], System.nanoTime() - started);
-				}*/
+				int key = ids[keyIndex];
+				for (String tag : tickMap.get(key)) {
+					tagToClass.get(tag).tick(this, entityManager.getEntity(key));
+				}
 			}
-		}));
+		});
 	}
 	
-	private void secondTickEntities(Integer[] ids, TagClass tagClass, int start, int end) {
-		String tag = tagClass.getTag();
-		threads.add(server.executor.submit(() -> {
-			for (int index = start;index<end;index++) {
-				//long started = System.nanoTime();
-				Entity entity = entityManager.getEntity(ids[index]);
-
-				// have to check the tag due to possible modification during threading
-				if (entity != null && entity.getTagsList().contains(tag)) {
-					tagClass.tick(this,entity);
-					tagClass.secondTick(this,entity);
+	private Future<?> secondTickEntities(Integer[] ids,int start, int end, int tickEntitiesCount,int tickIndex) {
+		return server.threadPool.submit(() -> {
+			try {
+				for (int keyIndex=start;keyIndex<Math.min(tickEntitiesCount, end);keyIndex++) {
+					
+					int key = ids[keyIndex];
+					for (String tag : secondTickMap.get(tickIndex).get(key)) {
+						tagToClass.get(tag).secondTick(this, entityManager.getEntity(key));
+					}
 				}
-				//server.getDiagnostics().recordEntityCpu(ids[index], System.nanoTime() - started);
 			}
-		}));
+			catch(Exception e) {
+				e.printStackTrace();
+			}
+		});
 	}
 	
 	public Entity interact(Entity interactingEntity, Entity tagEntity) {
@@ -169,8 +213,8 @@ public class TagHandler {
 	}
 	
 	public int getTagAmount(String tagName) {
-		if (tagToEntities.containsKey(tagName)) return tagToEntities.get(tagName).size();
-		else return 0;
+		// TODO: fix this
+		return 0;
 	}
 	
 	/**

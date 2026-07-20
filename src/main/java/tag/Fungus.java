@@ -47,6 +47,10 @@ public class Fungus extends TagClass {
 	 * name: if name is fortified fungus vein then none of these changes will occur
 	 */
 	
+	public boolean hasTick() {
+		return true;
+	}
+	
 	public void secondTick(TagHandler tagHandler, Entity entity) {
 		// check to see if parent is still alive
 		if (!entity.containsInventorySlots("parentSpore")) return;

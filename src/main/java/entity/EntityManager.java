@@ -68,7 +68,7 @@ public class EntityManager {
 			    .setBleeding(1)
 			    .build();
 		HitDamage hitDamage = HitDamage.newBuilder()
-			    .setBruteDamage(10)
+			    .setBruteDamage(3)
 			    .setAsphyxiationDamage(0)
 			    .setBurnDamage(0)
 			    .setToxinDamage(0)
@@ -179,7 +179,7 @@ public class EntityManager {
 				chunkManager.updateEntityChunck(oldEntity, entity);
 			}
 			
-			tagHandler.updateEntity(oldEntity, entity);
+			tagHandler.updateEntityTag(entity);
 		}
 		else {
 			chunkManager.addEntity(entity);

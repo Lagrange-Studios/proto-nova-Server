@@ -74,7 +74,7 @@ public class EntityFinder {
 			// else we do threaded search
 			// search through chunks
 			for (int i=0;i<chunkList.size();i+=CHUNKS_PER_THREAD) {
-				Future<ArrayList<Entity>> future = server.executor.submit(findEntitiesInChunkThread(chunkList,i,Math.min(i+CHUNKS_PER_THREAD, chunkList.size()),
+				Future<ArrayList<Entity>> future = server.threadPool.submit(findEntitiesInChunkThread(chunkList,i,Math.min(i+CHUNKS_PER_THREAD, chunkList.size()),
 						start,radiusSquared));
 				
 				futureLists.add(future);

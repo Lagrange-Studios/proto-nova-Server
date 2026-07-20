@@ -4,8 +4,10 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import com.sun.management.OperatingSystemMXBean;
 import java.util.ArrayList;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -80,7 +82,7 @@ public class Server {
 	private ResourceDiagnostics diagnostics;
 	private volatile boolean serverReady = false;
 	private boolean headless;
-	public ExecutorService executor;
+	public ThreadPoolExecutor threadPool;
 	
 	private int saveCounter = 0;
 	private long saveInterval = 15 * 60 * 1000; // 15 minutes in milliseconds (real time, not TPS-dependent)
@@ -150,7 +152,7 @@ public class Server {
 		serverLoader = new ServerLoader(console);
 		planeManager = new PlaneManager(serverLoader.loadWorld());
 		entityManager = new EntityManager(serverLoader,console, playerList, this);
-		diagnostics = new ResourceDiagnostics(entityManager);
+		//diagnostics = new ResourceDiagnostics(entityManager);
 		soundManager = new SoundManager(serverLoader,console, this);
 		chatManager = new ChatManager(serverLoader,console, this, playerList);
 		
@@ -241,7 +243,8 @@ public class Server {
 					ResourceDiagnostics.threadFactory("Server-Scheduler")); // tick, idle check, resource check
 			
 			// public thread executor
-			executor = Executors.newFixedThreadPool(workerThreadLimit);
+			threadPool = new ThreadPoolExecutor(workerThreadLimit,workerThreadLimit,10,TimeUnit.SECONDS, new LinkedBlockingQueue<>());
+			threadPool.prestartAllCoreThreads();
 			
 			Runnable task = () -> {
 				try {
@@ -264,7 +267,7 @@ public class Server {
 			};
 			idleCheckTask = scheduler.scheduleAtFixedRate(idleCheck, 5, 5, TimeUnit.SECONDS);
 			
-			// Schedule resource check task to run every 10 seconds
+			/*// Schedule resource check task to run every 10 seconds
 			Runnable resourceCheck = () -> {
 				try {
 					checkResourceLimits();
@@ -272,7 +275,7 @@ public class Server {
 					e.printStackTrace();
 				}
 			};
-			resourceCheckTask = scheduler.scheduleAtFixedRate(resourceCheck, 10, 10, TimeUnit.SECONDS);
+			resourceCheckTask = scheduler.scheduleAtFixedRate(resourceCheck, 10, 10, TimeUnit.SECONDS);*/
 			
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -426,6 +429,18 @@ public class Server {
 	
 	public boolean isServerReady() {
 		return serverReady;
+	}
+	
+	public int getMaximumThreads() {
+		return threadPool.getMaximumPoolSize();
+	}
+	
+	public int getWorkingThreads() {
+		return threadPool.getActiveCount();
+	}
+	
+	public int getOpenThreads() {
+		return threadPool.getMaximumPoolSize()-threadPool.getActiveCount();
 	}
 	
 	public ArrayList<Player> getPlayers() {
