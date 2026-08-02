@@ -1,7 +1,6 @@
 package entity;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -9,15 +8,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import ai.PathfindingHandler;
 import collision.EntityCollision;
+import file.AssetManager;
 import file.ServerLoader;
-import health.Health;
-import health.Health.TraumaState;
+import health.HealthManager;
 import main.Console;
 import main.Server;
-import protonova.protobuf.DamageProto.Damage;
-import protonova.protobuf.DamageProto.DamageMultiplier;
-import protonova.protobuf.DamageProto.HitDamage;
-import protonova.protobuf.EntityProto.Direction;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.PlayerDataProto.PlayerData.Builder;
 import protonova.protobuf.VectorProto.Vector;
@@ -29,90 +24,39 @@ import util.Id;
 
 public class EntityManager {
 
-	private HashMap<Integer, Entity> entities;
+	private ConcurrentHashMap<Integer, Entity> entities;
 	private ChunkManager chunkManager;
 	private Console console;
 	private TagHandler tagHandler;
 	private ArrayList<Player> playerList;
 	private EntityFinder entityFinder;
 	private final Set<Integer> velocityEntities = ConcurrentHashMap.newKeySet();
+	private final Set<Integer> reservedEntityIds = ConcurrentHashMap.newKeySet();
 	private Server server;
 	private PathfindingHandler pathfindingHandler;
+	private HealthManager healthManager;
+	private AssetManager assetManager;
 
 	public EntityManager(ServerLoader serverLoader,Console console, ArrayList<Player> playerList, Server server) {
-		entities = serverLoader.loadEntities();
+		entities = new ConcurrentHashMap<>(serverLoader.loadEntities());
 		this.console = console;
 		this.playerList = playerList;
 		this.server = server;
 	}
+
+	EntityManager(Map<Integer, Entity> startingEntities) {
+		entities = new ConcurrentHashMap<>(startingEntities);
+		playerList = new ArrayList<>();
+	}
 	
 	public Entity makeNewEntity(String name,int mapId) {
-		
-		int currentId = Id.getNewId(entities.keySet());
-		
-		Vector vector = Vector.newBuilder()
-				.setX(0)
-				.setY(0)
-				.build();
-		Vector one = Vector.newBuilder()
-				.setX(0.8f)
-				.setY(0.8f)
-				.build();
-		DamageMultiplier damageMult = DamageMultiplier.newBuilder()
-			    .setBrute(1)
-			    .setAsphyxiation(1)
-			    .setBurn(1)
-			    .setToxin(1)
-			    .setGenetic(1)
-			    .setStructural(1)
-			    .setBleeding(1)
-			    .build();
-		HitDamage hitDamage = HitDamage.newBuilder()
-			    .setBruteDamage(3)
-			    .setAsphyxiationDamage(0)
-			    .setBurnDamage(0)
-			    .setToxinDamage(0)
-			    .setGeneticDamage(0)
-			    .setStructuralDamage(0)
-			    .setBleedingPerTick(0)
-			    .setHitCooldown(1000)
-			    .setCanAttack(true)
-			    .build();
-		Damage damage = Damage.newBuilder()
-				.setBruteDamage(0)
-				.setAsphyxiationDamage(0)
-				.setBurnDamage(0)
-				.setToxinDamage(0)
-				.setGeneticDamage(0)
-				.setStructuralDamage(0)
-				.setBleedingPerTick(0)
-				.setDamageMultiplier(damageMult)
-				.build();
-		
-		Entity entity = Entity.newBuilder()
-				.setName(name)
-				.setMap(mapId)
-				.setPosition(vector)
-				.setSize(one)
-				.setId(currentId)
-				.setSpeed(7.5)
-				.setMaxSpeed(7.5)
-				.setMaxHealth(200)
-				.setCritHealth(100)
-				.setAlive(true)
-				.setDropsABody(true)
-				.setVelocity(vector.toBuilder().build())
-				.setDirection(Direction.Down)
-				.setSelectedSlot("leftHand")
-				.setDamage(damage)
-				.setHitDamage(hitDamage)
-				.setReach(1.5)
-				.build();
-		
+		if (assetManager == null) throw new IllegalStateException("Asset manager has not been set");
+		Entity entity = assetManager.getEntity(name, mapId);
+		if (entity == null) throw new IllegalArgumentException("Missing entity asset: " + name);
 		updateEntity(entity);
-		
-		return entity;
-		
+		Entity stored = getEntity(entity.getId());
+		if (stored == null) throw new IllegalStateException("Entity failed its spawn check: " + name);
+		return stored;
 	}
 	
 	public Entity makeNewEntity(String name) {
@@ -142,7 +86,7 @@ public class EntityManager {
 		return entities.get(player.data.getEntityId());
 	}
 	
-	public HashMap<Integer,Entity> getAllEntities() {
+	public Map<Integer,Entity> getAllEntities() {
 		return entities;
 	}
 
@@ -165,14 +109,24 @@ public class EntityManager {
 	 * Updates the entity list with the new value and checks for movement both position wise and map change then updates the chunk manager
 	 * @param entity
 	 */
-	public void updateEntity(Entity entity) {
+	public synchronized void updateEntity(Entity entity) {
+		boolean isFirstInsertion = !entities.containsKey(entity.getId())
+				|| reservedEntityIds.remove(entity.getId());
+		boolean installedOrgan = entity.hasOrganComponent()
+				&& entity.getOrganComponent().hasInstalledInEntityId();
+
 		if (entity.getMaxSpeed() <= 0) {
 			entity = entity.toBuilder()
 					.setMaxSpeed(7.5)
 					.build();
 		}
+
+		// A spawn must be valid before it is registered with chunks and tags.
+		if (isFirstInsertion && healthManager != null) {
+			entity = healthManager.prepareEntityState(entity);
+		}
 		
-		if (entities.containsKey(entity.getId())) {
+		if (!isFirstInsertion && !installedOrgan) {
 			Entity oldEntity = entities.get(entity.getId());
 			
 			if (!oldEntity.getPosition().equals(entity.getPosition()) || oldEntity.getMap() != entity.getMap()) {
@@ -181,18 +135,24 @@ public class EntityManager {
 			
 			tagHandler.updateEntityTag(entity);
 		}
-		else {
+		else if (!installedOrgan) {
 			chunkManager.addEntity(entity);
 			tagHandler.addEntity(entity);
 		}
 		
-		if ((entity.getVelocity().getX() != 0 || entity.getVelocity().getY() != 0) &&
-				!velocityEntities.contains(entity.getId())) {
+		if (entity.getVelocity().getX() != 0 || entity.getVelocity().getY() != 0) {
 			velocityEntities.add(entity.getId());
+		} else {
+			velocityEntities.remove(entity.getId());
 		}
 		
 		sendUpdate(entity);
 		entities.put(entity.getId(), entity);
+
+		// Death side effects expect the entity to already exist in the manager.
+		if (isFirstInsertion && healthManager != null) {
+			healthManager.entityCheck(entity);
+		}
 	}
 	
 	/**
@@ -241,7 +201,15 @@ public class EntityManager {
 	 * Removes the given entity next tick
 	 * @param entity
 	 */
-	public void removeEntity(Entity entity) {
+	public synchronized void removeEntity(Entity entity) {
+		reservedEntityIds.remove(entity.getId());
+		if (entity.hasOrganSlots()) {
+			removeInstalledOrgan(entity.getOrganSlots().hasHeartEntityId() ? entity.getOrganSlots().getHeartEntityId() : -1);
+			removeInstalledOrgan(entity.getOrganSlots().hasLungsEntityId() ? entity.getOrganSlots().getLungsEntityId() : -1);
+			removeInstalledOrgan(entity.getOrganSlots().hasLiverEntityId() ? entity.getOrganSlots().getLiverEntityId() : -1);
+			removeInstalledOrgan(entity.getOrganSlots().hasBrainEntityId() ? entity.getOrganSlots().getBrainEntityId() : -1);
+			removeInstalledOrgan(entity.getOrganSlots().hasStomachEntityId() ? entity.getOrganSlots().getStomachEntityId() : -1);
+		}
 		if (velocityEntities.contains(entity.getId())) velocityEntities.remove(entity.getId());
 		sendDeletion(entity);
 		tagHandler.removeEntity(entity);
@@ -250,19 +218,45 @@ public class EntityManager {
 		entities.remove(entity.getId());
 	}
 
+	private void removeInstalledOrgan(int id) {
+		if (id < 0) return;
+		Entity organ = entities.get(id);
+		if (organ != null) removeEntity(organ);
+	}
+
 	public void setClasses(ChunkManager chunkManager, TagHandler tagHandler, EntityFinder entityFinder, PathfindingHandler pathfindingHandler) {
 		this.chunkManager = chunkManager;
 		this.tagHandler = tagHandler;
 		this.entityFinder = entityFinder;
 		this.pathfindingHandler = pathfindingHandler;
 	}
+
+	public void setAssetManager(AssetManager assetManager) {
+		this.assetManager = assetManager;
+	}
+
+	/**
+	 * Installs health validation and normalizes entities loaded from an existing
+	 * world before the server starts ticking.
+	 */
+	public synchronized void setHealthManager(HealthManager healthManager) {
+		this.healthManager = healthManager;
+		if (healthManager == null) return;
+		entities.replaceAll((id, entity) -> healthManager.prepareEntityState(
+				entity.toBuilder()
+						.setHitDamage(entity.getHitDamage().toBuilder().setCanAttack(true))
+						.build()));
+	}
 	
 	/**
 	 * Reserves a new entity id. Be cautious when using this to not make a ton of empty entities
 	 * @return A entity ID that has been newly reserved
 	 */
-	public int reserveNewEntityId() {
-		int newId = Id.getNewId(entities.keySet());
+	public synchronized int reserveNewEntityId() {
+		Set<Integer> unavailableIds = new HashSet<>(entities.keySet());
+		unavailableIds.addAll(reservedEntityIds);
+		int newId = Id.getNewId(unavailableIds);
+		reservedEntityIds.add(newId);
 		entities.put(newId, Entity.newBuilder().build());
 		
 		return newId;
@@ -323,7 +317,7 @@ public class EntityManager {
 	 * Force fully updates the entity list with the new value and DOES NOT update the chunk manager
 	 * @param entity
 	 */
-	private void forceUpdateEntity(Entity entity) {
+	private synchronized void forceUpdateEntity(Entity entity) {
 		sendUpdate(entity);
 		entities.put(entity.getId(), entity);
 	}
@@ -369,16 +363,19 @@ public class EntityManager {
 		}
 		else entity = entityYAxis;
 
-		return entity;
+		return EntitySimulation.slowItemVelocity(entity, tps);
 	}
 	
 	private Entity checkCollision(Entity updatedEntity, Entity originalEntity, ArrayList<Entity> closeEntities) {
 		if (originalEntity.getPosition().equals(updatedEntity.getPosition())) return originalEntity;
 		
 		for (Entity entity : closeEntities) {
-			if (entity.getId() != originalEntity.getId()) {
-				//if (EntityCollision.checkCollision(updatedEntity, entity)) System.out.println(true);
-				if (entity.getCanCollide() && EntityCollision.checkCollision(updatedEntity, entity)) return originalEntity;
+			if (entity.getId() != originalEntity.getId() && entity.getMap() == originalEntity.getMap()) {
+				boolean alreadyOverlapping = EntityCollision.checkCollision(originalEntity, entity);
+				if (entity.getCanCollide() && EntityCollision.checkCollision(updatedEntity, entity)) {
+					boolean movingAway = EntityCollision.isMovingAway(originalEntity, updatedEntity, entity);
+					if (!alreadyOverlapping || !movingAway) return originalEntity;
+				}
 			}
 		}
 		
@@ -387,38 +384,11 @@ public class EntityManager {
 	
 	public void recalculateEntity(Entity entity) {
 		if (entity == null) return;
-		
-		// MAKE COMMENTS FOR EVERYTHING YOU PUT IN HERE. THIS WILL BE VERY LONG!!
-		
-		// Calculate Health Speed
-		
-		entity = getEntity(entity.getId());
-		double totalDamage = Health.getDamage(entity);
-		double critHealthThreshold = entity.getCritHealth();
-		double healthSpeedMult = 1;
-		
-		if (totalDamage >= critHealthThreshold || !entity.getAlive()) {
-			healthSpeedMult = 0;
-		} else if (totalDamage >= critHealthThreshold * TraumaState.MORTALLY_WOUNDED.getTraumaPercent()) {
-			healthSpeedMult = 0.3;
-		} else if (totalDamage >= critHealthThreshold * TraumaState.SEVERELY_INJURED.getTraumaPercent()) {
-			healthSpeedMult = 0.6;
-		} else if (totalDamage >= critHealthThreshold * TraumaState.INJURED.getTraumaPercent()) {
-			healthSpeedMult = 0.75;
-		} else if (totalDamage >= critHealthThreshold * TraumaState.MINOR_INJURIES.getTraumaPercent()) {
-			healthSpeedMult = 0.9;
-		}
-		
-		Entity.Builder entityBuilder = entity.toBuilder();
-		entityBuilder.setSpeed(entity.getMaxSpeed() * healthSpeedMult);
-		entity = entityBuilder.build();
-		
-		
-		// End of Health Speed
-		
-		
-		
-		// This should always be at the bottom
-		updateEntity(entity);
+		Entity stored = getEntity(entity.getId());
+		if (stored == null) return;
+		Entity recalculated = healthManager == null
+				? stored
+				: healthManager.prepareEntityState(stored);
+		updateEntity(recalculated);
 	}
 }

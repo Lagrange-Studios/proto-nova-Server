@@ -6,6 +6,9 @@ import java.util.HashSet;
 import entity.EntityManager;
 import main.Console;
 import protonova.protobuf.EntityProto.Entity;
+import protonova.protobuf.OrgansProto.OrganAssetSlots;
+import protonova.protobuf.OrgansProto.OrganComponent;
+import protonova.protobuf.OrgansProto.OrganSlots;
 
 public class AssetManager {
 	private HashMap<String, Entity> entityAssets;
@@ -33,16 +36,67 @@ public class AssetManager {
 	public Entity getEntity(String name, int mapId) {
 		
 		if (entityAssets.containsKey(name)) {
-			
-			Entity clone = entityAssets.get(name).toBuilder()
-					.setId(entityManager.reserveNewEntityId())
-					.setMap(mapId)
-					.build();
-			
-			return clone;
+			Entity clone = prepareEntityForSpawn(
+					entityAssets.get(name),
+					entityManager.reserveNewEntityId(),
+					mapId);
+
+			return attachOrgans(clone);
 		}
 		else console.print("Error: Could not find asset: "+name);
 		return null;
+	}
+
+	static Entity prepareEntityForSpawn(Entity asset, int entityId, int mapId) {
+		return asset.toBuilder()
+				.setId(entityId)
+				.setMap(mapId)
+				.setHitDamage(asset.getHitDamage().toBuilder().setCanAttack(true))
+				.build();
+	}
+
+	private Entity attachOrgans(Entity body) {
+		if (!body.hasOrganAssetSlots()) return body;
+
+		OrganAssetSlots assets = body.getOrganAssetSlots();
+		OrganSlots.Builder slots = OrganSlots.newBuilder();
+		setOrganSlot(slots, assets.getHeartAsset(), body, 0);
+		setOrganSlot(slots, assets.getLungsAsset(), body, 1);
+		setOrganSlot(slots, assets.getLiverAsset(), body, 2);
+		setOrganSlot(slots, assets.getBrainAsset(), body, 3);
+		setOrganSlot(slots, assets.getStomachAsset(), body, 4);
+		return body.toBuilder().setOrganSlots(slots).build();
+	}
+
+	private void setOrganSlot(OrganSlots.Builder slots, String assetName, Entity body, int slot) {
+		if (assetName == null || assetName.isBlank()) return;
+		Entity asset = entityAssets.get(assetName);
+		if (asset == null || !asset.hasOrganComponent()) {
+			console.print("Error: Invalid organ asset: " + assetName);
+			return;
+		}
+
+		OrganComponent component = asset.getOrganComponent().toBuilder()
+				.setInstalledInEntityId(body.getId())
+				.build();
+		Entity organ = asset.toBuilder()
+				.setId(entityManager.reserveNewEntityId())
+				.setMap(-1)
+				.setAnchored(true)
+				.setOrganComponent(component)
+				.clearOrganSlots()
+				.clearOrganAssetSlots()
+				.build();
+		entityManager.updateEntity(organ);
+
+		switch (slot) {
+			case 0: slots.setHeartEntityId(organ.getId()); break;
+			case 1: slots.setLungsEntityId(organ.getId()); break;
+			case 2: slots.setLiverEntityId(organ.getId()); break;
+			case 3: slots.setBrainEntityId(organ.getId()); break;
+			case 4: slots.setStomachEntityId(organ.getId()); break;
+			default: break;
+		}
 	}
 	
 	public final Entity getReadOnlyEntity(String name) {

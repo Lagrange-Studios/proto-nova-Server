@@ -1,8 +1,8 @@
 package sound;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import entity.ChunkManager;
@@ -15,11 +15,11 @@ import util.CoordinateConverter;
 import util.VectorMath;
 
 public class SoundFinder {
-	private HashMap<Integer, Entity> entities;
+	private Map<Integer, Entity> entities;
 	private ArrayList<Audio> sounds;
 	private ChunkManager chunkManager;
 	
-	public SoundFinder(HashMap<Integer, Entity> allEntities, ArrayList<Audio> allSounds, ChunkManager chunkManager) {
+	public SoundFinder(Map<Integer, Entity> allEntities, ArrayList<Audio> allSounds, ChunkManager chunkManager) {
 		sounds = allSounds;
 		this.entities = allEntities;
 		this.chunkManager = chunkManager;
@@ -27,7 +27,7 @@ public class SoundFinder {
 	
 	public ArrayList<Audio> getAllSoundsInRadius(Vector start, int mapId, double radius) {
 		
-		HashMap<Coordinate,Chunk> chunkMap = chunkManager.getPlaneChunks(mapId);
+		Map<Coordinate,Chunk> chunkMap = chunkManager.getPlaneChunks(mapId);
 		Coordinate chunkCoordinate = CoordinateConverter.toChunkCoordinates(start);
 		
 		int radiusInChunks = (int) (Math.round(radius/CoordinateConverter.CHUNK_SIZE) + 1);
@@ -82,7 +82,7 @@ public class SoundFinder {
 
 	public void DEBUG_METHOD() {
 		System.out.println("Start");
-		HashMap<Integer, HashMap<Coordinate, Chunk>> chunks = chunkManager.getChunks();
+		Map<Integer, ? extends Map<Coordinate, Chunk>> chunks = chunkManager.getChunks();
 		
 		System.out.println("has: "+chunks.containsKey(1));
 		if (chunks.containsKey(1)) {

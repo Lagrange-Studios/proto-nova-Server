@@ -2,6 +2,7 @@ package sound;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 import entity.ChunkManager;
 import file.ServerLoader;
@@ -45,7 +46,7 @@ public class SoundManager {
 		SoundQueue.add(sound);
 	}
 	
-	public void processPlayerMovement(HashMap<Integer, Entity> players) {
+	public void processPlayerMovement(Map<Integer, Entity> players) {
 		// Player movement sounds are now created and sent by clients
 		// This method is kept for backward compatibility but is no longer used for walking sounds
 	}

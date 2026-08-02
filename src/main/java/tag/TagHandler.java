@@ -176,10 +176,20 @@ public class TagHandler {
 	private Future<?> tickEntities(Integer[] ids,int start, int end, int tickEntitiesCount) {
 		return server.threadPool.submit(() -> {
 			for (int keyIndex=start;keyIndex<Math.min(tickEntitiesCount, end);keyIndex++) {
-				
-				int key = ids[keyIndex];
-				for (String tag : tickMap.get(key)) {
-					tagToClass.get(tag).tick(this, entityManager.getEntity(key));
+				int entityId = ids[keyIndex];
+				Entity entity = entityManager.getEntity(entityId);
+				String[] entityTags = tickMap.get(entityId);
+
+				if (entity == null || entityTags == null) {
+					continue;
+				}
+
+				for (String tag : entityTags) {
+					TagClass tagClass = tagToClass.get(tag);
+
+					if (tagClass != null) {
+						tagClass.tick(this, entity);
+					}
 				}
 			}
 		});
@@ -189,10 +199,20 @@ public class TagHandler {
 		return server.threadPool.submit(() -> {
 			try {
 				for (int keyIndex=start;keyIndex<Math.min(tickEntitiesCount, end);keyIndex++) {
-					
-					int key = ids[keyIndex];
-					for (String tag : secondTickMap.get(tickIndex).get(key)) {
-						tagToClass.get(tag).secondTick(this, entityManager.getEntity(key));
+					int entityId = ids[keyIndex];
+					Entity entity = entityManager.getEntity(entityId);
+					String[] entityTags = secondTickMap.get(tickIndex).get(entityId);
+
+					if (entity == null || entityTags == null) {
+						continue;
+					}
+
+					for (String tag : entityTags) {
+						TagClass tagClass = tagToClass.get(tag);
+
+						if (tagClass != null) {
+							tagClass.secondTick(this, entity);
+						}
 					}
 				}
 			}
