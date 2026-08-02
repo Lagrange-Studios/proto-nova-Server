@@ -32,6 +32,7 @@ public class TagHandler {
 	private ConcurrentHashMap<Integer,String[]> tickMap;
 	private HashMap<Integer,ConcurrentHashMap<Integer,String[]>> secondTickMap;
 	private ConcurrentHashMap<String, TagClass> tagToClass;
+	private ConcurrentHashMap<String, Set<Integer>> tagCount;
 	private Server server; 
 	private AssetManager assetManager;
 	private EntityFinder entityFinder;
@@ -50,6 +51,7 @@ public class TagHandler {
 		this.pathfindingHandler = pathfindingHandler;
 		this.healthManager = healthManager;
 		tagToClass = new ConcurrentHashMap<>();
+		tagCount = new ConcurrentHashMap<>();
 
 		tickMap = new ConcurrentHashMap<>();
 		secondTickMap = new HashMap<>();
@@ -86,26 +88,34 @@ public class TagHandler {
 				if (tagClass.hasSecondTick()) secondTick.add(tag);
 			}
 			
+			// add to the tag counts
+			if (!tagCount.containsKey(tag))
+				tagCount.put(tag,ConcurrentHashMap.newKeySet());	
+			
+			tagCount.get(tag).add(entity.getId());
+			
 		}
 		
 		// add the tick to the general map
 		if (!tick.isEmpty()) tickMap.put(entity.getId(), tick.toArray(new String[0]));
 		
-		// find the smallest second tick map
-		int smallestIndex = 0;
-		int smallestSize = secondTickMap.get(0).size();
-		
-		for (int i=1;i<server.TPS;i++) {
-			int size = secondTickMap.get(i).size();
-			
-			if (size < smallestSize) {
-				smallestIndex = i;
-				smallestSize = size;
-			}
-		}
-		
 		// add the entity and its tags to the second tick map
-		if (!secondTick.isEmpty()) secondTickMap.get(smallestIndex).put(entity.getId(), secondTick.toArray(new String[0]));
+		if (!secondTick.isEmpty()) {
+			// find the smallest second tick map
+			int smallestIndex = 0;
+			int smallestSize = secondTickMap.get(0).size();
+			
+			for (int i=1;i<server.TPS;i++) {
+				int size = secondTickMap.get(i).size();
+				
+				if (size < smallestSize) {
+					smallestIndex = i;
+					smallestSize = size;
+				}
+			}
+			
+			secondTickMap.get(smallestIndex).put(entity.getId(), secondTick.toArray(new String[0]));
+		}
 	}
 	
 	public void removeEntity(Entity entity) {
@@ -117,9 +127,15 @@ public class TagHandler {
 			if (secondTickMap.get(i).remove(entity.getId()) != null) 
 				break;
 		}
+		
+		for (String tag : entity.getTagsList()) {
+			if (tagCount.containsKey(tag))
+				tagCount.get(tag).remove(entity.getId());
+		}
 	}
 
 	public void tick() {
+		
 		ArrayList<Future<?>> threads = new ArrayList<>();
 		
 		// get the tick number for determining which group of second ticks to update
@@ -213,8 +229,8 @@ public class TagHandler {
 	}
 	
 	public int getTagAmount(String tagName) {
-		// TODO: fix this
-		return 0;
+		if (tagCount.containsKey(tagName)) return tagCount.get(tagName).size();
+		else return 0;
 	}
 	
 	/**
