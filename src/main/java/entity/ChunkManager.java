@@ -1,9 +1,8 @@
 package entity;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 import plane.PlaneManager;
 
@@ -19,83 +18,61 @@ import util.CoordinateConverter;
 
 public class ChunkManager {
 
-	private HashMap<Integer, HashMap<Coordinate, Chunk>> chunks;
-	private HashMap<Integer, Entity> entities;
+	private volatile ConcurrentHashMap<Integer, ConcurrentHashMap<Coordinate, Chunk>> chunks;
+	private Map<Integer, Entity> entities;
 	private PlaneManager planeManager;
 	
-	public ChunkManager(HashMap<Integer, Entity> allEntities, PlaneManager planeManager) {
+	public ChunkManager(Map<Integer, Entity> allEntities, PlaneManager planeManager) {
 		this.planeManager = planeManager;
 		entities = allEntities;
-		chunks = new HashMap<Integer, HashMap<Coordinate, Chunk>>();
+		chunks = new ConcurrentHashMap<>();
 	}
-	
-	public HashMap<Coordinate, Chunk> getPlaneChunks(int mapId) {
-		
-		if (!chunks.containsKey(mapId)) {
-			if (!planeManager.planeExists(mapId) && mapId != 0) System.err.println("Warning: just tried to make chunks for plane id: "+mapId+" which does not exist");
-			chunks.put(mapId, new HashMap<Coordinate, Chunk>());
-		}
-		
-		return chunks.get(mapId);
+
+	public ConcurrentHashMap<Coordinate, Chunk> getPlaneChunks(int mapId) {
+		return chunks.computeIfAbsent(mapId, selectedMapId -> {
+			if (!planeManager.planeExists(selectedMapId) && selectedMapId != 0) {
+				System.err.println("Warning: just tried to make chunks for plane id: " + selectedMapId + " which does not exist");
+			}
+			return new ConcurrentHashMap<>();
+		});
 	}
-	
-	private HashMap<Coordinate, Chunk> getPlaneChunks(Entity entity) {
+
+	private ConcurrentHashMap<Coordinate, Chunk> getPlaneChunks(Entity entity) {
 		
 		return getPlaneChunks(entity.getMap());
 	}
-	
-	private void addEntityToChunk(HashMap<Coordinate, Chunk> chunkMap, Coordinate coordinate, Entity entity) {
-		if (!chunkMap.containsKey(coordinate)) {
-			Chunk newChunk = Chunk.newBuilder()
-					.setCoordinate(coordinate)
-					.build();
-			
-			chunkMap.put(coordinate,newChunk);
-		}
-		
-		Chunk selectedChunk = chunkMap.get(coordinate);
-		selectedChunk = selectedChunk.toBuilder()
-			.addEntityIds(entity.getId())
-			.build();	
-		
-		chunkMap.put(coordinate, selectedChunk);
+
+	private void addEntityToChunk(ConcurrentHashMap<Coordinate, Chunk> chunkMap, Coordinate coordinate, Entity entity) {
+		chunkMap.compute(coordinate, (selectedCoordinate, selectedChunk) -> {
+			Chunk.Builder chunkBuilder = selectedChunk == null
+					? Chunk.newBuilder().setCoordinate(selectedCoordinate)
+					: selectedChunk.toBuilder();
+			return chunkBuilder.addEntityIds(entity.getId()).build();
+		});
 	}
-	
-	private void addSoundToChunk(HashMap<Coordinate, Chunk> chunkMap, Coordinate coordinate, Audio audio) {
-		if (!chunkMap.containsKey(coordinate)) {
-			Chunk newChunk = Chunk.newBuilder()
-					.setCoordinate(coordinate)
-					.build();
-			
-			chunkMap.put(coordinate,newChunk);
-		}
-		
-		Chunk selectedChunk = chunkMap.get(coordinate);
-		selectedChunk = selectedChunk.toBuilder()
-			.addSounds(audio)
-			.build();
-		
-		chunkMap.put(coordinate, selectedChunk);
+
+	private void addSoundToChunk(ConcurrentHashMap<Coordinate, Chunk> chunkMap, Coordinate coordinate, Audio audio) {
+		chunkMap.compute(coordinate, (selectedCoordinate, selectedChunk) -> {
+			Chunk.Builder chunkBuilder = selectedChunk == null
+					? Chunk.newBuilder().setCoordinate(selectedCoordinate)
+					: selectedChunk.toBuilder();
+			return chunkBuilder.addSounds(audio).build();
+		});
 	}
-	
-	private void addChatMessageToChunk(HashMap<Coordinate, Chunk> chunkMap, Coordinate coordinate, ChatMessage message) {
-		if (!chunkMap.containsKey(coordinate)) {
-			Chunk newChunk = Chunk.newBuilder()
-					.setCoordinate(coordinate)
-					.build();
-			
-			chunkMap.put(coordinate,newChunk);
-		}
-		
-		Chunk selectedChunk = chunkMap.get(coordinate);
-		selectedChunk = selectedChunk.toBuilder()
-			.addChats(message)
-			.build();
-		
-		chunkMap.put(coordinate, selectedChunk);
+
+	private void addChatMessageToChunk(ConcurrentHashMap<Coordinate, Chunk> chunkMap, Coordinate coordinate, ChatMessage message) {
+		chunkMap.compute(coordinate, (selectedCoordinate, selectedChunk) -> {
+			Chunk.Builder chunkBuilder = selectedChunk == null
+					? Chunk.newBuilder().setCoordinate(selectedCoordinate)
+					: selectedChunk.toBuilder();
+			return chunkBuilder.addChats(message).build();
+		});
 	}
-	
+
 	public void addEntity(Entity entity) {
+		if (!canUseWorldChunks(entity)) {
+			return;
+		}
 		addEntityToChunk(getPlaneChunks(entity),CoordinateConverter.toChunkCoordinates(entity.getPosition()),entity);
 	}
 	
@@ -122,31 +99,25 @@ public class ChunkManager {
 		
 		addChatMessageToChunk(getPlaneChunks(message.getMap()),CoordinateConverter.toChunkCoordinates(position),message);
 	}
-	
-	public synchronized void removeAllChatMessages() {
-		for(Entry<Integer, HashMap<Coordinate, Chunk>> map : chunks.entrySet()) {
-			for (Entry<Coordinate, Chunk> entry : map.getValue().entrySet()) {
-				if (entry.getValue().getChatsCount() != 0) {
-					entry.setValue(entry.getValue().toBuilder().clearChats().build());
-				}
-			}
+
+	public void removeAllChatMessages() {
+		for (ConcurrentHashMap<Coordinate, Chunk> planeChunks : chunks.values()) {
+			planeChunks.replaceAll((coordinate, chunk) -> chunk.getChatsCount() == 0
+					? chunk
+					: chunk.toBuilder().clearChats().build());
 		}
 	}
-	
-	public synchronized void removeAllSounds() {
-		for(Entry<Integer, HashMap<Coordinate, Chunk>> map : chunks.entrySet()) {
-			for (Entry<Coordinate, Chunk> entry : map.getValue().entrySet()) {
-				if (entry.getValue().getSoundsCount() != 0) {
-					entry.setValue(entry.getValue().toBuilder().clearSounds().build());
-				}
-			}
+
+	public void removeAllSounds() {
+		for (ConcurrentHashMap<Coordinate, Chunk> planeChunks : chunks.values()) {
+			planeChunks.replaceAll((coordinate, chunk) -> chunk.getSoundsCount() == 0
+					? chunk
+					: chunk.toBuilder().clearSounds().build());
 		}
 	}
-	
-	private void removeEntityFromChunk(HashMap<Coordinate, Chunk> chunkMap, Coordinate coordinate, Entity entity) {
-		if (chunkMap.containsKey(coordinate)) {
-			Chunk selectedChunk = chunkMap.get(coordinate);
-			
+
+	private void removeEntityFromChunk(ConcurrentHashMap<Coordinate, Chunk> chunkMap, Coordinate coordinate, Entity entity) {
+		chunkMap.computeIfPresent(coordinate, (selectedCoordinate, selectedChunk) -> {
 			for (int i=0;i<selectedChunk.getEntityIdsCount();i++) {
 				if (entity.getId() == selectedChunk.getEntityIds(i)) {
 
@@ -160,22 +131,18 @@ public class ChunkManager {
 					builder.addAllEntityIds(modifableList);
 					selectedChunk = builder.build();
 					
-					if (selectedChunk.getEntityIdsCount() == 0) {
-						chunkMap.remove(coordinate);
-					}
-					else {
-						chunkMap.put(coordinate, selectedChunk);
-					}
-							
-					break;
+					return selectedChunk.getEntityIdsCount() == 0 ? null : selectedChunk;
 				}
 			}
-		}
-		// Silent fail - chunk doesn't exist (expected in some edge cases)
+			return selectedChunk;
+		});
 	}
 	
 	private void groupEntity(Entity entity) {
-		HashMap<Coordinate, Chunk> chunkMap = getPlaneChunks(entity);
+		if (!canUseWorldChunks(entity)) {
+			return;
+		}
+		ConcurrentHashMap<Coordinate, Chunk> chunkMap = getPlaneChunks(entity);
 		
 		Coordinate coordinate = CoordinateConverter.toChunkCoordinates(entity.getPosition());
 		
@@ -183,7 +150,7 @@ public class ChunkManager {
 	}
 	
 	public void groupAllEntites() {
-		chunks = new HashMap<Integer, HashMap<Coordinate, Chunk>>();
+		chunks = new ConcurrentHashMap<>();
 		
 		for (Map.Entry<Integer, Entity> entry : entities.entrySet()) {
 			Entity entity = entry.getValue();
@@ -193,16 +160,34 @@ public class ChunkManager {
 	}
 	
 	public void updateEntityChunck(Entity oldEntity, Entity newEntity) {
-		removeEntityFromChunk(oldEntity);
-		
-		addEntityToChunk(getPlaneChunks(newEntity), CoordinateConverter.toChunkCoordinates(newEntity.getPosition()), newEntity);
+		if (canUseWorldChunks(oldEntity)) {
+			removeEntityFromChunk(oldEntity);
+		}
+		if (canUseWorldChunks(newEntity)) {
+			addEntityToChunk(getPlaneChunks(newEntity), CoordinateConverter.toChunkCoordinates(newEntity.getPosition()), newEntity);
+		}
 	}
 	
-	public HashMap<Integer, HashMap<Coordinate, Chunk>> getChunks() {
+	public ConcurrentHashMap<Integer, ConcurrentHashMap<Coordinate, Chunk>> getChunks() {
 		return chunks;
 	}
 	
 	public void removeEntityFromChunk(Entity entity) {
+		if (!canUseWorldChunks(entity)) {
+			return;
+		}
 		removeEntityFromChunk(getPlaneChunks(entity), CoordinateConverter.toChunkCoordinates(entity.getPosition()), entity);
+	}
+
+	private boolean canUseWorldChunks(Entity entity) {
+		return isWorldEntity(entity) && planeManager.planeExists(entity.getMap());
+	}
+
+	static boolean isWorldEntity(Entity entity) {
+		if (entity.getMap() <= 0) {
+			return false;
+		}
+		return !entity.hasOrganComponent()
+				|| !entity.getOrganComponent().hasInstalledInEntityId();
 	}
 }

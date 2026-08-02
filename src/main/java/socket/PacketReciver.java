@@ -1,5 +1,7 @@
 package socket;
 
+import java.util.ArrayList;
+
 import action.ActionHandler;
 import chat.ChatManager;
 import entity.EntityFinder;
@@ -15,6 +17,7 @@ import protonova.protobuf.VectorProto.Vector;
 import simulation.EntitySimulation;
 import sound.SoundManager;
 import util.VectorMath;
+import character.CharacterAppearanceCodec;
 
 public class PacketReciver {
 
@@ -47,6 +50,7 @@ public class PacketReciver {
 		serverEntity = serverEntity.toBuilder()
 				.setSelectedSlot(clientEntity.getSelectedSlot())
 				.build();
+		serverEntity = applyCharacterAppearance(player, serverEntity, clientEntity);
 		
 		if (!healthManager.checkCrit(serverEntity)) {
 			for (Action action : packet.getActionsList()) {
@@ -89,5 +93,26 @@ public class PacketReciver {
 			console.print("WARNING: Player "+player.getUsername()+" rubberbanded");
 			
 		}
+	}
+
+	private Entity applyCharacterAppearance(Player player, Entity serverEntity, Entity clientEntity) {
+		String update = null;
+		for (String tag : clientEntity.getTagsList()) {
+			if (!CharacterAppearanceCodec.isAppearanceTag(tag)) continue;
+			if (update != null || !CharacterAppearanceCodec.isValidUpdate(tag)) {
+				console.print("WARNING: Rejected invalid character appearance from " + player.getUsername());
+				return serverEntity;
+			}
+			update = tag;
+		}
+		if (update == null) return serverEntity; // Older clients do not change the saved appearance.
+
+		ArrayList<String> preservedTags = new ArrayList<>();
+		for (String tag : serverEntity.getTagsList()) {
+			if (!CharacterAppearanceCodec.isAppearanceTag(tag)) preservedTags.add(tag);
+		}
+		Entity.Builder builder = serverEntity.toBuilder().clearTags().addAllTags(preservedTags);
+		if (!CharacterAppearanceCodec.DEFAULT.equals(update)) builder.addTags(update);
+		return builder.build();
 	}
 }

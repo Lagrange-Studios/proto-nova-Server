@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.BorderFactory;
+import javax.swing.AbstractButton;
 import javax.swing.Box;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
@@ -61,6 +62,9 @@ public class AssetMakerGUI {
     final JList<String> entityList = new JList<>(entityListModel);
     final JTextField searchField = new JTextField(18);
     final JTextArea otherAssetsArea = new JTextArea();
+    final JComboBox<String> starterTypeCombo = new JComboBox<>(new String[]{
+            "Solid world object", "Item you can pick up", "Living creature", "Human body", "Organ"
+    });
 
     // ===== Identity and display controls =====
     final JTextField nameField = new JTextField();
@@ -101,6 +105,7 @@ public class AssetMakerGUI {
     // ===== Item and inventory controls =====
     final JCheckBox isItemBox = new JCheckBox("Is Item");
     final JCheckBox stackableBox = new JCheckBox("Stackable");
+    final JCheckBox canDestroyBox = new JCheckBox("Can be damaged and destroyed");
     final JSpinner amountSpinner = new JSpinner(new SpinnerNumberModel(1, 0, Integer.MAX_VALUE, 1));
     final JTextArea inventorySlotsField = new JTextArea();
 
@@ -124,16 +129,41 @@ public class AssetMakerGUI {
     final JCheckBox dropsABodyBox = new JCheckBox("Drops a body");
     final JSpinner internalSpaceSpinner = new JSpinner(new SpinnerNumberModel(0, 0, Integer.MAX_VALUE, 1));
     final JTextArea internalValuesField = new JTextArea();
-    final JCheckBox heartBox = new JCheckBox("Heart");
-    final JTextField heartBloodField = new JTextField();
-    final JTextField heartMaxBloodField = new JTextField();
-    final JCheckBox lungsBox = new JCheckBox("Lungs");
+    final JCheckBox heartBox = new JCheckBox("Heart present");
+    final JSpinner heartBloodSpinner = decimalSpinner(100, 0, 100000, 1);
+    final JSpinner heartMaxBloodSpinner = decimalSpinner(100, 0, 100000, 1);
+    final JSpinner heartCirculationSpinner = decimalSpinner(10, 0, 100000, 0.5);
+    final JSpinner heartOxygenUseSpinner = decimalSpinner(1, 0, 100000, 0.1);
+    final OrganStatusControls heartStatus = new OrganStatusControls();
+    final JCheckBox lungsBox = new JCheckBox("Lungs present");
     final JSpinner lungsOxygenSpinner = new JSpinner(new SpinnerNumberModel(0, 0, Integer.MAX_VALUE, 1));
-    final JCheckBox liverBox = new JCheckBox("Liver");
+    final JSpinner lungsOxygenUseSpinner = decimalSpinner(0.5, 0, 100000, 0.1);
+    final OrganStatusControls lungsStatus = new OrganStatusControls();
+    final JCheckBox liverBox = new JCheckBox("Liver present");
     final JSpinner liverDetoxificationSpinner = new JSpinner(new SpinnerNumberModel(0, 0, Integer.MAX_VALUE, 1));
-    final JCheckBox brainBox = new JCheckBox("Brain");
+    final JSpinner liverOxygenUseSpinner = decimalSpinner(1, 0, 100000, 0.1);
+    final OrganStatusControls liverStatus = new OrganStatusControls();
+    final JCheckBox brainBox = new JCheckBox("Brain present");
+    final JSpinner brainOxygenUseSpinner = decimalSpinner(3, 0, 100000, 0.1);
+    final OrganStatusControls brainStatus = new OrganStatusControls();
+    final JCheckBox stomachBox = new JCheckBox("Stomach present");
+    final JSpinner stomachCapacitySpinner = decimalSpinner(50, 0, 100000, 1);
+    final JSpinner stomachAbsorptionSpinner = decimalSpinner(1, 0, 100000, 0.1);
+    final JSpinner stomachOxygenUseSpinner = decimalSpinner(0.5, 0, 100000, 0.1);
+    final OrganStatusControls stomachStatus = new OrganStatusControls();
     final JTextArea stomachChemicalsField = new JTextArea();
+    final JCheckBox cardiovascularBox = new JCheckBox("Circulatory system present");
+    final JSpinner cardiovascularOxygenSpinner = decimalSpinner(0, 0, 100000, 1);
+    final JSpinner cardiovascularMaxOxygenSpinner = decimalSpinner(100, 0, 100000, 1);
+    final JSpinner cardiovascularPowerSpinner = decimalSpinner(0, 0, 100000, 1);
+    final JSpinner cardiovascularMaxPowerSpinner = decimalSpinner(0, 0, 100000, 1);
+    final JSpinner cardiovascularFluidCapacitySpinner = decimalSpinner(150, 0, 100000, 1);
     final JTextArea cardiovascularChemicalsField = new JTextArea();
+    final JTextField heartOrganAssetField = new JTextField();
+    final JTextField lungsOrganAssetField = new JTextField();
+    final JTextField liverOrganAssetField = new JTextField();
+    final JTextField brainOrganAssetField = new JTextField();
+    final JTextField stomachOrganAssetField = new JTextField();
 
     final JLabel statusLabel = new JLabel(" ");
     final JLabel loadedEntityLabel = new JLabel(" ");
@@ -141,6 +171,7 @@ public class AssetMakerGUI {
     String currentAssetName = null;
     Entity currentEntity = null;
     boolean dirty = false;
+    boolean updatingForm = false;
 
     private AssetMakerGUIController controller;
 
@@ -158,6 +189,7 @@ public class AssetMakerGUI {
         initialize();
         controller = new AssetMakerGUIController(this);
         controller.refreshAssetList();
+        installDirtyTracking();
     }
 
     private void initialize() {
@@ -176,6 +208,7 @@ public class AssetMakerGUI {
         frame.getContentPane().add(buildToolbar(), BorderLayout.NORTH);
         frame.getContentPane().add(buildMainSplit(), BorderLayout.CENTER);
         frame.getContentPane().add(buildStatusBar(), BorderLayout.SOUTH);
+        addSimpleHelp();
     }
 
     private JPanel buildToolbar() {
@@ -183,20 +216,20 @@ public class AssetMakerGUI {
         bar.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
 
         JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
-        JButton btnNew = new JButton("+ New Asset");
-        JButton btnSave = new JButton("Save");
-        JButton btnSaveAs = new JButton("Save As...");
+        JButton btnNew = new JButton("+ Make Something New");
+        JButton btnSave = new JButton("Save Changes");
+        JButton btnSaveAs = new JButton("Make a Copy...");
         JButton btnDelete = new JButton("Delete");
-        JButton btnReload = new JButton("Reload");
-        JButton btnRefresh = new JButton("Refresh List");
-        JButton btnExportRaw = new JButton("Show Raw");
+        JButton btnReload = new JButton("Undo Unsaved Changes");
+        JButton btnRefresh = new JButton("Refresh");
+        JButton btnExportRaw = new JButton("Expert: Show Raw Data");
         left.add(btnNew); left.add(btnSave); left.add(btnSaveAs);
         left.add(btnDelete); left.add(btnReload); left.add(btnRefresh);
         left.add(Box.createHorizontalStrut(12));
         left.add(btnExportRaw);
 
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
-        right.add(new JLabel("Filter:"));
+        right.add(new JLabel("Find by name:"));
         right.add(searchField);
 
         bar.add(left, BorderLayout.WEST);
@@ -227,10 +260,10 @@ public class AssetMakerGUI {
 
     private JPanel buildLeftPanel() {
         JPanel left = new JPanel(new BorderLayout());
-        left.setPreferredSize(new Dimension(320, 0));
+        left.setPreferredSize(new Dimension(270, 0));
         left.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
 
-        JLabel header = new JLabel("Entity Assets  (assets/entities/)");
+        JLabel header = new JLabel("Saved Things");
         header.setFont(header.getFont().deriveFont(Font.BOLD));
         left.add(header, BorderLayout.NORTH);
 
@@ -269,15 +302,6 @@ public class AssetMakerGUI {
         scroll.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
         left.add(scroll, BorderLayout.CENTER);
 
-        JPanel other = new JPanel(new BorderLayout());
-        other.setBorder(BorderFactory.createTitledBorder("Other asset folders (read only)"));
-        otherAssetsArea.setEditable(false);
-        otherAssetsArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
-        otherAssetsArea.setBackground(new Color(245, 245, 245));
-        otherAssetsArea.setRows(8);
-        other.add(new JScrollPane(otherAssetsArea), BorderLayout.CENTER);
-        left.add(other, BorderLayout.SOUTH);
-
         return left;
     }
 
@@ -287,14 +311,111 @@ public class AssetMakerGUI {
         AssetMakerGUIPanels p = new AssetMakerGUIPanels(this);
         // Every editor section is wrapped in its own scroll pane. This keeps
         // lower controls reachable on smaller screens or at higher display scaling.
-        tabs.addTab("Identity", wrapEditorTab(p.buildIdentityTab()));
-        tabs.addTab("Movement", wrapEditorTab(p.buildMovementTab()));
-        tabs.addTab("Combat", wrapEditorTab(p.buildCombatTab()));
-        tabs.addTab("Item / Stack", wrapEditorTab(p.buildItemTab()));
-        tabs.addTab("Tags & Display", wrapEditorTab(p.buildTagsTab()));
-        tabs.addTab("Loot Table", wrapEditorTab(p.buildLootTableTab()));
-        tabs.addTab("Advanced", wrapEditorTab(p.buildAdvancedTab()));
+        tabs.addTab("1. Basics", wrapEditorTab(p.buildIdentityTab()));
+        tabs.addTab("2. Place & Move", wrapEditorTab(p.buildMovementTab()));
+        tabs.addTab("3. Health & Damage", wrapEditorTab(p.buildCombatTab()));
+        tabs.addTab("4. Item & Storage", wrapEditorTab(p.buildItemTab()));
+        tabs.addTab("5. Looks & Behaviors", wrapEditorTab(p.buildTagsTab()));
+        tabs.addTab("6. Drops", wrapEditorTab(p.buildLootTableTab()));
+        tabs.addTab("7. Body & Organs", wrapEditorTab(p.buildPhysiologyTab()));
+        tabs.addTab("Expert (Usually Skip)", wrapEditorTab(p.buildAdvancedTab()));
         return tabs;
+    }
+
+    void applyStarterPreset(String choice) {
+        controller.applyStarterPreset(choice);
+    }
+
+    private void addSimpleHelp() {
+        idField.setEditable(false);
+        idField.setToolTipText("The server gives each spawned thing its own ID. You normally leave this alone.");
+        mapField.setToolTipText("Which world map this starts on. Most assets can leave this at 0.");
+        nameField.setToolTipText("The name used by the game, such as wooden chair or red apple.");
+        displayTextureField.setToolTipText("The picture name. Example: red apple");
+        tagsField.setToolTipText("Behavior words separated by commas. Example: plant, harvestable");
+        hexColorField.setToolTipText("Optional color. Example: #FF0000 is red.");
+        posXField.setToolTipText("How far left or right it starts. 0 is the middle.");
+        posYField.setToolTipText("How far up or down it starts. 0 is the middle.");
+        sizeXField.setToolTipText("Width in tiles. 1 means one tile wide.");
+        sizeYField.setToolTipText("Height in tiles. 1 means one tile tall.");
+        speedField.setToolTipText("How fast it moves now. Use 0 for things that do not move.");
+        maxSpeedField.setToolTipText("The fastest it is allowed to move.");
+        reachField.setToolTipText("How many tiles away it can touch something.");
+        lightRangeField.setToolTipText("Leave blank for no light, or enter how many tiles it lights up.");
+        anchoredBox.setToolTipText("Turn this on if it should stay in one place.");
+        canCollideBox.setToolTipText("Turn this on if other things should bump into it instead of passing through.");
+        aliveBox.setToolTipText("Turn this on for a living creature.");
+        isItemBox.setToolTipText("Turn this on if a player can pick it up.");
+        stackableBox.setToolTipText("Turn this on if several copies can share one inventory slot.");
+        canDestroyBox.setToolTipText("Turn this on if attacks should be able to break this item.");
+    }
+
+    private void installDirtyTracking() {
+        DocumentListener documentListener = new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) { markDirty(); }
+            public void removeUpdate(DocumentEvent e) { markDirty(); }
+            public void changedUpdate(DocumentEvent e) { markDirty(); }
+        };
+        JTextField[] textFields = {
+                nameField, idField, mapField, selectedSlotField, tagsField, displayTextureField, hexColorField,
+                posXField, posYField, velXField, velYField, sizeXField, sizeYField, speedField, maxSpeedField,
+                reachField, lightRangeField, heartOrganAssetField, lungsOrganAssetField, liverOrganAssetField,
+                brainOrganAssetField, stomachOrganAssetField
+        };
+        for (JTextField field : textFields) field.getDocument().addDocumentListener(documentListener);
+        JTextArea[] textAreas = {
+                inventorySlotsField, internalValuesField, stomachChemicalsField, cardiovascularChemicalsField
+        };
+        for (JTextArea area : textAreas) area.getDocument().addDocumentListener(documentListener);
+
+        AbstractButton[] buttons = {
+                anchoredBox, canCollideBox, castShadowBox, aliveBox, isItemBox, stackableBox, canDestroyBox,
+                dropsABodyBox, heartBox, lungsBox, liverBox, brainBox, stomachBox, cardiovascularBox
+        };
+        for (AbstractButton button : buttons) button.addItemListener(e -> markDirty());
+        directionCombo.addItemListener(e -> markDirty());
+        starterTypeCombo.addItemListener(e -> { });
+
+        List<JSpinner> spinners = new ArrayList<>();
+        for (JSpinner spinner : dmgValues) spinners.add(spinner);
+        for (JSpinner spinner : dmgMultValues) spinners.add(spinner);
+        for (JSpinner spinner : hitDmgValues) spinners.add(spinner);
+        JSpinner[] otherSpinners = {
+                hitCooldownSpinner, maxHealthSpinner, critHealthSpinner, amountSpinner, internalSpaceSpinner,
+                heartBloodSpinner, heartMaxBloodSpinner, heartCirculationSpinner, heartOxygenUseSpinner,
+                lungsOxygenSpinner, lungsOxygenUseSpinner, liverDetoxificationSpinner, liverOxygenUseSpinner,
+                brainOxygenUseSpinner, stomachCapacitySpinner, stomachAbsorptionSpinner, stomachOxygenUseSpinner,
+                cardiovascularOxygenSpinner, cardiovascularMaxOxygenSpinner, cardiovascularPowerSpinner,
+                cardiovascularMaxPowerSpinner, cardiovascularFluidCapacitySpinner
+        };
+        for (JSpinner spinner : otherSpinners) spinners.add(spinner);
+        OrganStatusControls[] statuses = { heartStatus, lungsStatus, liverStatus, brainStatus, stomachStatus };
+        for (OrganStatusControls status : statuses) {
+            status.type.addItemListener(e -> markDirty());
+            spinners.add(status.healthPercent);
+            spinners.add(status.efficiencyPercent);
+            spinners.add(status.powerUse);
+        }
+        for (JSpinner spinner : spinners) spinner.addChangeListener(e -> markDirty());
+        lootTableModel.addTableModelListener(e -> markDirty());
+    }
+
+    private void markDirty() {
+        if (updatingForm || currentEntity == null || dirty) return;
+        dirty = true;
+        statusLabel.setText(" You have unsaved changes. Click Save Changes when you are ready.");
+        entityList.repaint();
+    }
+
+    private static JSpinner decimalSpinner(double value, double minimum, double maximum, double step) {
+        return new JSpinner(new SpinnerNumberModel(value, minimum, maximum, step));
+    }
+
+    static final class OrganStatusControls {
+        final JComboBox<String> type = new JComboBox<>(new String[]{"Biological", "Cybernetic"});
+        final JSpinner healthPercent = decimalSpinner(100, 0, 100, 1);
+        final JSpinner efficiencyPercent = decimalSpinner(100, 0, 200, 1);
+        final JSpinner powerUse = decimalSpinner(0, 0, 100000, 0.1);
     }
 
     /**

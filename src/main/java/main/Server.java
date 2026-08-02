@@ -157,16 +157,20 @@ public class Server {
 		chatManager = new ChatManager(serverLoader,console, this, playerList);
 		
 		assetManager = new AssetManager(entityManager,serverLoader.loadEntityAssets(), console, serverLoader.loadTypes());
+		entityManager.setAssetManager(assetManager);
 		console.print("World data and game assets loaded.");
 		
 		chunkManager = new ChunkManager(entityManager.getAllEntities(), planeManager);
-		chunkManager.groupAllEntites();
+		if (!shouldGenerate) {
+			chunkManager.groupAllEntites();
+		}
 		soundManager.setChunkManager(chunkManager);
 		chatManager.setChunkManager(chunkManager);
 		
 		lootTableManager = new LootTableManager(entityManager, console, assetManager);
 
 		healthManager = new HealthManager(entityManager, console, lootTableManager);
+		entityManager.setHealthManager(healthManager);
 		combatManager = new CombatManager(entityManager, healthManager);
 		
 		entityFinder = new EntityFinder(entityManager.getAllEntities(),chunkManager,this);
@@ -191,6 +195,7 @@ public class Server {
 			for (Entity entity : entityFinder.getAllEntitiesInRadius(Vector.newBuilder().setX(0).setY(0).build(),1,2)) {
 				entityManager.removeEntity(entity);
 			}
+			chunkManager.groupAllEntites();
 			console.print("World generation complete.");
 		}
 		

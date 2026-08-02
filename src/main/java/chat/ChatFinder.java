@@ -1,8 +1,8 @@
 package chat;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import entity.ChunkManager;
@@ -15,11 +15,11 @@ import util.CoordinateConverter;
 import util.VectorMath;
 
 public class ChatFinder {
-	private HashMap<Integer, Entity> entities;
+	private Map<Integer, Entity> entities;
 	private ArrayList<ChatMessage> chats;
 	private ChunkManager chunkManager;
 	
-	public ChatFinder(HashMap<Integer, Entity> allEntities, ArrayList<ChatMessage> allChats, ChunkManager chunkManager) {
+	public ChatFinder(Map<Integer, Entity> allEntities, ArrayList<ChatMessage> allChats, ChunkManager chunkManager) {
 		chats = allChats;
 		this.entities = allEntities;
 		this.chunkManager = chunkManager;
@@ -27,7 +27,7 @@ public class ChatFinder {
 	
 	public ArrayList<ChatMessage> getAllChatsInRadius(Vector start, int mapId, double radius) {
 		
-		HashMap<Coordinate,Chunk> chunkMap = chunkManager.getPlaneChunks(mapId);
+		Map<Coordinate,Chunk> chunkMap = chunkManager.getPlaneChunks(mapId);
 		Coordinate chunkCoordinate = CoordinateConverter.toChunkCoordinates(start);
 		
 		int radiusInChunks = (int) (Math.round(radius/CoordinateConverter.CHUNK_SIZE) + 1);
@@ -82,7 +82,7 @@ public class ChatFinder {
 
 	public void DEBUG_METHOD() {
 		System.out.println("Start");
-		HashMap<Integer, HashMap<Coordinate, Chunk>> chunks = chunkManager.getChunks();
+		Map<Integer, ? extends Map<Coordinate, Chunk>> chunks = chunkManager.getChunks();
 		
 		System.out.println("has: "+chunks.containsKey(1));
 		if (chunks.containsKey(1)) {
@@ -101,9 +101,9 @@ public class ChatFinder {
 	}
 	
 	public void clearAllChats() {
-	    HashMap<Integer, HashMap<Coordinate, Chunk>> allChunks = chunkManager.getChunks();
+	    Map<Integer, ? extends Map<Coordinate, Chunk>> allChunks = chunkManager.getChunks();
 
-	    for (HashMap<Coordinate, Chunk> planeChunks : allChunks.values()) {
+	    for (Map<Coordinate, Chunk> planeChunks : allChunks.values()) {
 	        for (Chunk chunk : planeChunks.values()) {
 	            chunk.getChatsList().clear();
 	        }

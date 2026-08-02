@@ -73,29 +73,15 @@ public class PacketMaker {
 				}
 				
 				if (player.getState() != State.DISCONNECTED) {
-					// Only load and initialize player data once on first connection
 					if (player.data == null) {
 						player.data = serverLoader.getPlayerData(player.getUsername());
-						boolean isNewPlayer = player.data.getEntityId() == 0;
-						
-						// If player data was loaded and has a valid entity ID, check if entity still exists
-						if (!isNewPlayer && entityManager.getEntity(player.data.getEntityId()) == null) {
-							// Entity doesn't exist but player data exists - recreate the entity
-							// This handles the case where entities were cleared but player data persists
-							Entity newEntity = entityManager.makeNewEntity("human");
-							player.data = player.data.toBuilder()
-								.setEntityId(newEntity.getId())
-								.build();
-						} else if (isNewPlayer) {
-							// This is a new player, create their first character
+						if (player.data.getEntityId() == 0
+								|| entityManager.getEntity(player.data.getEntityId()) == null) {
 							Entity newEntity = entityManager.makeNewEntity("human");
 							player.data = player.data.toBuilder()
 								.setEntityId(newEntity.getId())
 								.build();
 						}
-						// If player data exists and entity exists, just reuse it (player is reconnecting)
-						
-						// Save player data after initialization
 						if (serverSaver != null) {
 							serverSaver.savePlayer(player);
 						}
