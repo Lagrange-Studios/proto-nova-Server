@@ -124,9 +124,9 @@ public class Fungus extends TagClass {
 					for (Entity foundEntity : tagHandler.getEntityFinder().getAllEntitiesInRadius(newPosition, entity.getMap(), .99)) {
 						if (!foundEntity.getIsItem() && foundEntity.getId() != entity.getId()) {
 							
-							/*if (foundEntity.getTagsList().contains("plant"))
+							if (foundEntity.getTagsList().contains("plant"))
 								tagHandler.getCombatManager().attemptToDamage(entity,foundEntity);
-							*/
+							
 							open = false;
 							break;
 						}
@@ -164,7 +164,7 @@ public class Fungus extends TagClass {
 					
 					tagHandler.updateEntity(newMonster);
 					
-					System.out.println("[Fungus] new monster at: "+newMonster.getPosition().getX()+","+newMonster.getPosition().getY());
+					//System.out.println("[Fungus] new monster at: "+newMonster.getPosition().getX()+","+newMonster.getPosition().getY());
 				}
 				entity = entity.toBuilder()
 						.setName("fortifeid fungus vein")
