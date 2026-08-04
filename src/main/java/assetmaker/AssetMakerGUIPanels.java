@@ -31,7 +31,7 @@ import javax.swing.SwingConstants;
 class AssetMakerGUIPanels {
 
     static final String[] DAMAGE_KEYS = {
-            "Physical", "Suffocation", "Fire", "Poison", "DNA", "Body damage", "Bleeding"
+            "Brute", "Asphyxiation", "Burn", "Toxin", "Genetic", "Structural", "Bleeding"
     };
 
     private final AssetMakerGUI gui;
@@ -157,10 +157,10 @@ class AssetMakerGUIPanels {
         root.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
         JPanel health = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        health.add(new JLabel("Damage needed to die:"));
+        health.add(new JLabel("Max health (damage needed to die):"));
         health.add(gui.maxHealthSpinner);
         health.add(Box.createHorizontalStrut(12));
-        health.add(new JLabel("Damage needed to collapse:"));
+        health.add(new JLabel("Critical health (damage needed to collapse):"));
         health.add(gui.critHealthSpinner);
         root.add(health);
 
@@ -171,11 +171,11 @@ class AssetMakerGUIPanels {
         root.add(light);
 
         root.add(Box.createVerticalStrut(8));
-        root.add(makeDamageTable("Damage it already has (usually all zero)", gui.dmgValues));
+        root.add(makeDamageTable("Damage (current damage, usually all zero)", gui.dmgValues));
         root.add(Box.createVerticalStrut(8));
-        root.add(makeDamageTable("Damage weakness (1 = normal, 2 = double)", gui.dmgMultValues));
+        root.add(makeDamageTable("Damage multiplier (1 = normal, 2 = double)", gui.dmgMultValues));
         root.add(Box.createVerticalStrut(8));
-        root.add(makeDamageTable("Damage it deals when it hits", gui.hitDmgValues));
+        root.add(makeDamageTable("Hit damage (damage dealt when it hits)", gui.hitDmgValues));
         root.add(Box.createVerticalStrut(8));
         JPanel cooldownRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         cooldownRow.add(new JLabel("Hit Cooldown (ms):"));

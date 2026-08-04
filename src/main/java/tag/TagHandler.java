@@ -126,15 +126,14 @@ public class TagHandler {
 		int tickNumber = (int) (server.globalTicks % server.TPS);
 		
 		// get a total count of entities we are updating this tick to split them into threads
-		int tickEntitiesCount = tickMap.size();
+		Integer[] tickKeyArray = tickMap.keySet().toArray(new Integer[0]);
+		int tickEntitiesCount = tickKeyArray.length;
 		// get all open threads
 		int idleThreads = Math.max(1, server.getOpenThreads());
 		
 		// calcualte how many entities we will put in each thread
 		int entitiesPerThread = (int)Math.ceil((double)tickEntitiesCount / idleThreads);
 		entitiesPerThread = Math.max(1, entitiesPerThread);
-		
-		Integer[] tickKeyArray = tickMap.keySet().toArray(new Integer[0]);
 		
 		for (int i=0;i<tickEntitiesCount;i+=entitiesPerThread) {
 			threads.add(tickEntities(tickKeyArray,i,i+entitiesPerThread,tickEntitiesCount));
@@ -151,12 +150,11 @@ public class TagHandler {
 		threads.clear();
 		
 		// repeat same process for this tick second tick updates
-		int secondTickEntitiesCount = secondTickMap.get(tickNumber).size();
+		Integer[] secondTickKeyArray = secondTickMap.get(tickNumber).keySet().toArray(new Integer[0]);
+		int secondTickEntitiesCount = secondTickKeyArray.length;
 		
 		int secondEntitiesPerThread = (int)Math.ceil((double)secondTickEntitiesCount / idleThreads);
 		secondEntitiesPerThread = Math.max(1, secondEntitiesPerThread);
-		
-		Integer[] secondTickKeyArray = secondTickMap.get(tickNumber).keySet().toArray(new Integer[0]);
 		
 		for (int i=0;i<secondTickEntitiesCount;i+=secondEntitiesPerThread) {
 			threads.add(secondTickEntities(secondTickKeyArray,i,i+secondEntitiesPerThread,secondTickEntitiesCount,tickNumber));
