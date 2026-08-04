@@ -40,8 +40,6 @@ public class CombatManager {
 
 		if (attacker.getReach() >= VectorMath.distance(attacker.getPosition(), defender.getPosition())
 				&& isAttackReady(attacker.getId())) {
-			//System.out.println("attacker: "+attacker.getName()+" health: "+Health.getDamage(attacker));
-			//System.out.println("defender: "+defender.getName()+" health: "+Health.getDamage(defender));
 			
 			startEntityHitCooldown(attacker);
 			damage(attacker, defender);
