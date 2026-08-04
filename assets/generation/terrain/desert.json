@@ -5,5 +5,8 @@
     "sand":-0.625,
 	"grass":-0.75,
     "water":-1
+  },
+  "movementDifficulty": {
+    "water":2
   }
 }

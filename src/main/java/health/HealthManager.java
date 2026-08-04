@@ -20,10 +20,7 @@ public class HealthManager {
 		this.lootTableManager = lootTableManager;
 	}
 
-	/**
-	 * Applies health-derived state without performing world side effects. This is
-	 * safe to call before a new entity has been inserted into the manager.
-	 */
+
 	public Entity prepareEntityState(Entity entity) {
 		if (entity == null) return null;
 
@@ -45,7 +42,6 @@ public class HealthManager {
 				.build();
 	}
 
-	/** Runs a complete health check and stores every resulting state change. */
 	public Entity entityCheck(Entity entity) {
 		if (entity == null) return null;
 		Entity stored = entityManager.getEntity(entity.getId());
@@ -78,6 +74,10 @@ public class HealthManager {
 	public boolean checkCrit(Entity entity) {
 		return usesHealthSystem(entity)
 				&& entity.getCritHealth() <= Health.getDamage(entity);
+	}
+
+	public boolean canPerformActions(Entity entity) {
+		return entity != null && entity.getAlive() && !checkCrit(entity);
 	}
 
 	public Entity changeDeathState(Entity entity, boolean alive) {

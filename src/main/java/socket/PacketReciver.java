@@ -9,12 +9,14 @@ import entity.EntityManager;
 import health.HealthManager;
 import main.Console;
 import main.Server;
+import plane.PlaneManager;
 import protonova.protobuf.ActionProto.Action;
 import protonova.protobuf.ActionProto.ActionType;
 import protonova.protobuf.ClientToServerPacketProto.ClientToServerPacket;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.VectorProto.Vector;
 import simulation.EntitySimulation;
+import simulation.TileMovement;
 import sound.SoundManager;
 import util.VectorMath;
 import character.CharacterAppearanceCodec;
@@ -28,10 +30,11 @@ public class PacketReciver {
 	private ActionHandler actionHandler;
 	private EntityFinder entityFinder;
 	private HealthManager healthManager;
+	private PlaneManager planeManager;
 	private final double reconcileCoefficient = 5; // this is very tight could cuase rubber banding in the future
 	private Server server;
 	
-	public PacketReciver(EntityManager entityManager, SoundManager soundManager, ChatManager chatManager, Console console, ActionHandler actionHandler, EntityFinder entityFinder, HealthManager healthManager, Server server) {
+	public PacketReciver(EntityManager entityManager, SoundManager soundManager, ChatManager chatManager, Console console, ActionHandler actionHandler, EntityFinder entityFinder, HealthManager healthManager, PlaneManager planeManager, Server server) {
 		this.entityManager = entityManager;
 		this.soundManager = soundManager;
 		this.chatManager = chatManager;
@@ -39,6 +42,7 @@ public class PacketReciver {
 		this.actionHandler = actionHandler;
 		this.entityFinder = entityFinder;
 		this.healthManager = healthManager;
+		this.planeManager = planeManager;
 		this.server = server;
 	}
 	
@@ -46,17 +50,18 @@ public class PacketReciver {
 		
 		Entity clientEntity = packet.getUpdatedEntity();
 		Entity serverEntity = entityManager.getEntity(player);
+		float speedMultiplier = TileMovement.getSpeedMultiplier(planeManager.getTileAt(serverEntity));
 		
 		serverEntity = serverEntity.toBuilder()
 				.setSelectedSlot(clientEntity.getSelectedSlot())
 				.build();
 		serverEntity = applyCharacterAppearance(player, serverEntity, clientEntity);
 		
-		if (!healthManager.checkCrit(serverEntity)) {
+		if (healthManager.canPerformActions(serverEntity)) {
 			for (Action action : packet.getActionsList()) {
 				
 				if (action.getActionType() != ActionType.Interact) {
-					serverEntity = EntitySimulation.simulateMovement(serverEntity, action);
+					serverEntity = EntitySimulation.simulateMovement(serverEntity, action, speedMultiplier);
 				}
 				else {
 					// so we need the velocity changes persisted first to prevent the re-fetch from getting stale data.
@@ -82,13 +87,13 @@ public class PacketReciver {
 			chatManager.addChatToQueue(packet.getChatMessage(i));
 		}
 		
-		serverEntity = entityManager.simulateVelocity(serverEntity, server.CLIENT_TPS);
+		serverEntity = entityManager.simulateVelocity(serverEntity, server.CLIENT_TPS, speedMultiplier);
 		entityManager.updateEntity(serverEntity);
 		
 		healthManager.entityCheck(serverEntity);
 		
 		
-		if (VectorMath.distance(clientEntity.getPosition(), serverEntity.getPosition()) >= (serverEntity.getSpeed()/server.CLIENT_TPS)*reconcileCoefficient) {
+		if (VectorMath.distance(clientEntity.getPosition(), serverEntity.getPosition()) >= (serverEntity.getSpeed()*speedMultiplier/server.CLIENT_TPS)*reconcileCoefficient) {
 			player.shouldReconcile = true;
 			console.print("WARNING: Player "+player.getUsername()+" rubberbanded");
 			

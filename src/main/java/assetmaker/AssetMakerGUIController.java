@@ -133,6 +133,7 @@ class AssetMakerGUIController {
         gui.speedField.setText("0");
         gui.maxSpeedField.setText("0");
         gui.reachField.setText("1.5");
+        gui.renderPrioritySpinner.setValue(0);
         gui.sizeXField.setText("1");
         gui.sizeYField.setText("1");
         gui.velXField.setText("0");
@@ -433,10 +434,11 @@ class AssetMakerGUIController {
             gui.displayTextureField.setText("");
         }
         if (entity.hasHexColor()) {
-            gui.hexColorField.setText(entity.getHexColor());
+        gui.hexColorField.setText(entity.getHexColor());
         } else {
             gui.hexColorField.setText("");
         }
+        gui.renderPrioritySpinner.setValue(entity.getRenderPriority());
 
         // ===== Movement =====
         gui.posXField.setText(fmt(entity.getPosition().getX()));
@@ -687,6 +689,7 @@ class AssetMakerGUIController {
 
         // 4. Tags and display fields.
         builder.clearTags().addAllTags(parseTags());
+        builder.setRenderPriority((Integer) gui.renderPrioritySpinner.getValue());
         setOptionalText(builder, gui.displayTextureField.getText(), true);
         setOptionalText(builder, gui.hexColorField.getText(), false);
 

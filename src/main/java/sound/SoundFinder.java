@@ -39,6 +39,9 @@ public class SoundFinder {
 				.build();*/
 		
 		ArrayList<Audio> foundSounds = new ArrayList<Audio>();
+		for (Audio sound : sounds) {
+			if (sound.getMap() == mapId && !sound.hasPosition() && !sound.hasEntityID()) foundSounds.add(sound);
+		}
 		
 		for (int x=-radiusInChunks;x<radiusInChunks;x++) {
 			for (int y=-radiusInChunks;y<radiusInChunks;y++) {
@@ -55,10 +58,14 @@ public class SoundFinder {
 						Audio selectedSound = chunkSounds.get(i);
 						Vector position;
 						
-						if (selectedSound.getPosition() == null) {
-							position = entities.get(selectedSound.getEntityID()).getPosition();
-						} else {
+						if (selectedSound.hasPosition()) {
 							position = selectedSound.getPosition();
+						} else if (selectedSound.hasEntityID()) {
+							Entity source = entities.get(selectedSound.getEntityID());
+							if (source == null) continue;
+							position = source.getPosition();
+						} else {
+							continue;
 						}
 						
 						

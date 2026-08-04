@@ -1,8 +1,9 @@
 package sound;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicLong;
 
 import entity.ChunkManager;
 import file.ServerLoader;
@@ -10,97 +11,56 @@ import main.Console;
 import main.Server;
 import protonova.protobuf.AudioProto.Audio;
 import protonova.protobuf.AudioProto.AudioType;
-import protonova.protobuf.EntityProto.Direction;
 import protonova.protobuf.EntityProto.Entity;
-import protonova.protobuf.VectorProto.Vector;
-import socket.Player;
-import util.Id;
 
 public class SoundManager {
 
-	private ArrayList<Audio> SoundQueue;
-	private ArrayList<Audio> Sounds;
-	private HashMap<Long, Long> soundCreationTime;
-	private HashMap<Integer, Long> playerMovementState;
-	private ServerLoader serverLoader;
+	private final ConcurrentLinkedQueue<Audio> soundQueue = new ConcurrentLinkedQueue<>();
+	private final ArrayList<Audio> sounds = new ArrayList<>();
+	private final AtomicLong nextSoundId = new AtomicLong(1);
+	private final Console console;
 	private ChunkManager chunkManager;
-	private Console console;
-	private Server server;
-	private long SoundID = 0;
-	private final long SOUND_LIFETIME_MS = 20000; // 20 seconds in milliseconds
-	private final long WALKING_SOUND_COOLDOWN_MS = 500; // 500ms cooldown in milliseconds
-	
-	public SoundManager(ServerLoader serverLoader,Console console, Server server) {
-		this.serverLoader = serverLoader;
-		this.server = server;
-		SoundQueue = new ArrayList<Audio>();
-		Sounds = new ArrayList<Audio>();
-		soundCreationTime = new HashMap<>();
-		playerMovementState = new HashMap<>();
+
+	public SoundManager(ServerLoader serverLoader, Console console, Server server) {
 		this.console = console;
 	}
-	
+
 	public void addSoundToQueue(Audio sound) {
-		sound = sound.toBuilder().setAudioID(SoundID).build();
-		SoundID++;
-		SoundQueue.add(sound);
+		if (sound == null || sound.getName().trim().isEmpty()) return;
+		soundQueue.offer(sound.toBuilder()
+				.setVolume(Math.max(0, Math.min(100, sound.getVolume())))
+				.build());
 	}
-	
-	public void processPlayerMovement(Map<Integer, Entity> players) {
-		// Player movement sounds are now created and sent by clients
-		// This method is kept for backward compatibility but is no longer used for walking sounds
+
+	public void emit(Audio sound) {
+		addSoundToQueue(sound);
 	}
-	
+
+	public void processPlayerMovement(Map<Integer, Entity> players) {}
+
 	public void processSoundMessagesToSend() {
-		removeAllSoundsFromChuncks();
-		for (Audio message : SoundQueue) {
-			makeNewSound(message);
-		}
-		SoundQueue.clear();
-		
-		cleanupOldSounds();
-	}
-	
-	private Audio makeNewSound(Audio sound) {
-		
-		Sounds.add(sound);
-		soundCreationTime.put(sound.getAudioID(), System.currentTimeMillis());
-		
-		if (chunkManager != null) {
-			chunkManager.addSound(sound);
-		}
-		else {
-			console.print("WARNING: created Sound without adding it to the chunk manager");
-		}
-		
-		return sound;
-		
-	}
-	
-	private void cleanupOldSounds() {
-		long currentTime = System.currentTimeMillis();
-		ArrayList<Long> keysToRemove = new ArrayList<>();
-		
-		for (Long soundID : soundCreationTime.keySet()) {
-			if (currentTime - soundCreationTime.get(soundID) > SOUND_LIFETIME_MS) {
-				keysToRemove.add(soundID);
-			}
-		}
-		
-		for (Long soundID : keysToRemove) {
-			soundCreationTime.remove(soundID);
-			Sounds.removeIf(sound -> sound.getAudioID() == soundID);
-		}
-	}
-	
-	public void removeAllSoundsFromChuncks() {
+		if (chunkManager == null) return;
 		chunkManager.removeAllSounds();
+		sounds.clear();
+		Audio queued;
+		while ((queued = soundQueue.poll()) != null) {
+			Audio sound = queued.toBuilder().setAudioID(nextSoundId.getAndIncrement()).build();
+			if (!sound.hasPosition() && !sound.hasEntityID()
+					&& (sound.getAudioType() == AudioType.MUSIC || sound.getStop())) {
+				sounds.add(sound);
+			} else if (chunkManager.addSound(sound)) sounds.add(sound);
+			else console.print("WARNING: rejected sound without a valid position: " + sound.getName());
+		}
 	}
-	
+
+	public void removeAllSoundsFromChuncks() {
+		if (chunkManager != null) chunkManager.removeAllSounds();
+	}
+
 	public ArrayList<Audio> getAllSounds() {
-		return Sounds;
+		return sounds;
 	}
-	
+
 	public void setChunkManager(ChunkManager chunkManager) {
 		this.chunkManager = chunkManager;
 	}

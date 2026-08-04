@@ -328,10 +328,14 @@ public class EntityManager {
 	 * @return entity with modified position based on velocity
 	 */
 	public Entity simulateVelocity(Entity entity, int tps) {
+		return simulateVelocity(entity, tps, 1.0f);
+	}
+
+	public Entity simulateVelocity(Entity entity, int tps, float speedMultiplier) {
 		
 		ArrayList<Entity> closeEntities = entityFinder.getAllEntitiesInRadis(entity, 10);
 		
-		Entity entityXAxis = checkCollision(EntitySimulation.simulateVelocityXAxis(entity,tps),entity,closeEntities);
+		Entity entityXAxis = checkCollision(EntitySimulation.simulateVelocityXAxis(entity,tps,speedMultiplier),entity,closeEntities);
 		
 		// check if we actualy did anything
 		if (entityXAxis.getPosition().equals(entity.getPosition())) {
@@ -347,7 +351,7 @@ public class EntityManager {
 		}
 		else entity = entityXAxis;
 		
-		Entity entityYAxis = checkCollision(EntitySimulation.simulateVelocityYAxis(entity,tps),entity,closeEntities);
+		Entity entityYAxis = checkCollision(EntitySimulation.simulateVelocityYAxis(entity,tps,speedMultiplier),entity,closeEntities);
 		
 		// check if we actualy did anything
 		if (entityYAxis.getPosition().equals(entity.getPosition())) {

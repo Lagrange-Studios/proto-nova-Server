@@ -76,16 +76,21 @@ public class ChunkManager {
 		addEntityToChunk(getPlaneChunks(entity),CoordinateConverter.toChunkCoordinates(entity.getPosition()),entity);
 	}
 	
-	public void addSound(Audio audio) {
+	public boolean addSound(Audio audio) {
 		Vector position;
-		
-		if (audio.getPosition() == null) {
-			position = entities.get(audio.getEntityID()).getPosition();
-		} else {
+
+		if (audio.hasPosition()) {
 			position = audio.getPosition();
+		} else if (audio.hasEntityID()) {
+			Entity source = entities.get(audio.getEntityID());
+			if (source == null) return false;
+			position = source.getPosition();
+		} else {
+			return false;
 		}
-		
+
 		addSoundToChunk(getPlaneChunks(audio.getMap()),CoordinateConverter.toChunkCoordinates(position),audio);
+		return true;
 	}
 	
 	public void addChatMessage(ChatMessage message) {

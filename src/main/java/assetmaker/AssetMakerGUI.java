@@ -77,6 +77,8 @@ public class AssetMakerGUI {
     final JTextField tagsField = new JTextField();
     final JTextField displayTextureField = new JTextField();
     final JTextField hexColorField = new JTextField();
+    final JSpinner renderPrioritySpinner = new JSpinner(
+            new SpinnerNumberModel(0, Integer.MIN_VALUE, Integer.MAX_VALUE, 1));
 
     // ===== Movement controls =====
     final JTextField posXField = new JTextField();
@@ -334,6 +336,7 @@ public class AssetMakerGUI {
         displayTextureField.setToolTipText("The picture name. Example: red apple");
         tagsField.setToolTipText("Behavior words separated by commas. Example: plant, harvestable");
         hexColorField.setToolTipText("Optional color. Example: #FF0000 is red.");
+        renderPrioritySpinner.setToolTipText("Higher numbers draw on top of entities with lower numbers.");
         posXField.setToolTipText("How far left or right it starts. 0 is the middle.");
         posYField.setToolTipText("How far up or down it starts. 0 is the middle.");
         sizeXField.setToolTipText("Width in tiles. 1 means one tile wide.");
@@ -381,7 +384,7 @@ public class AssetMakerGUI {
         for (JSpinner spinner : dmgMultValues) spinners.add(spinner);
         for (JSpinner spinner : hitDmgValues) spinners.add(spinner);
         JSpinner[] otherSpinners = {
-                hitCooldownSpinner, maxHealthSpinner, critHealthSpinner, amountSpinner, internalSpaceSpinner,
+                renderPrioritySpinner, hitCooldownSpinner, maxHealthSpinner, critHealthSpinner, amountSpinner, internalSpaceSpinner,
                 heartBloodSpinner, heartMaxBloodSpinner, heartCirculationSpinner, heartOxygenUseSpinner,
                 lungsOxygenSpinner, lungsOxygenUseSpinner, liverDetoxificationSpinner, liverOxygenUseSpinner,
                 brainOxygenUseSpinner, stomachCapacitySpinner, stomachAbsorptionSpinner, stomachOxygenUseSpinner,

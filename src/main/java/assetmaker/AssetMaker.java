@@ -108,6 +108,7 @@ public class AssetMaker {
                 .setCritHealth(50)
                 .setReach(1.5)
                 .setSelectedSlot("leftHand")
+                .setRenderPriority(0)
                 .setDamage(damage)
                 .setHitDamage(hitDamageStruc)
                 .build();

@@ -250,11 +250,14 @@ class AssetMakerGUIPanels {
         c.weightx = 0; addLabel(root, c, "Optional color:", 0, 3);
         c.weightx = 1; c.gridx = 1; root.add(gui.hexColorField, c);
 
+        c.weightx = 0; addLabel(root, c, "Render priority:", 0, 4);
+        c.weightx = 1; c.gridx = 1; root.add(gui.renderPrioritySpinner, c);
+
         JLabel colorHelp = new JLabel("<html>Optional tint color in <code>#RRGGBB</code> or <code>#AARRGGBB</code> " +
-                "format. Used to recolor the sprite.</html>");
+                "format. Used to recolor the sprite. Higher render priority values draw on top.</html>");
         colorHelp.setFont(colorHelp.getFont().deriveFont(Font.PLAIN, 11f));
         colorHelp.setForeground(new Color(110, 110, 110));
-        c.gridx = 0; c.gridy = 4; c.gridwidth = 2; c.weightx = 1;
+        c.gridx = 0; c.gridy = 5; c.gridwidth = 2; c.weightx = 1;
         root.add(colorHelp, c);
 
         c.weighty = 1;
