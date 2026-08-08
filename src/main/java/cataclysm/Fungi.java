@@ -67,7 +67,7 @@ public class Fungi extends CataclysmClass {
 			System.out.println("[Fungi] current ratio: "+currentRatio);
 			
 			if (currentRatio >= FUNGUS_WIN_PERCENTAGE) return getName();
-			//else if (currentRatio <= FUNGUS_LOOSE_PERCENTAGE) return "players";
+			else if (currentRatio <= FUNGUS_LOOSE_PERCENTAGE) return "players";
 		}
 		
 		return null;
