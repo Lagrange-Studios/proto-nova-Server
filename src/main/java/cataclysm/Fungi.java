@@ -28,8 +28,8 @@ public class Fungi extends CataclysmClass {
 			GamemodeManager gamemodeManager, AssetManager assetManager, Cataclysm cataclysm, TagHandler tagHandler, String[] arguments) {
 		super(console, entityManager, entityFinder, planeManager, gamemodeManager, assetManager, cataclysm, tagHandler, arguments);
 		
-		introStartTime = 60;
-		endStartTime = 120;
+		introStartTime = 300;
+		endStartTime = 900;
 		
 		if (!gamemode.has("spores")) gamemode.put("spores", 0);
 	}
