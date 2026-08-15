@@ -1,0 +1,12 @@
+{
+  "frequency": 0.025,
+  "tiles": {
+    "stone":0.7,
+    "dirt":-0.35,
+    "sand":-0.5,
+    "water":-1
+  },
+  "movementDifficulty": {
+    "water":2
+  }
+}
