@@ -374,7 +374,7 @@ public class Server {
 		tagHandler.tick();
 		entityManager.tick();
 		
-		//gamemodeManager.tickGamemode();
+		gamemodeManager.tickGamemode();
 		
 		console.addTick();
 		globalTicks++;
