@@ -14,7 +14,7 @@ import util.VectorMath;
 
 public class Fungus extends TagClass {
 
-	private final int chanceOfGrowthPerSecond = 15; // one in ten chance
+	private final int chanceOfGrowthPerSecond = 10; // one in ten chance
 	private final int evolveChancePerSecond = chanceOfGrowthPerSecond*2; // one in ten chance
 	private final int fungusMonsterChance = 20; // 1 in x amount 
 	private final int SEARCH_RANGE = 50;
@@ -47,10 +47,14 @@ public class Fungus extends TagClass {
 	 * name: if name is fortified fungus vein then none of these changes will occur
 	 */
 	
+	public boolean hasSecondTick() {
+		return true;
+	}
+	
 	public void secondTick(TagHandler tagHandler, Entity entity) {
 		// check to see if parent is still alive
 		if (!entity.containsInventorySlots("parentSpore")) return;
-
+		
 		Entity parentSpore = tagHandler.getEntityManager().getEntity(entity.getInventorySlotsMap().get("parentSpore"));
 		if (parentSpore != null  && parentSpore.getName().equals("fungus spore")) {
 			
@@ -160,7 +164,7 @@ public class Fungus extends TagClass {
 					
 					tagHandler.updateEntity(newMonster);
 					
-					DebugPrinter.print(entity.getPosition());
+					//System.out.println("[Fungus] new monster at: "+newMonster.getPosition().getX()+","+newMonster.getPosition().getY());
 				}
 				entity = entity.toBuilder()
 						.setName("fortifeid fungus vein")

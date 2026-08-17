@@ -1,6 +1,7 @@
 package health;
 
 import java.util.concurrent.Executors;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -20,6 +21,7 @@ public class CombatManager {
 	private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4,
 			ResourceDiagnostics.threadFactory("Combat-Scheduler"));
 	private HealthManager healthManager;
+	private final ConcurrentHashMap<Integer, Long> attackCooldownDeadlines = new ConcurrentHashMap<>();
 	
 	public CombatManager(EntityManager entityManager, HealthManager healthManager) {
 		this.entityManager = entityManager;
@@ -30,9 +32,14 @@ public class CombatManager {
 		if (!entityManager.entityExist(attacker) || !entityManager.entityExist(defender)) {
 			return false;
 		}
-		if (attacker.getReach() >= VectorMath.distance(attacker.getPosition(), defender.getPosition()) && attacker.getHitDamage().getCanAttack()) {
-			//System.out.println("attacker: "+attacker.getName()+" health: "+Health.getDamage(attacker));
-			//System.out.println("defender: "+defender.getName()+" health: "+Health.getDamage(defender));
+
+		attacker = entityManager.getEntity(attacker.getId());
+		defender = entityManager.getEntity(defender.getId());
+		if (attacker == null || defender == null) return false;
+		if (!canReceiveAttack(defender)) return false;
+
+		if (attacker.getReach() >= VectorMath.distance(attacker.getPosition(), defender.getPosition())
+				&& isAttackReady(attacker.getId())) {
 			
 			startEntityHitCooldown(attacker);
 			damage(attacker, defender);
@@ -42,26 +49,46 @@ public class CombatManager {
 			
 		}
 	}
+
+	/** Items are protected from attacks unless their asset explicitly opts in. */
+	public static boolean canReceiveAttack(Entity entity) {
+		return entity != null && (!entity.getIsItem() || entity.getCanDestroy());
+	}
 	
 	public void startEntityHitCooldown(Entity entity) {
+		int cooldownTime = getHitCooldown(entity);
+		long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(cooldownTime);
+		attackCooldownDeadlines.put(entity.getId(), deadline);
+
 		Entity updated = entity.toBuilder().setHitDamage(
 				entity.getHitDamage().toBuilder()
 				.setCanAttack(false)).build();
 		entityManager.updateEntity(updated);
-		startTimedCooldown(entity);
+		startTimedCooldown(entity.getId(), cooldownTime, deadline);
 	}
 	
-	private void startTimedCooldown(Entity entity) {
-		
-		int cooldownTime =  entity.getHitDamage().getHitCooldown();
-		
+	private int getHitCooldown(Entity entity) {
+		int cooldownTime = entity.getHitDamage().getHitCooldown();
 		if (entity.getInventorySlotsMap().containsKey(entity.getSelectedSlot())) {
-			cooldownTime = entity.getHitDamage().getHitCooldown();
+			int heldItemEntityId = entity.getInventorySlotsMap().get(entity.getSelectedSlot());
+			Entity heldItem = entityManager.getEntity(heldItemEntityId);
+			if (heldItem != null) {
+				cooldownTime = heldItem.getHitDamage().getHitCooldown();
+			}
 		}
+		return Math.max(0, cooldownTime);
+	}
+
+	private boolean isAttackReady(int entityId) {
+		Long deadline = attackCooldownDeadlines.get(entityId);
+		return deadline == null || System.nanoTime() >= deadline;
+	}
+
+	private void startTimedCooldown(int entityId, int cooldownTime, long deadline) {
 		
 		TimedTask task = new TimedTask(
 	            () -> {
-	            	resetCooldown(entity);
+	             	resetCooldown(entityId, deadline);
 	            },
 	            cooldownTime,
 	            TimeUnit.MILLISECONDS,
@@ -69,8 +96,13 @@ public class CombatManager {
 	    );
 	}
 	
-	private void resetCooldown(Entity entity) {
-		entity = entityManager.getEntity(entity.getId());
+	private void resetCooldown(int entityId, long deadline) {
+		if (!attackCooldownDeadlines.remove(entityId, deadline)) return;
+
+		Entity entity = entityManager.getEntity(entityId);
+		if (entity == null) {
+			return;
+		}
 		Entity updated = entity.toBuilder().setHitDamage(
 				entity.getHitDamage().toBuilder()
 				.setCanAttack(true)).build();

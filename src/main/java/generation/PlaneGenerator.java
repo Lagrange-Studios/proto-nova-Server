@@ -60,6 +60,7 @@ public class PlaneGenerator {
 		
 		JSONObject generationValues = new JSONObject(FileReader.readJSONFile("assets/generation/terrain/"+generationType+".json"));
 		JSONObject tileValues = generationValues.getJSONObject("tiles");
+		JSONObject movementDifficulties = generationValues.optJSONObject("movementDifficulty");
 		
 		String[] unsortedNames = JSONObject.getNames(tileValues);
 		String[] sortedNames = new String[unsortedNames.length];
@@ -105,6 +106,7 @@ public class PlaneGenerator {
 						.setName(name)
 						.setCoordinate(coordinate)
 						.setVariant((int) (Math.round(Math.random()*3)+1))
+						.setMovementDifficulty(movementDifficulties == null ? 1.0f : movementDifficulties.optFloat(name, 1.0f))
 						.build();
 				
 				plane.putTiles(CoordinateConverter.convert(coordinate), tile);

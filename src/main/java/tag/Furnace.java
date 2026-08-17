@@ -40,6 +40,10 @@ public class Furnace extends TagClass {
 	 * fuelTypeName: the type name of items that can be used for fuel
 	 */
 	
+	public boolean hasTick() {
+		return true;
+	}
+	
 	public void tick(TagHandler tagHandler, Entity entity) {
 		
 		int fuelTime = getSlot(entity, "fuelTimer", 0);
@@ -59,10 +63,6 @@ public class Furnace extends TagClass {
 			
 			tagHandler.updateEntity(builder.build());
 		}
-	}
-	
-	public void secondTick(TagHandler tagHandler, Entity entity) {
-		
 	}
 	
 	public Entity interact(TagHandler tagHandler, Entity interactingEntity, Entity thisEntity) {

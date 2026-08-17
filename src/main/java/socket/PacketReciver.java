@@ -57,7 +57,7 @@ public class PacketReciver {
 				.build();
 		serverEntity = applyCharacterAppearance(player, serverEntity, clientEntity);
 		
-		if (!healthManager.checkCrit(serverEntity)) {
+		if (healthManager.canPerformActions(serverEntity)) {
 			for (Action action : packet.getActionsList()) {
 				
 				if (action.getActionType() != ActionType.Interact) {
@@ -110,7 +110,7 @@ public class PacketReciver {
 			}
 			update = tag;
 		}
-		if (update == null) return serverEntity;
+		if (update == null) return serverEntity; // Older clients do not change the saved appearance.
 
 		ArrayList<String> preservedTags = new ArrayList<>();
 		for (String tag : serverEntity.getTagsList()) {

@@ -29,7 +29,7 @@ public class Fungi extends CataclysmClass {
 		super(console, entityManager, entityFinder, planeManager, gamemodeManager, assetManager, cataclysm, tagHandler, arguments);
 		
 		introStartTime = 300;
-		endStartTime = 1000;
+		endStartTime = 900;
 		
 		if (!gamemode.has("spores")) gamemode.put("spores", 0);
 	}
@@ -60,9 +60,11 @@ public class Fungi extends CataclysmClass {
 		
 		if (state.equals("end")) {
 			int fungusCount = tagHandler.getTagAmount("fungus");
+			System.out.println("[Fungi] fungus count: "+fungusCount);
 			int tileCount = planeManager.getTileCount(1);
 			
 			double currentRatio = (double) fungusCount/tileCount;
+			System.out.println("[Fungi] current ratio: "+currentRatio);
 			
 			if (currentRatio >= FUNGUS_WIN_PERCENTAGE) return getName();
 			else if (currentRatio <= FUNGUS_LOOSE_PERCENTAGE) return "players";
@@ -89,6 +91,8 @@ public class Fungi extends CataclysmClass {
 				.setPosition(vector)
 				.putInventorySlots("parentSpore", newSpore.getId())
 				.build();
+		
+		System.out.println("[Fungi] new spore at: "+newSpore.getPosition().getX()+","+newSpore.getPosition().getY());
 		
 		entityManager.updateEntity(newSpore);
 		return true;

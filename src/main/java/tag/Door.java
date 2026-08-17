@@ -17,14 +17,6 @@ public class Door extends TagClass {
 		return "door";
 	}
 	
-	public void tick(TagHandler tagHandler, Entity entity) {
-		
-	}
-	
-	public void secondTick(TagHandler tagHandler, Entity entity) {
-		
-	}
-	
 	public Entity interact(TagHandler tagHandler, Entity interactingEntity, Entity thisEntity) {
 		
 		int state = getSlot(thisEntity, "doorState", 0);

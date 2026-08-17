@@ -38,7 +38,12 @@ public class ActionHandler {
 	}
 
 	public Entity executeAction(Player player, Action action, Entity playerEntity) {
-		
+		Entity authoritativePlayerEntity = entityManager.getEntity(player);
+		if (authoritativePlayerEntity != null) {
+			playerEntity = authoritativePlayerEntity;
+		}
+		if (!healthManager.canPerformActions(playerEntity)) return playerEntity;
+
 		if (action.getActionType() != ActionType.Interact) return playerEntity;
 		Entity interactingEntity = entityManager.getEntity(action.getInteractingEntityId());
 		

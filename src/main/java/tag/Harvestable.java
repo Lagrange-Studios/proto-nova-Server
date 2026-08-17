@@ -17,6 +17,10 @@ public class Harvestable extends TagClass {
 	 * 
 	 */
 	
+	public boolean hasSecondTick() {
+		return true;
+	}
+	
 	public void secondTick(TagHandler tagHandler, Entity entity) {
 		
 		int harvestTimer = getSlot(entity, "harvestTimer", 60);

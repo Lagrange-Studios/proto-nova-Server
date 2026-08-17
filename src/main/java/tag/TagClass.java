@@ -12,10 +12,24 @@ public class TagClass {
 	}
 	
 	/**
+	 * @return whether the tag class has logic it wants executed for the tick method
+	 */
+	public boolean hasTick() {
+		return false;
+	}
+	
+	/**
 	 * occurs once per tick
 	 */
 	public void tick(TagHandler tagHandler, Entity entity) {
 		
+	}
+	
+	/**
+	 * @return whether the tag class has logic it wants executed for the second tick method
+	 */
+	public boolean hasSecondTick() {
+		return false;
 	}
 	
 	/**

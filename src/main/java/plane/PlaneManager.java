@@ -58,7 +58,10 @@ public class PlaneManager {
 	}
 	
 	public Tile getTileAt(Entity entity) {
-		return planes.get(entity.getMap()).getTilesMap().get(CoordinateConverter.convert(entity.getPosition()));
+		if (entity == null) return null;
+		Plane plane = planes.get(entity.getMap());
+		if (plane == null) return null;
+		return plane.getTilesMap().get(CoordinateConverter.convert(entity.getPosition()));
 	}
 	
 	public boolean planeExists(int id) {

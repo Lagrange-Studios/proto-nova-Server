@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 import javax.swing.JOptionPane;
+import javax.swing.JComboBox;
+import javax.swing.JTextField;
 
 import protonova.protobuf.DamageProto.Damage;
 import protonova.protobuf.DamageProto.DamageMultiplier;
@@ -14,7 +16,13 @@ import protonova.protobuf.EntityProto.Direction;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.ChemicalProto.Chemical;
 import protonova.protobuf.LootTableItemProto.lootTableItem;
+import protonova.protobuf.OrgansProto.CardiovascularSystem;
+import protonova.protobuf.OrgansProto.OrganAssetSlots;
+import protonova.protobuf.OrgansProto.OrganComponent;
+import protonova.protobuf.OrgansProto.OrganStatus;
+import protonova.protobuf.OrgansProto.OrganType;
 import protonova.protobuf.OrgansProto.Organs;
+import protonova.protobuf.OrgansProto.Stomach;
 import protonova.protobuf.VectorProto.Vector;
 
 /**
@@ -72,15 +80,24 @@ class AssetMakerGUIController {
     
     
     void onNewAsset() {
-        String name = JOptionPane.showInputDialog(gui.frame,
-                "Name for the new entity asset:",
-                "New Asset",
+        JTextField nameField = new JTextField(20);
+        JComboBox<String> kindField = new JComboBox<>(new String[]{
+                "Solid world object", "Item you can pick up", "Living creature", "Human body", "Organ"
+        });
+        int answer = JOptionPane.showConfirmDialog(gui.frame,
+                new Object[]{
+                        "What should your new thing be called?", nameField,
+                        "What kind of thing is it?", kindField,
+                        "You can change these choices later."
+                },
+                "Make Something New",
+                JOptionPane.OK_CANCEL_OPTION,
                 JOptionPane.PLAIN_MESSAGE);
-        if (name == null) return;
-        name = name.trim();
+        if (answer != JOptionPane.OK_OPTION) return;
+        String name = nameField.getText().trim();
         if (name.isEmpty()) {
-            JOptionPane.showMessageDialog(gui.frame, "Asset name cannot be empty.",
-                    "Invalid name", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(gui.frame, "Please give it a name, such as 'wooden chair'.",
+                    "It needs a name", JOptionPane.WARNING_MESSAGE);
             return;
         }
         if (gui.assetMaker.listAssetNames().contains(name)) {
@@ -98,7 +115,103 @@ class AssetMakerGUIController {
         refreshAssetList();
         gui.entityList.setSelectedValue(name, true);
         loadAssetIntoEditor(name);
-        setStatus("Created new asset: " + name);
+        gui.starterTypeCombo.setSelectedItem(kindField.getSelectedItem());
+        applyStarterPreset(String.valueOf(kindField.getSelectedItem()));
+        onSave(false);
+        setStatus("Made " + name + ". Follow the numbered tabs if you want to change more.");
+    }
+
+    void applyStarterPreset(String choice) {
+        gui.isItemBox.setSelected(false);
+        gui.stackableBox.setSelected(false);
+        gui.canDestroyBox.setSelected(false);
+        gui.amountSpinner.setValue(1);
+        gui.anchoredBox.setSelected(true);
+        gui.canCollideBox.setSelected(true);
+        gui.castShadowBox.setSelected(false);
+        gui.aliveBox.setSelected(false);
+        gui.speedField.setText("0");
+        gui.maxSpeedField.setText("0");
+        gui.reachField.setText("1.5");
+        gui.renderPrioritySpinner.setValue(0);
+        gui.sizeXField.setText("1");
+        gui.sizeYField.setText("1");
+        gui.velXField.setText("0");
+        gui.velYField.setText("0");
+        gui.maxHealthSpinner.setValue(100);
+        gui.critHealthSpinner.setValue(50);
+        gui.dropsABodyBox.setSelected(false);
+        gui.heartBox.setSelected(false);
+        gui.lungsBox.setSelected(false);
+        gui.liverBox.setSelected(false);
+        gui.brainBox.setSelected(false);
+        gui.stomachBox.setSelected(false);
+        gui.cardiovascularBox.setSelected(false);
+        gui.heartOrganAssetField.setText("");
+        gui.lungsOrganAssetField.setText("");
+        gui.liverOrganAssetField.setText("");
+        gui.brainOrganAssetField.setText("");
+        gui.stomachOrganAssetField.setText("");
+        for (int i = 0; i < AssetMakerGUIPanels.DAMAGE_KEYS.length; i++) {
+            gui.dmgValues[i].setValue(0.0f);
+            gui.dmgMultValues[i].setValue(1.0f);
+            gui.hitDmgValues[i].setValue(0.0f);
+        }
+
+        if ("Item you can pick up".equals(choice)) {
+            gui.isItemBox.setSelected(true);
+            gui.anchoredBox.setSelected(false);
+            gui.canCollideBox.setSelected(false);
+        } else if ("Living creature".equals(choice)) {
+            applyLivingDefaults(false);
+        } else if ("Human body".equals(choice)) {
+            applyLivingDefaults(true);
+            applyHumanBodyDefaults();
+        } else if ("Organ".equals(choice)) {
+            gui.isItemBox.setSelected(true);
+            gui.canDestroyBox.setSelected(true);
+            gui.anchoredBox.setSelected(false);
+            gui.canCollideBox.setSelected(false);
+            setStatus("Organ starting values filled in. On '7. Body & Organs', choose exactly one organ.");
+            return;
+        }
+        setStatus("Safe starting values filled in for: " + choice);
+    }
+
+    private void applyLivingDefaults(boolean human) {
+        gui.anchoredBox.setSelected(false);
+        gui.aliveBox.setSelected(true);
+        gui.speedField.setText(human ? "7.5" : "5");
+        gui.maxSpeedField.setText(human ? "7.5" : "5");
+        gui.dropsABodyBox.setSelected(true);
+        gui.selectedSlotField.setText("leftHand");
+    }
+
+    private void applyHumanBodyDefaults() {
+        gui.heartBox.setSelected(true);
+        gui.lungsBox.setSelected(true);
+        gui.liverBox.setSelected(true);
+        gui.brainBox.setSelected(true);
+        gui.stomachBox.setSelected(true);
+        gui.cardiovascularBox.setSelected(true);
+        gui.heartOrganAssetField.setText("human heart");
+        gui.lungsOrganAssetField.setText("human lungs");
+        gui.liverOrganAssetField.setText("human liver");
+        gui.brainOrganAssetField.setText("human brain");
+        gui.stomachOrganAssetField.setText("human stomach");
+        gui.heartBloodSpinner.setValue(100.0);
+        gui.heartMaxBloodSpinner.setValue(100.0);
+        gui.heartCirculationSpinner.setValue(10.0);
+        gui.lungsOxygenSpinner.setValue(10);
+        gui.liverDetoxificationSpinner.setValue(1);
+        gui.stomachCapacitySpinner.setValue(50.0);
+        gui.cardiovascularOxygenSpinner.setValue(100.0);
+        gui.cardiovascularMaxOxygenSpinner.setValue(100.0);
+        gui.cardiovascularFluidCapacitySpinner.setValue(150.0);
+        if (!gui.tagsField.getText().contains("physiology")) {
+            String tags = gui.tagsField.getText().trim();
+            gui.tagsField.setText(tags.isEmpty() ? "physiology" : tags + ", physiology");
+        }
     }
 
     void onSave(boolean saveAs) {
@@ -123,16 +236,12 @@ class AssetMakerGUIController {
             newEntity = buildEntityFromForm();
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(gui.frame,
-                    "Could not parse a numeric field: " + ex.getMessage() + "\n\n" +
-                            "Fix the highlighted field and try again.",
-                    "Parse error", JOptionPane.ERROR_MESSAGE);
+                    "One answer needs to be a number.\n\n" + ex.getMessage() + "\n\n" +
+                            "Example numbers: 0, 1, 2.5, or 100.",
+                    "Please fix one answer", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        if (saveAs && gui.currentAssetName != null && !targetName.equals(gui.currentAssetName)) {
-            
-            gui.assetMaker.deleteAsset(gui.currentAssetName);
-        }
         if (!gui.assetMaker.saveEntity(targetName, newEntity)) {
             JOptionPane.showMessageDialog(gui.frame, "Failed to save asset.",
                     "Error", JOptionPane.ERROR_MESSAGE);
@@ -210,7 +319,12 @@ class AssetMakerGUIController {
         gui.currentAssetName = name;
         gui.currentEntity = entity;
         gui.dirty = false;
-        populateForm(entity);
+        gui.updatingForm = true;
+        try {
+            populateForm(entity);
+        } finally {
+            gui.updatingForm = false;
+        }
         updateLoadedEntityLabel(entity);
         setStatus("Loaded " + name);
     }
@@ -252,6 +366,7 @@ class AssetMakerGUIController {
 
         gui.isItemBox.setSelected(false);
         gui.stackableBox.setSelected(false);
+        gui.canDestroyBox.setSelected(false);
         gui.amountSpinner.setValue(0);
         gui.inventorySlotsField.setText("");
 
@@ -262,15 +377,40 @@ class AssetMakerGUIController {
         gui.internalSpaceSpinner.setValue(0);
         gui.internalValuesField.setText("");
         gui.heartBox.setSelected(false);
-        gui.heartBloodField.setText("");
-        gui.heartMaxBloodField.setText("");
+        gui.heartBloodSpinner.setValue(100.0);
+        gui.heartMaxBloodSpinner.setValue(100.0);
+        gui.heartCirculationSpinner.setValue(10.0);
+        gui.heartOxygenUseSpinner.setValue(1.0);
+        resetStatus(gui.heartStatus);
         gui.lungsBox.setSelected(false);
-        gui.lungsOxygenSpinner.setValue(0);
+        gui.lungsOxygenSpinner.setValue(10);
+        gui.lungsOxygenUseSpinner.setValue(0.5);
+        resetStatus(gui.lungsStatus);
         gui.liverBox.setSelected(false);
-        gui.liverDetoxificationSpinner.setValue(0);
+        gui.liverDetoxificationSpinner.setValue(1);
+        gui.liverOxygenUseSpinner.setValue(1.0);
+        resetStatus(gui.liverStatus);
         gui.brainBox.setSelected(false);
+        gui.brainOxygenUseSpinner.setValue(3.0);
+        resetStatus(gui.brainStatus);
+        gui.stomachBox.setSelected(false);
+        gui.stomachCapacitySpinner.setValue(50.0);
+        gui.stomachAbsorptionSpinner.setValue(1.0);
+        gui.stomachOxygenUseSpinner.setValue(0.5);
+        resetStatus(gui.stomachStatus);
         gui.stomachChemicalsField.setText("");
+        gui.cardiovascularBox.setSelected(false);
+        gui.cardiovascularOxygenSpinner.setValue(0.0);
+        gui.cardiovascularMaxOxygenSpinner.setValue(100.0);
+        gui.cardiovascularPowerSpinner.setValue(0.0);
+        gui.cardiovascularMaxPowerSpinner.setValue(0.0);
+        gui.cardiovascularFluidCapacitySpinner.setValue(150.0);
         gui.cardiovascularChemicalsField.setText("");
+        gui.heartOrganAssetField.setText("");
+        gui.lungsOrganAssetField.setText("");
+        gui.liverOrganAssetField.setText("");
+        gui.brainOrganAssetField.setText("");
+        gui.stomachOrganAssetField.setText("");
 
         gui.loadedEntityLabel.setText(" ");
         gui.selectedSlotField.setText("");
@@ -294,10 +434,11 @@ class AssetMakerGUIController {
             gui.displayTextureField.setText("");
         }
         if (entity.hasHexColor()) {
-            gui.hexColorField.setText(entity.getHexColor());
+        gui.hexColorField.setText(entity.getHexColor());
         } else {
             gui.hexColorField.setText("");
         }
+        gui.renderPrioritySpinner.setValue(entity.getRenderPriority());
 
         // ===== Movement =====
         gui.posXField.setText(fmt(entity.getPosition().getX()));
@@ -354,6 +495,7 @@ class AssetMakerGUIController {
         // ===== Item and inventory =====
         gui.isItemBox.setSelected(entity.getIsItem());
         gui.stackableBox.setSelected(entity.getStackable());
+        gui.canDestroyBox.setSelected(entity.getCanDestroy());
         gui.amountSpinner.setValue(entity.getAmount());
 
         // ===== Loot table =====
@@ -372,18 +514,108 @@ class AssetMakerGUIController {
         gui.internalSpaceSpinner.setValue(entity.getInternalSpace());
         gui.internalValuesField.setText(formatMap(entity.getInternalMap()));
         Organs organs = entity.getOrgans();
+        OrganAssetSlots organAssets = entity.getOrganAssetSlots();
+        gui.heartOrganAssetField.setText(organAssets.getHeartAsset());
+        gui.lungsOrganAssetField.setText(organAssets.getLungsAsset());
+        gui.liverOrganAssetField.setText(organAssets.getLiverAsset());
+        gui.brainOrganAssetField.setText(organAssets.getBrainAsset());
+        gui.stomachOrganAssetField.setText(organAssets.getStomachAsset());
+		if (entity.hasOrganComponent()) {
+			OrganComponent component = entity.getOrganComponent();
+			if (component.hasHeart()) organs = organs.toBuilder().setHeart(component.getHeart()).build();
+			if (component.hasLungs()) organs = organs.toBuilder().setLungs(component.getLungs()).build();
+			if (component.hasLiver()) organs = organs.toBuilder().setLiver(component.getLiver()).build();
+			if (component.hasBrain()) organs = organs.toBuilder().setBrain(component.getBrain()).build();
+			if (component.hasStomach()) organs = organs.toBuilder().setStomach(component.getStomach()).build();
+		}
         gui.heartBox.setSelected(organs.hasHeart());
-        gui.heartBloodField.setText(organs.hasHeart() ? fmt(organs.getHeart().getBlood()) : "");
-        gui.heartMaxBloodField.setText(organs.hasHeart() ? fmt(organs.getHeart().getMaxBlood()) : "");
+        if (organs.hasHeart()) {
+            gui.heartBloodSpinner.setValue((double) organs.getHeart().getBlood());
+            gui.heartMaxBloodSpinner.setValue((double) organs.getHeart().getMaxBlood());
+            gui.heartCirculationSpinner.setValue((double) (organs.getHeart().hasCirculationPerSecond()
+                    ? organs.getHeart().getCirculationPerSecond() : organs.getHeart().getMaxBlood()));
+            gui.heartOxygenUseSpinner.setValue((double) (organs.getHeart().hasOxygenUsePerSecond()
+                    ? organs.getHeart().getOxygenUsePerSecond() : 1.0f));
+            populateStatus(gui.heartStatus, organs.getHeart().getStatus());
+        } else {
+            gui.heartBloodSpinner.setValue(100.0);
+            gui.heartMaxBloodSpinner.setValue(100.0);
+            gui.heartCirculationSpinner.setValue(10.0);
+            gui.heartOxygenUseSpinner.setValue(1.0);
+            resetStatus(gui.heartStatus);
+        }
         gui.lungsBox.setSelected(organs.hasLungs());
-        gui.lungsOxygenSpinner.setValue(organs.hasLungs() ? organs.getLungs().getOxygen() : 0);
+        if (organs.hasLungs()) {
+            gui.lungsOxygenSpinner.setValue(organs.getLungs().getOxygen());
+            gui.lungsOxygenUseSpinner.setValue((double) (organs.getLungs().hasOxygenUsePerSecond()
+                    ? organs.getLungs().getOxygenUsePerSecond() : 0.5f));
+            populateStatus(gui.lungsStatus, organs.getLungs().getStatus());
+        } else {
+            gui.lungsOxygenSpinner.setValue(10);
+            gui.lungsOxygenUseSpinner.setValue(0.5);
+            resetStatus(gui.lungsStatus);
+        }
         gui.liverBox.setSelected(organs.hasLiver());
-        gui.liverDetoxificationSpinner.setValue(organs.hasLiver() ? organs.getLiver().getDetoxification() : 0);
+        if (organs.hasLiver()) {
+            gui.liverDetoxificationSpinner.setValue(organs.getLiver().getDetoxification());
+            gui.liverOxygenUseSpinner.setValue((double) (organs.getLiver().hasOxygenUsePerSecond()
+                    ? organs.getLiver().getOxygenUsePerSecond() : 1.0f));
+            populateStatus(gui.liverStatus, organs.getLiver().getStatus());
+        } else {
+            gui.liverDetoxificationSpinner.setValue(1);
+            gui.liverOxygenUseSpinner.setValue(1.0);
+            resetStatus(gui.liverStatus);
+        }
         gui.brainBox.setSelected(organs.hasBrain());
-        gui.stomachChemicalsField.setText(formatChemicals(organs.hasStomach()
-                ? organs.getStomach().getChemicalsList() : java.util.Collections.emptyList()));
-        gui.cardiovascularChemicalsField.setText(formatChemicalMessages(organs.hasCardiovascularSystem()
-                ? organs.getCardiovascularSystem().getChemicalsList() : java.util.Collections.emptyList()));
+        if (organs.hasBrain()) {
+            gui.brainOxygenUseSpinner.setValue((double) (organs.getBrain().hasOxygenUsePerSecond()
+                    ? organs.getBrain().getOxygenUsePerSecond() : 3.0f));
+            populateStatus(gui.brainStatus, organs.getBrain().getStatus());
+        } else {
+            gui.brainOxygenUseSpinner.setValue(3.0);
+            resetStatus(gui.brainStatus);
+        }
+        gui.stomachBox.setSelected(organs.hasStomach());
+        if (organs.hasStomach()) {
+            Stomach stomach = organs.getStomach();
+            gui.stomachCapacitySpinner.setValue((double) (stomach.hasChemicalCapacity()
+                    ? stomach.getChemicalCapacity() : 50.0f));
+            gui.stomachAbsorptionSpinner.setValue((double) (stomach.hasAbsorptionPerSecond()
+                    ? stomach.getAbsorptionPerSecond() : 1.0f));
+            gui.stomachOxygenUseSpinner.setValue((double) (stomach.hasOxygenUsePerSecond()
+                    ? stomach.getOxygenUsePerSecond() : 0.5f));
+            populateStatus(gui.stomachStatus, stomach.getStatus());
+            gui.stomachChemicalsField.setText(formatStomachChemicals(stomach));
+        } else {
+            gui.stomachCapacitySpinner.setValue(50.0);
+            gui.stomachAbsorptionSpinner.setValue(1.0);
+            gui.stomachOxygenUseSpinner.setValue(0.5);
+            resetStatus(gui.stomachStatus);
+            gui.stomachChemicalsField.setText("");
+        }
+        gui.cardiovascularBox.setSelected(organs.hasCardiovascularSystem());
+        if (organs.hasCardiovascularSystem()) {
+            CardiovascularSystem cardiovascular = organs.getCardiovascularSystem();
+            float maximumBlood = organs.hasHeart() ? organs.getHeart().getMaxBlood() : 0;
+            gui.cardiovascularOxygenSpinner.setValue((double) cardiovascular.getOxygen());
+            gui.cardiovascularMaxOxygenSpinner.setValue((double) (cardiovascular.hasMaxOxygen()
+                    ? cardiovascular.getMaxOxygen() : maximumBlood));
+            gui.cardiovascularPowerSpinner.setValue((double) cardiovascular.getElectricalPower());
+            gui.cardiovascularMaxPowerSpinner.setValue((double) (cardiovascular.hasMaxElectricalPower()
+                    ? cardiovascular.getMaxElectricalPower() : cardiovascular.getElectricalPower()));
+            gui.cardiovascularFluidCapacitySpinner.setValue((double) (cardiovascular.hasFluidCapacity()
+                    ? cardiovascular.getFluidCapacity() : maximumBlood + 50.0f));
+            gui.cardiovascularChemicalsField.setText(
+                    formatChemicalMessages(cardiovascular.getChemicalsList()));
+        } else {
+            float maximumBlood = organs.hasHeart() ? organs.getHeart().getMaxBlood() : 100.0f;
+            gui.cardiovascularOxygenSpinner.setValue(0.0);
+            gui.cardiovascularMaxOxygenSpinner.setValue((double) maximumBlood);
+            gui.cardiovascularPowerSpinner.setValue(0.0);
+            gui.cardiovascularMaxPowerSpinner.setValue(0.0);
+            gui.cardiovascularFluidCapacitySpinner.setValue((double) maximumBlood + 50.0);
+            gui.cardiovascularChemicalsField.setText("");
+        }
 
         Map<String, Integer> slots = entity.getInventorySlotsMap();
         StringBuilder inv = new StringBuilder();
@@ -451,11 +683,13 @@ class AssetMakerGUIController {
         // 3. Item and inventory fields. Inventory lines use: slotName=itemId.
         builder.setIsItem(gui.isItemBox.isSelected())
                 .setStackable(gui.stackableBox.isSelected())
+                .setCanDestroy(gui.canDestroyBox.isSelected())
                 .setAmount((Integer) gui.amountSpinner.getValue())
                 .putAllInventorySlots(parseInventorySlots());
 
         // 4. Tags and display fields.
         builder.clearTags().addAllTags(parseTags());
+        builder.setRenderPriority((Integer) gui.renderPrioritySpinner.getValue());
         setOptionalText(builder, gui.displayTextureField.getText(), true);
         setOptionalText(builder, gui.hexColorField.getText(), false);
 
@@ -463,7 +697,13 @@ class AssetMakerGUIController {
         builder.setDropsABody(gui.dropsABodyBox.isSelected())
                 .setInternalSpace((Integer) gui.internalSpaceSpinner.getValue())
                 .putAllInternal(parseInternalValues())
-                .setOrgans(buildOrgans());
+				.setOrganAssetSlots(buildOrganAssetSlots());
+		Organs builtOrgans = buildOrgans();
+		builder.setOrgans(builtOrgans.toBuilder()
+				.clearHeart().clearLungs().clearLiver().clearBrain().clearStomach());
+		OrganComponent component = buildOrganComponent(builtOrgans);
+		if (component == null) builder.clearOrganComponent();
+		else builder.setOrganComponent(component);
 
         // 6. Loot table rows are converted from the table model at save time.
         builder.clearLootTable().addAllLootTable(buildLootTable());
@@ -481,10 +721,17 @@ class AssetMakerGUIController {
         return result.toString();
     }
 
-    /** Formats stomach chemical IDs as one ID per line. */
-    private static String formatChemicals(List<Integer> ids) {
+    /** Converts legacy one-unit stomach entries and amount-aware entries to id=amountU. */
+    private static String formatStomachChemicals(Stomach stomach) {
+        Map<Integer, Float> combined = new LinkedHashMap<>();
+        for (Integer id : stomach.getChemicalsList()) combined.merge(id, 1.0f, Float::sum);
+        for (Chemical chemical : stomach.getContentsList()) {
+            combined.merge(chemical.getId(), chemical.getAmount(), Float::sum);
+        }
         StringBuilder result = new StringBuilder();
-        for (Integer id : ids) result.append(id).append('\n');
+        for (Map.Entry<Integer, Float> entry : combined.entrySet()) {
+            result.append(entry.getKey()).append('=').append(fmt(entry.getValue())).append('\n');
+        }
         return result.toString();
     }
 
@@ -521,59 +768,128 @@ class AssetMakerGUIController {
         Organs.Builder organs = Organs.newBuilder();
         if (gui.heartBox.isSelected()) {
             organs.setHeart(protonova.protobuf.OrgansProto.Heart.newBuilder()
-                    .setBlood(parseFloat(gui.heartBloodField.getText(), "Heart blood"))
-                    .setMaxBlood(parseFloat(gui.heartMaxBloodField.getText(), "Heart max blood")));
+                    .setBlood(spinFloat(gui.heartBloodSpinner))
+                    .setMaxBlood(spinFloat(gui.heartMaxBloodSpinner))
+                    .setCirculationPerSecond(spinFloat(gui.heartCirculationSpinner))
+                    .setOxygenUsePerSecond(spinFloat(gui.heartOxygenUseSpinner))
+                    .setStatus(buildStatus(gui.heartStatus)));
         }
         if (gui.lungsBox.isSelected()) {
             organs.setLungs(protonova.protobuf.OrgansProto.Lungs.newBuilder()
-                    .setOxygen((Integer) gui.lungsOxygenSpinner.getValue()));
+                    .setOxygen((Integer) gui.lungsOxygenSpinner.getValue())
+                    .setOxygenUsePerSecond(spinFloat(gui.lungsOxygenUseSpinner))
+                    .setStatus(buildStatus(gui.lungsStatus)));
         }
         if (gui.liverBox.isSelected()) {
             organs.setLiver(protonova.protobuf.OrgansProto.Liver.newBuilder()
-                    .setDetoxification((Integer) gui.liverDetoxificationSpinner.getValue()));
+                    .setDetoxification((Integer) gui.liverDetoxificationSpinner.getValue())
+                    .setOxygenUsePerSecond(spinFloat(gui.liverOxygenUseSpinner))
+                    .setStatus(buildStatus(gui.liverStatus)));
         }
         if (gui.brainBox.isSelected()) {
-            organs.setBrain(protonova.protobuf.OrgansProto.Brain.newBuilder());
+            organs.setBrain(protonova.protobuf.OrgansProto.Brain.newBuilder()
+                    .setOxygenUsePerSecond(spinFloat(gui.brainOxygenUseSpinner))
+                    .setStatus(buildStatus(gui.brainStatus)));
         }
-        List<Integer> stomachIds = parseIntegerLines(gui.stomachChemicalsField.getText(), "Stomach chemical");
-        if (!stomachIds.isEmpty()) {
-            organs.setStomach(protonova.protobuf.OrgansProto.Stomach.newBuilder().addAllChemicals(stomachIds));
+        if (gui.stomachBox.isSelected()) {
+            organs.setStomach(Stomach.newBuilder()
+                    .setChemicalCapacity(spinFloat(gui.stomachCapacitySpinner))
+                    .setAbsorptionPerSecond(spinFloat(gui.stomachAbsorptionSpinner))
+                    .setOxygenUsePerSecond(spinFloat(gui.stomachOxygenUseSpinner))
+                    .setStatus(buildStatus(gui.stomachStatus))
+                    .addAllContents(parseChemicals(
+                            gui.stomachChemicalsField.getText(), "Stomach content")));
         }
-        List<Chemical> cardiovascular = parseChemicals(gui.cardiovascularChemicalsField.getText());
-        if (!cardiovascular.isEmpty()) {
-            organs.setCardiovascularSystem(protonova.protobuf.OrgansProto.CardiovascularSystem.newBuilder()
-                    .addAllChemicals(cardiovascular));
+        if (gui.cardiovascularBox.isSelected()) {
+            organs.setCardiovascularSystem(CardiovascularSystem.newBuilder()
+                    .setOxygen(spinFloat(gui.cardiovascularOxygenSpinner))
+                    .setMaxOxygen(spinFloat(gui.cardiovascularMaxOxygenSpinner))
+                    .setElectricalPower(spinFloat(gui.cardiovascularPowerSpinner))
+                    .setMaxElectricalPower(spinFloat(gui.cardiovascularMaxPowerSpinner))
+                    .setFluidCapacity(spinFloat(gui.cardiovascularFluidCapacitySpinner))
+                    .addAllChemicals(parseChemicals(
+                            gui.cardiovascularChemicalsField.getText(), "Bloodstream chemical")));
         }
         return organs.build();
     }
 
-    private List<Integer> parseIntegerLines(String text, String label) {
-        List<Integer> values = new ArrayList<>();
-        for (String line : text.split("\\r?\\n")) {
-            line = line.trim();
-            if (line.isEmpty()) continue;
-            try { values.add(Integer.parseInt(line)); }
-            catch (NumberFormatException ex) { throw new NumberFormatException(label + ": " + ex.getMessage()); }
-        }
-        return values;
-    }
+	private OrganAssetSlots buildOrganAssetSlots() {
+		return OrganAssetSlots.newBuilder()
+				.setHeartAsset(gui.heartOrganAssetField.getText().trim())
+				.setLungsAsset(gui.lungsOrganAssetField.getText().trim())
+				.setLiverAsset(gui.liverOrganAssetField.getText().trim())
+				.setBrainAsset(gui.brainOrganAssetField.getText().trim())
+				.setStomachAsset(gui.stomachOrganAssetField.getText().trim())
+				.build();
+	}
 
-    private List<Chemical> parseChemicals(String text) {
+	private OrganComponent buildOrganComponent(Organs organs) {
+		if (!gui.isItemBox.isSelected()) return null;
+		int selected = (gui.heartBox.isSelected() ? 1 : 0)
+				+ (gui.lungsBox.isSelected() ? 1 : 0)
+				+ (gui.liverBox.isSelected() ? 1 : 0)
+				+ (gui.brainBox.isSelected() ? 1 : 0)
+				+ (gui.stomachBox.isSelected() ? 1 : 0);
+		if (selected != 1) return null;
+
+		OrganComponent.Builder component = OrganComponent.newBuilder();
+		if (organs.hasHeart()) component.setHeart(organs.getHeart());
+		if (organs.hasLungs()) component.setLungs(organs.getLungs());
+		if (organs.hasLiver()) component.setLiver(organs.getLiver());
+		if (organs.hasBrain()) component.setBrain(organs.getBrain());
+		if (organs.hasStomach()) component.setStomach(organs.getStomach());
+		return component.build();
+	}
+
+    private List<Chemical> parseChemicals(String text, String label) {
         List<Chemical> values = new ArrayList<>();
         for (String line : text.split("\\r?\\n")) {
             line = line.trim();
             if (line.isEmpty()) continue;
             int equals = line.indexOf('=');
-            if (equals < 0) throw new NumberFormatException("Cardiovascular chemical must use id=amount");
+            if (equals < 0) throw new NumberFormatException(label + " must use chemicalId=amountU");
             try {
+                float amount = Float.parseFloat(line.substring(equals + 1).trim());
+                if (!Float.isFinite(amount) || amount < 0) {
+                    throw new NumberFormatException("amount must be zero or greater");
+                }
                 values.add(Chemical.newBuilder()
                         .setId(Integer.parseInt(line.substring(0, equals).trim()))
-                        .setAmount(Float.parseFloat(line.substring(equals + 1).trim())).build());
+                        .setAmount(amount).build());
             } catch (NumberFormatException ex) {
-                throw new NumberFormatException("Cardiovascular chemical: " + ex.getMessage());
+                throw new NumberFormatException(label + ": " + ex.getMessage());
             }
         }
         return values;
+    }
+
+    private static OrganStatus buildStatus(AssetMakerGUI.OrganStatusControls controls) {
+        OrganType type = "Cybernetic".equals(controls.type.getSelectedItem())
+                ? OrganType.ORGAN_TYPE_CYBERNETIC
+                : OrganType.ORGAN_TYPE_BIOLOGICAL;
+        return OrganStatus.newBuilder()
+                .setType(type)
+                .setHealth(spinFloat(controls.healthPercent) / 100.0f)
+                .setEfficiency(spinFloat(controls.efficiencyPercent) / 100.0f)
+                .setPowerUsePerSecond(spinFloat(controls.powerUse))
+                .build();
+    }
+
+    private static void populateStatus(AssetMakerGUI.OrganStatusControls controls, OrganStatus status) {
+        controls.type.setSelectedItem(status.getType() == OrganType.ORGAN_TYPE_CYBERNETIC
+                ? "Cybernetic" : "Biological");
+        double health = (status.hasHealth() ? status.getHealth() : 1.0f) * 100.0;
+        double efficiency = (status.hasEfficiency() ? status.getEfficiency() : 1.0f) * 100.0;
+        controls.healthPercent.setValue(Math.max(0.0, Math.min(100.0, health)));
+        controls.efficiencyPercent.setValue(Math.max(0.0, Math.min(200.0, efficiency)));
+        controls.powerUse.setValue((double) status.getPowerUsePerSecond());
+    }
+
+    private static void resetStatus(AssetMakerGUI.OrganStatusControls controls) {
+        controls.type.setSelectedItem("Biological");
+        controls.healthPercent.setValue(100.0);
+        controls.efficiencyPercent.setValue(100.0);
+        controls.powerUse.setValue(0.0);
     }
 
     /** Writes the identity and movement tab into the protobuf builder. */
@@ -633,7 +949,9 @@ class AssetMakerGUIController {
                 .setGeneticDamage(spinFloat(gui.hitDmgValues[4]))
                 .setStructuralDamage(spinFloat(gui.hitDmgValues[5]))
                 .setBleedingPerTick(spinFloat(gui.hitDmgValues[6]))
-                .setHitCooldown((Integer) gui.hitCooldownSpinner.getValue()).build();
+				.setHitCooldown((Integer) gui.hitCooldownSpinner.getValue())
+				.setCanAttack(true)
+				.build();
     }
 
     /** Light range is optional in the protobuf, so blank means clear the field. */

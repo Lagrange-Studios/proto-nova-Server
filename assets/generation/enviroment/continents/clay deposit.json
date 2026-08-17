@@ -1,0 +1,6 @@
+{
+	"name": "clay deposit",
+	"tiles": ["sand"],
+	"tileDensity": 50,
+	"grid": true
+}

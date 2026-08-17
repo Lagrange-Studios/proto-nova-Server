@@ -1,0 +1,25 @@
+END-USER LICENSE AGREEMENT (EULA) for Proto-Nova
+Last Updated: April 28, 2026
+This End-User License Agreement ("Agreement") is a legal agreement between you (either an individual or a single entity) and Lagrange Studios ("Licensor") for the software product Proto-Nova, which includes computer software and may include associated media, printed materials, and online or electronic documentation (collectively, the "Software").
+BY INSTALLING, COPYING, OR OTHERWISE USING THE SOFTWARE, YOU AGREE TO BE BOUND BY THE TERMS OF THIS AGREEMENT. IF YOU DO NOT AGREE TO THE TERMS OF THIS AGREEMENT, DO NOT INSTALL OR USE THE SOFTWARE.
+1. GRANT OF LICENSE
+Lagrange Studios grants you a personal, non-exclusive, non-transferable, and royalty-free license to install and use the Software on any device capable of running the Java Runtime Environment (JRE), strictly for your personal, non-commercial entertainment purposes.
+2. MODDING PERMISSION
+Unlike many proprietary licenses, Lagrange Studios encourages community creativity. You are permitted to create, distribute, and install "Mods" (modifications, tools, or plugins) for Proto-Nova, provided that:
+Originality: The Mod must be your own original work and must not contain substantial portions of the Software’s proprietary source code.
+Non-Commercial: You may not sell Mods for money or charge users for access to them.
+Compatibility: Mods must not interfere with the core functionality of the Software or bypass security measures.
+3. RESTRICTIONS
+Except as expressly permitted in Section 2, you may not:
+No Reverse Engineering: You shall not decompile, reverse engineer, disassemble, or otherwise attempt to derive the source code of the Software.
+No Commercial Use: You may not use the Software for any commercial purpose or redistribute the Software for profit without prior written consent from Lagrange Studios.
+4. INTELLECTUAL PROPERTY
+The Software is protected by copyright laws and international copyright treaties. Lagrange Studios retains all right, title, and interest in and to the Software, including all copyrights, trademarks, and other intellectual property rights.
+5. TERMINATION
+This license is effective until terminated. Your rights under this Agreement will terminate automatically without notice if you fail to comply with any of its terms. Upon termination, you must cease all use of the Software and destroy all copies in your possession.
+6. DISCLAIMER OF WARRANTIES
+THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, LAGRANGE STUDIOS DISCLAIMS ALL WARRANTIES, WHETHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+7. LIMITATION OF LIABILITY
+IN NO EVENT SHALL LAGRANGE STUDIOS BE LIABLE FOR ANY SPECIAL, INCIDENTAL, INDIRECT, OR CONSEQUENTIAL DAMAGES WHATSOEVER ARISING OUT OF THE USE OF OR INABILITY TO USE THE SOFTWARE.
+8. GOVERNING LAW
+This Agreement shall be governed by and construed in accordance with the laws of the State of Missouri, United States, without regard to its conflict of law principles. Any legal action or proceeding related to this Agreement shall be brought exclusively in the courts located in Missouri.

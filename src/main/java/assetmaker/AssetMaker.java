@@ -70,6 +70,7 @@ public class AssetMaker {
                 .setStructuralDamage(10)
                 .setBleedingPerTick(0)
                 .setHitCooldown(0)
+                .setCanAttack(true)
                 .build();
         Damage damage = Damage.newBuilder()
                 .setBruteDamage(0)
@@ -97,6 +98,7 @@ public class AssetMaker {
                 .setSize(one)
                 .setVelocity(zero)
                 .setCanCollide(true)
+                .setCanDestroy(false)
                 .setAnchored(true)
                 .setCastShadow(false)
                 .setAlive(true)
@@ -106,6 +108,7 @@ public class AssetMaker {
                 .setCritHealth(50)
                 .setReach(1.5)
                 .setSelectedSlot("leftHand")
+                .setRenderPriority(0)
                 .setDamage(damage)
                 .setHitDamage(hitDamageStruc)
                 .build();

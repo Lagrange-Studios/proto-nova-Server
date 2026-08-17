@@ -1,8 +1,8 @@
 package entity;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -20,12 +20,12 @@ import diagnostics.ResourceDiagnostics;
 import main.Server;
 
 public class EntityFinder {
-	private HashMap<Integer, Entity> entities;
+	private Map<Integer, Entity> entities;
 	private ChunkManager chunkManager;
 	private final int CHUNKS_PER_THREAD = 10;
 	private Server server;
 	
-	public EntityFinder(HashMap<Integer, Entity> allEntities, ChunkManager chunkManager, Server server) {
+	public EntityFinder(Map<Integer, Entity> allEntities, ChunkManager chunkManager, Server server) {
 		entities = allEntities;
 		this.chunkManager = chunkManager;
 		this.server = server;
@@ -37,7 +37,7 @@ public class EntityFinder {
 	
 	public ArrayList<Entity> getAllEntitiesInRadius(Vector start, int mapId, double radius) {
 		
-		HashMap<Coordinate,Chunk> chunkMap = chunkManager.getPlaneChunks(mapId);
+		Map<Coordinate,Chunk> chunkMap = chunkManager.getPlaneChunks(mapId);
 		Coordinate chunkCoordinate = CoordinateConverter.toChunkCoordinates(start);
 		
 		int radiusInChunks = (int) (Math.ceil(radius/CoordinateConverter.CHUNK_SIZE));
@@ -74,7 +74,7 @@ public class EntityFinder {
 			// else we do threaded search
 			// search through chunks
 			for (int i=0;i<chunkList.size();i+=CHUNKS_PER_THREAD) {
-				Future<ArrayList<Entity>> future = server.executor.submit(findEntitiesInChunkThread(chunkList,i,Math.min(i+CHUNKS_PER_THREAD, chunkList.size()),
+				Future<ArrayList<Entity>> future = server.threadPool.submit(findEntitiesInChunkThread(chunkList,i,Math.min(i+CHUNKS_PER_THREAD, chunkList.size()),
 						start,radiusSquared));
 				
 				futureLists.add(future);
@@ -142,7 +142,7 @@ public class EntityFinder {
 
 	public void DEBUG_METHOD() {
 		System.out.println("Start");
-		HashMap<Integer, HashMap<Coordinate, Chunk>> chunks = chunkManager.getChunks();
+		Map<Integer, ? extends Map<Coordinate, Chunk>> chunks = chunkManager.getChunks();
 		
 		System.out.println("has: "+chunks.containsKey(1));
 		if (chunks.containsKey(1)) {

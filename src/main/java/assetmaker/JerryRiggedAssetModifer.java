@@ -9,7 +9,7 @@ import protonova.protobuf.EntityProto.Entity;
 public class JerryRiggedAssetModifer {
 
 	public static void main(String[] args) {
-		Path path = Path.of("assets/entities/fungus spore.data");
+		Path path = Path.of("assets/entities/fungus monster.data");
 		
 		try {
 			Entity entity = Entity.parseFrom(Files.readAllBytes(path));

@@ -84,6 +84,20 @@ public class ServerStatusHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             try {
+                // This endpoint is intentionally public and contains only
+                // reachability, player-count, and uptime information. Allow
+                // the Proto Nova website to read it directly from a visitor's
+                // browser without routing the request through the directory API.
+                exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+                exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, OPTIONS");
+                exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type");
+                exchange.getResponseHeaders().set("Cache-Control", "no-store");
+
+                if (exchange.getRequestMethod().equals("OPTIONS")) {
+                    exchange.sendResponseHeaders(204, -1);
+                    return;
+                }
+
                 // Only allow GET requests
                 if (!exchange.getRequestMethod().equals("GET")) {
                     sendError(exchange, 405, "Method Not Allowed");

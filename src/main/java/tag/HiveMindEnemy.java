@@ -17,8 +17,8 @@ public class HiveMindEnemy extends TagClass {
 	 * canTarget() inputs possible target and should return true if this enemy can target them
 	 */
 	
-	public void tick(TagHandler tagHandler, Entity entity) {
-		
+	public boolean hasSecondTick() {
+		return true;
 	}
 	
 	public void secondTick(TagHandler tagHandler, Entity entity) {
