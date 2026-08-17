@@ -78,7 +78,7 @@ public class ServerConfig {
         defaultProps.setProperty("http.status.bind.address", "0.0.0.0");
         defaultProps.setProperty("http.status.worker.threads", "2");
         defaultProps.setProperty("http.status.queue.size", "32");
-        defaultProps.setProperty("server.tps", "60");
+        defaultProps.setProperty("server.tps", "20");
         defaultProps.setProperty("server.thread.pool.size", "50");
         defaultProps.setProperty("server.processor.limit", "0");
         defaultProps.setProperty("server.ram.limit", "0");
@@ -103,7 +103,7 @@ public class ServerConfig {
         this.statusHttpBindAddress = getStringProperty("http.status.bind.address", "0.0.0.0").trim();
         this.statusHttpWorkerThreads = getBoundedPositiveIntProperty("http.status.worker.threads", 2, 64);
         this.statusHttpQueueSize = getBoundedPositiveIntProperty("http.status.queue.size", 32, 10_000);
-        this.ticksPerSecond = getIntProperty("server.tps", 60);
+        this.ticksPerSecond = getIntProperty("server.tps", 20);
         this.threadPoolSize = getBoundedPositiveIntProperty("server.thread.pool.size", 50, 10_000);
         this.processorLimit = getIntProperty("server.processor.limit", 0);
         this.ramLimit = getIntProperty("server.ram.limit", 0);

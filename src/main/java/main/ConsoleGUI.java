@@ -20,6 +20,7 @@ public class ConsoleGUI extends Console {
     private JLabel infoBar;
     private JFrame frame;
     private JButton diagnosticsButton;
+    private AdvancedDiagnosticsDialog diagnosticsDialog;
 
     public ConsoleGUI(Server server) {
     	// Call parent constructor with headless=false, but don't run initHeadless
@@ -72,7 +73,11 @@ public class ConsoleGUI extends Console {
         diagnosticsButton.setFocusable(false);
         diagnosticsButton.addActionListener(event -> {
             if (server.getDiagnostics() != null) {
-                new AdvancedDiagnosticsDialog(frame, server.getDiagnostics()).setVisible(true);
+                if (diagnosticsDialog == null || !diagnosticsDialog.isDisplayable()) {
+                    diagnosticsDialog = new AdvancedDiagnosticsDialog(frame, server.getDiagnostics());
+                }
+                diagnosticsDialog.setVisible(true);
+                diagnosticsDialog.toFront();
             }
         });
 

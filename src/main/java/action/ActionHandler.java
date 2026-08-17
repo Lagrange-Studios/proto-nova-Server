@@ -77,6 +77,7 @@ public class ActionHandler {
 						
 						heldItem = heldItem.toBuilder()
 								.setAmount(newAmount)
+								.clearVelocity()
 								.build();
 						
 						entityManager.updateEntity(heldItem);
@@ -86,6 +87,7 @@ public class ActionHandler {
 					// Normal pickup
 					interactingEntity = interactingEntity.toBuilder()
 							.setMap(0)
+							.clearVelocity()
 							.build();
 					
 					entityManager.updateEntity(interactingEntity);
@@ -105,6 +107,7 @@ public class ActionHandler {
 				item = item.toBuilder()
 					.setPosition(action.getInteractionPosition())
 					.setMap(playerEntity.getMap())
+					.setVelocity(playerEntity.getVelocity())
 					.build();
 				entityManager.updateEntity(item);
 			
@@ -124,6 +127,7 @@ public class ActionHandler {
 					heldItem = heldItem.toBuilder()
 							.setPosition(action.getInteractionPosition())
 							.setMap(playerEntity.getMap())
+							.setVelocity(playerEntity.getVelocity())
 							.build();
 					entityManager.updateEntity(heldItem);
 					
@@ -141,6 +145,7 @@ public class ActionHandler {
 							.setAmount(1)
 							.setPosition(action.getInteractionPosition())
 							.setMap(playerEntity.getMap())
+							.setVelocity(playerEntity.getVelocity())
 							.setId(entityManager.reserveNewEntityId())
 							.build();
 					entityManager.updateEntity(clonedItem);

@@ -49,7 +49,7 @@ final class KeystoreManager {
                 ServerConfig.getInstance().getKeystoreValidityDays());
     }
 
-    static LoadedKeystore loadOrCreate(Path keystorePath, String legacyPassword, int validityDays) throws Exception {
+    static synchronized LoadedKeystore loadOrCreate(Path keystorePath, String legacyPassword, int validityDays) throws Exception {
         Path passwordPath = Paths.get(keystorePath.toString() + ".password");
         Path parent = keystorePath.getParent();
         if (parent != null) {

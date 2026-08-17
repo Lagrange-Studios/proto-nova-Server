@@ -3,6 +3,7 @@ package socket;
 import java.util.ArrayList;
 
 import action.ActionHandler;
+import character.CharacterAppearanceCodec;
 import chat.ChatManager;
 import entity.EntityFinder;
 import entity.EntityManager;
@@ -19,7 +20,6 @@ import simulation.EntitySimulation;
 import simulation.TileMovement;
 import sound.SoundManager;
 import util.VectorMath;
-import character.CharacterAppearanceCodec;
 
 public class PacketReciver {
 
