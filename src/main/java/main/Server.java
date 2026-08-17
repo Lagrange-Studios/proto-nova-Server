@@ -194,7 +194,7 @@ public class Server {
 		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager, craftingManager, tagHandler, combatManager, healthManager);
 		serverSaver = new ServerSaver(this, entityManager, planeManager, celestialObjectManager, gamemodeManager);
 		
-		packetReciver = new PacketReciver(entityManager, soundManager, chatManager, console, actionHandler, entityFinder, healthManager, this);
+		packetReciver = new PacketReciver(entityManager, soundManager, chatManager, console, actionHandler, entityFinder, healthManager, planeManager, this);
 		
 		console.print("Starting the secure game listener...");
 		serverSocket = new ServerSocketHandler(console, packetReciver, playerList, serverSaver);

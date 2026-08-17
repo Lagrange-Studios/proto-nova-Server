@@ -16,6 +16,8 @@ import java.util.concurrent.ThreadLocalRandom;
 
 
 public class LootTableManager {
+	private static final float MIN_DROP_SPEED = 2.0f;
+	private static final float MAX_DROP_SPEED = 7.0f;
 	
 	private EntityManager entityManager;
 	private Console console;
@@ -44,8 +46,7 @@ public class LootTableManager {
 			int randomNumber = ThreadLocalRandom.current().nextInt(1, 101);
 			if (randomNumber <= prob) {
 				Entity result = assetManager.getEntity(item.getItemName(), entity.getMap());
-				float offset = ThreadLocalRandom.current().nextFloat(-7, 7);
-				Vector velocity = Vector.newBuilder().setX(offset).setY(offset).build();
+				Vector velocity = randomDropVelocity();
 				result = result.toBuilder().setVelocity(velocity).setPosition(entity.getPosition()).build();
 				entityManager.updateEntity(result);
 				loot.add(result);
@@ -58,11 +59,20 @@ public class LootTableManager {
 		
 		for (lootTableItem item : getLootTable(entity)) {			
 			Entity result = assetManager.getEntity(item.getItemName(), entity.getMap());
-			float offset = ThreadLocalRandom.current().nextFloat(-7, 7);
-			Vector velocity = Vector.newBuilder().setX(offset).setY(offset).build();
+			Vector velocity = randomDropVelocity();
 			result = result.toBuilder().setVelocity(velocity).setPosition(entity.getPosition()).build();
 			entityManager.updateEntity(result);			
 		}
+	}
+
+	private Vector randomDropVelocity() {
+		ThreadLocalRandom random = ThreadLocalRandom.current();
+		double angle = random.nextDouble(0, Math.PI * 2);
+		float speed = random.nextFloat(MIN_DROP_SPEED, MAX_DROP_SPEED);
+		return Vector.newBuilder()
+				.setX((float) (Math.cos(angle) * speed))
+				.setY((float) (Math.sin(angle) * speed))
+				.build();
 	}
 	
 	
