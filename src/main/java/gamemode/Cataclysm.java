@@ -12,6 +12,7 @@ import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ScanResult;
 import main.Console;
+import main.ServerConfig;
 import plane.PlaneManager;
 import tag.TagHandler;
 import util.Random;
@@ -34,6 +35,12 @@ public class Cataclysm extends GamemodeClass {
 	public Cataclysm(Console console, EntityManager entityManager, EntityFinder entityFinder,
 			PlaneManager planeManager, GamemodeManager gamemodeManager, AssetManager assetManager, TagHandler tagHandler,  String ... arguments) {
 		super(console, entityManager, entityFinder, planeManager, gamemodeManager, assetManager, tagHandler, arguments);
+
+		if (!ServerConfig.getInstance().isCataclysmEnabled()) {
+			gamemode.put("cataclysmState", "disabled");
+			console.print("Cataclysms are disabled. The server is running in survival-only mode.");
+			return;
+		}
 		
 		loadAllloadCataclysms();
 		
@@ -54,10 +61,12 @@ public class Cataclysm extends GamemodeClass {
 	}
 	
 	public void tick() {
+		if (currentCataclysm == null) return;
 		currentCataclysm.tick();
 	}
 	
 	public void secondTick() {
+		if (currentCataclysm == null) return;
 		currentCataclysm.secondTick();
 		
 		winCheckInterval++;

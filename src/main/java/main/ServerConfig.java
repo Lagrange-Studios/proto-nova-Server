@@ -26,6 +26,7 @@ public class ServerConfig {
     private int processorLimit;
     private int ramLimit;
     private int workerThreadLimit;
+    private boolean cataclysmEnabled;
     private String keystorePath;
     private String legacyKeystorePassword;
     private int keystoreValidityDays;
@@ -83,6 +84,7 @@ public class ServerConfig {
         defaultProps.setProperty("server.processor.limit", "0");
         defaultProps.setProperty("server.ram.limit", "0");
         defaultProps.setProperty("server.worker.thread.limit", "32");
+        defaultProps.setProperty("game.cataclysm.enabled", "true");
         defaultProps.setProperty("keystore.path", "keystore.jks");
         defaultProps.setProperty("keystore.validity.days", "365");
         
@@ -108,6 +110,7 @@ public class ServerConfig {
         this.processorLimit = getIntProperty("server.processor.limit", 0);
         this.ramLimit = getIntProperty("server.ram.limit", 0);
         this.workerThreadLimit = getIntProperty("server.worker.thread.limit", 32);
+        this.cataclysmEnabled = getBooleanProperty("game.cataclysm.enabled", true);
         this.keystorePath = getStringProperty("keystore.path", "keystore.jks");
         this.legacyKeystorePassword = getStringProperty("keystore.password", "");
         this.keystoreValidityDays = getIntProperty("keystore.validity.days", 365);
@@ -196,6 +199,9 @@ public class ServerConfig {
     
     // Maximum number of worker threads for background tasks (0 = unlimited)
     public int getWorkerThreadLimit() { return workerThreadLimit; }
+
+    // Disable this for an open-ended survival server with no cataclysm events.
+    public boolean isCataclysmEnabled() { return cataclysmEnabled; }
     
     // Path to SSL keystore file
     public String getKeystorePath() { return keystorePath; }
