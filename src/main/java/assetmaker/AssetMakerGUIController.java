@@ -462,7 +462,7 @@ class AssetMakerGUIController {
                 dmg.getBruteDamage(), dmg.getAsphyxiationDamage(),
                 dmg.getBurnDamage(), dmg.getToxinDamage(),
                 dmg.getGeneticDamage(), dmg.getStructuralDamage(),
-                dmg.getBleedingPerTick()
+                dmg.getBleedingPerSecond()
         };
         float[] multArr = {
                 mult.getBrute(), mult.getAsphyxiation(), mult.getBurn(),
@@ -928,7 +928,7 @@ class AssetMakerGUIController {
                 .setToxinDamage(spinFloat(gui.dmgValues[3]))
                 .setGeneticDamage(spinFloat(gui.dmgValues[4]))
                 .setStructuralDamage(spinFloat(gui.dmgValues[5]))
-                .setBleedingPerTick(spinFloat(gui.dmgValues[6]))
+                .setBleedingPerSecond(spinFloat(gui.dmgValues[6]))
                 .setDamageMultiplier(DamageMultiplier.newBuilder()
                         .setBrute(spinFloat(gui.dmgMultValues[0]))
                         .setAsphyxiation(spinFloat(gui.dmgMultValues[1]))

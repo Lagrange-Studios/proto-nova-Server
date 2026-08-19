@@ -1,0 +1,62 @@
+{
+  "name" : "name",
+  "unitsPerSecond" : 0,
+  "overdose" : 0,
+  "minTempature" : 0,
+  "maxTempature" : 0,
+  "minDamage" : 0,
+  "maxDamage" : 0,
+  "canHealDead" : 0,
+  
+  "effects" : {
+	"healing" : {
+		"brute" : 0,
+		"asphyxiation" : 0,
+		"burn" : 0,
+		"toxin" : 0,
+		"genetic" : 0,
+		"structural" : 0,
+		"bleeding" : 0
+	  },
+	  
+	  "damage" : {
+		"brute" : 0,
+		"asphyxiation" : 0,
+		"burn" : 0,
+		"toxin" : 0,
+		"genetic" : 0,
+		"structural" : 0,
+		"bleedingPerSecond" : 0
+	   },
+	   "movementMultiplyer" : 0,
+	   "saturation" : 0
+	   
+  },
+  
+  "overdoseEffects" : {
+  	"healing" : {
+  		"brute" : 0,
+  		"asphyxiation" : 0,
+  		"burn" : 0,
+  		"toxin" : 0,
+  		"genetic" : 0,
+  		"structural" : 0,
+  		"bleeding" : 0
+  	  },
+  	  
+  	  "damage" : {
+  		"brute" : 0,
+  		"asphyxiation" : 0,
+  		"burn" : 0,
+  		"toxin" : 0,
+  		"genetic" : 0,
+  		"structural" : 0,
+  		"bleeding" : 0
+  	   },
+	   "movementMultiplyer" : 0,
+	   "saturation" : 0
+	   
+    }
+  
+  
+}

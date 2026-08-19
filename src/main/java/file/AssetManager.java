@@ -77,7 +77,7 @@ public class AssetManager {
 			if (currentDamage.getToxinDamage() != 0) hitBuilder.setToxinDamage(currentDamage.getToxinDamage());
 			if (currentDamage.getGeneticDamage() != 0) hitBuilder.setGeneticDamage(currentDamage.getGeneticDamage());
 			if (currentDamage.getStructuralDamage() != 0) hitBuilder.setStructuralDamage(currentDamage.getStructuralDamage());
-			if (currentDamage.getBleedingPerTick() != 0) hitBuilder.setBleedingPerTick(currentDamage.getBleedingPerTick());
+			if (currentDamage.getBleedingPerSecond() != 0) hitBuilder.setBleedingPerTick(currentDamage.getBleedingPerSecond());
 		}
 
 		Damage cleanDamage = currentDamage.toBuilder()
@@ -87,7 +87,7 @@ public class AssetManager {
 				.clearToxinDamage()
 				.clearGeneticDamage()
 				.clearStructuralDamage()
-				.clearBleedingPerTick()
+				.clearBleedingPerSecond()
 				.build();
 		return asset.toBuilder().setDamage(cleanDamage).setHitDamage(hitBuilder).build();
 	}
@@ -96,7 +96,7 @@ public class AssetManager {
 		return damage.getBruteDamage() != 0 || damage.getAsphyxiationDamage() != 0
 				|| damage.getBurnDamage() != 0 || damage.getToxinDamage() != 0
 				|| damage.getGeneticDamage() != 0 || damage.getStructuralDamage() != 0
-				|| damage.getBleedingPerTick() != 0;
+				|| damage.getBleedingPerSecond() != 0;
 	}
 
 	private Entity attachOrgans(Entity body) {
