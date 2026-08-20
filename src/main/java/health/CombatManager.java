@@ -168,7 +168,7 @@ public class CombatManager {
 			
 			float damage = (hitDamage.getBleedingPerTick() * damageMultipliers.getBleeding());
 			
-			entityDamage.setBleedingPerTick(currentDefenderDamage.getBleedingPerTick() + damage);
+			entityDamage.setBleedingPerSecond(currentDefenderDamage.getBleedingPerSecond() + damage);
 		}
 		
 		Entity defenderFinal = defenderBuilder.setDamage(entityDamage.build()).build();

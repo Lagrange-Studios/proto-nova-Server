@@ -79,7 +79,7 @@ public class AssetMaker {
                 .setToxinDamage(0)
                 .setGeneticDamage(0)
                 .setStructuralDamage(0)
-                .setBleedingPerTick(0)
+                .setBleedingPerSecond(0)
                 .setDamageMultiplier(damageMult)
                 .build();
         Vector zero = Vector.newBuilder()

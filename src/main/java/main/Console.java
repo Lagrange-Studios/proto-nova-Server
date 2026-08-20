@@ -214,7 +214,7 @@ public class Console {
 					.setToxinDamage(0)
 					.setGeneticDamage(0)
 					.setStructuralDamage(0)
-					.setBleedingPerTick(0)
+					.setBleedingPerSecond(0)
 					.build();
 
 			entityManager.updateEntity(entity.toBuilder().setDamage(healedDamage).build());
