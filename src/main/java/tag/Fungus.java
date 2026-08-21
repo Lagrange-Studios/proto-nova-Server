@@ -18,6 +18,7 @@ public class Fungus extends TagClass {
 	private final int evolveChancePerSecond = chanceOfGrowthPerSecond*2; // one in ten chance
 	private final int fungusMonsterChance = 20; // 1 in x amount 
 	private final int SEARCH_RANGE = 50;
+	private final int MAX_MONSTERS_PER_SPORE = 3;
 	
 	// tile info
 	public static final HashSet<String> allowedTiles = new HashSet<>(Arrays.asList("grass", "stone", "sand"));
@@ -153,8 +154,11 @@ public class Fungus extends TagClass {
 			else if (entity.getName().equals("fungus vein") && Random.randomInt(1,evolveChancePerSecond) == 1 && 
 					surroundedByVeins(entity, tagHandler)) {
 				
+				// check for max monsters
+				int monsterCount = getSlot(parentSpore, "monsterCount",0);
+				
 				// chance to spawn a monster along with fortifying
-				if (Random.randomInt(1, fungusMonsterChance) == 1) {
+				if (Random.randomInt(1, fungusMonsterChance) == 1 && monsterCount < MAX_MONSTERS_PER_SPORE) {
 					Entity newMonster = tagHandler.getAssetManager().getEntity("fungus monster", entity.getMap());
 					
 					newMonster = newMonster.toBuilder()
@@ -165,6 +169,13 @@ public class Fungus extends TagClass {
 					tagHandler.updateEntity(newMonster);
 					
 					//System.out.println("[Fungus] new monster at: "+newMonster.getPosition().getX()+","+newMonster.getPosition().getY());
+					parentSpore = parentSpore.toBuilder()
+							.putInventorySlots("monsterCount", monsterCount+1)
+							.build();
+					
+					tagHandler.updateEntity(parentSpore);
+					
+					//System.out.println("[Fungus] new monster count for parent spore at x: "+parentSpore.getPosition().getX()+" y: "+parentSpore.getPosition().getY() + " monster count: "+ parentSpore.getInventorySlotsMap().get("monsterCount"));
 				}
 				entity = entity.toBuilder()
 						.setName("fortifeid fungus vein")
