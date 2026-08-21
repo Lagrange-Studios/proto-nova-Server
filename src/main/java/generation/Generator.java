@@ -87,7 +87,7 @@ public class Generator {
 	}
 	
 	public void generatePlanet(String type) {
-		generatePlanet(500, type, 5);
+		generatePlanet(400, type, 5);
 	}
 	
 	public void generatePlanet() {
