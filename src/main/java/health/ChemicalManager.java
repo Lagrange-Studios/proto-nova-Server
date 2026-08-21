@@ -98,7 +98,7 @@ public final class ChemicalManager {
 		Map<Integer, Float> contents = new TreeMap<>();
 		for (int chemicalId : stomach.getChemicalsList()) contents.merge(chemicalId, 1.0f, Float::sum);
 		for (Chemical chemical : stomach.getContentsList()) {
-			contents.merge(chemical.getId(), positive(chemical.getAmount()), Float::sum);
+			contents.merge(chemical.getName(), positive(chemical.getAmount()), Float::sum);
 		}
 		return contents;
 	}
@@ -106,7 +106,7 @@ public final class ChemicalManager {
 	private static Map<Integer, Float> chemicalContents(CardiovascularSystem cardiovascular) {
 		Map<Integer, Float> contents = new TreeMap<>();
 		for (Chemical chemical : cardiovascular.getChemicalsList()) {
-			contents.merge(chemical.getId(), positive(chemical.getAmount()), Float::sum);
+			contents.merge(chemical.getName(), positive(chemical.getAmount()), Float::sum);
 		}
 		return contents;
 	}
@@ -118,7 +118,7 @@ public final class ChemicalManager {
 	}
 
 	private static Chemical chemical(int id, float amount) {
-		return Chemical.newBuilder().setId(id).setAmount(amount).build();
+		return Chemical.newBuilder().setName(id).setAmount(amount).build();
 	}
 
 	private static float remaining(float capacity, Map<Integer, Float> contents) {
