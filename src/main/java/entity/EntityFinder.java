@@ -52,8 +52,8 @@ public class EntityFinder {
 		Coordinate.Builder coordBuilder = Coordinate.newBuilder();
 		
 		// find all chunks to search
-		for (int x=-radiusInChunks;x<radiusInChunks;x++) {
-			for (int y=-radiusInChunks;y<radiusInChunks;y++) {
+		for (int x=-radiusInChunks;x<=radiusInChunks;x++) {
+			for (int y=-radiusInChunks;y<=radiusInChunks;y++) {
 				
 				// Reuse builder instead of creating new Coordinate every iteration
 				coordBuilder.setX(x + chunkCoordinate.getX());

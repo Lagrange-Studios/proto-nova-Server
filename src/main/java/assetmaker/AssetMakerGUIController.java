@@ -726,7 +726,7 @@ class AssetMakerGUIController {
         Map<Integer, Float> combined = new LinkedHashMap<>();
         for (Integer id : stomach.getChemicalsList()) combined.merge(id, 1.0f, Float::sum);
         for (Chemical chemical : stomach.getContentsList()) {
-            combined.merge(chemical.getId(), chemical.getAmount(), Float::sum);
+            combined.merge(chemical.getName(), chemical.getAmount(), Float::sum);
         }
         StringBuilder result = new StringBuilder();
         for (Map.Entry<Integer, Float> entry : combined.entrySet()) {
@@ -739,7 +739,7 @@ class AssetMakerGUIController {
     private static String formatChemicalMessages(List<Chemical> chemicals) {
         StringBuilder result = new StringBuilder();
         for (Chemical chemical : chemicals) {
-            result.append(chemical.getId()).append('=').append(chemical.getAmount()).append('\n');
+            result.append(chemical.getName()).append('=').append(chemical.getAmount()).append('\n');
         }
         return result.toString();
     }
@@ -854,7 +854,7 @@ class AssetMakerGUIController {
                     throw new NumberFormatException("amount must be zero or greater");
                 }
                 values.add(Chemical.newBuilder()
-                        .setId(Integer.parseInt(line.substring(0, equals).trim()))
+                        .setName(Integer.parseInt(line.substring(0, equals).trim()))
                         .setAmount(amount).build());
             } catch (NumberFormatException ex) {
                 throw new NumberFormatException(label + ": " + ex.getMessage());

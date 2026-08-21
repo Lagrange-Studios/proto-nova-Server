@@ -224,7 +224,7 @@ public final class PhysiologySystem {
 		for (Map.Entry<Integer, Float> chemical : physiologyUpdate.bloodstreamChemicals.entrySet()) {
 			if (chemical.getValue() > 0) {
 				updatedCardiovascularSystem.addChemicals(Chemical.newBuilder()
-						.setId(chemical.getKey())
+						.setName(chemical.getKey())
 						.setAmount(chemical.getValue()));
 			}
 		}
@@ -247,7 +247,7 @@ public final class PhysiologySystem {
 			for (Map.Entry<Integer, Float> chemical : physiologyUpdate.stomachChemicals.entrySet()) {
 				if (chemical.getValue() > 0) {
 					updatedStomach.addContents(Chemical.newBuilder()
-							.setId(chemical.getKey())
+							.setName(chemical.getKey())
 							.setAmount(chemical.getValue()));
 				}
 			}
@@ -528,7 +528,7 @@ public final class PhysiologySystem {
 			for (Chemical chemical : cardiovascularSystem.getChemicalsList()) {
 				addChemicalAmount(
 						bloodstreamChemicals,
-						chemical.getId(),
+						chemical.getName(),
 						chemical.getAmount());
 			}
 
@@ -550,7 +550,7 @@ public final class PhysiologySystem {
 				for (Chemical chemical : stomach.getContentsList()) {
 					addChemicalAmount(
 							stomachChemicals,
-							chemical.getId(),
+							chemical.getName(),
 							chemical.getAmount());
 				}
 
