@@ -9,6 +9,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JComboBox;
 import javax.swing.JTextField;
 
+import health.OrganEnergy;
 import protonova.protobuf.DamageProto.Damage;
 import protonova.protobuf.DamageProto.DamageMultiplier;
 import protonova.protobuf.DamageProto.HitDamage;
@@ -34,7 +35,6 @@ import protonova.protobuf.VectorProto.Vector;
  * and the write path ({@link #buildEntityFromForm()}).</p>
  */
 class AssetMakerGUIController {
-
     private final AssetMakerGUI gui;
 
     AssetMakerGUIController(AssetMakerGUI gui) {
@@ -381,23 +381,23 @@ class AssetMakerGUIController {
         gui.heartMaxBloodSpinner.setValue(100.0);
         gui.heartCirculationSpinner.setValue(10.0);
         gui.heartOxygenUseSpinner.setValue(1.0);
-        resetStatus(gui.heartStatus);
+        resetStatus(gui.heartStatus, OrganEnergy.DEFAULT_HEART_NUTRITION_USE);
         gui.lungsBox.setSelected(false);
         gui.lungsOxygenSpinner.setValue(10);
         gui.lungsOxygenUseSpinner.setValue(0.5);
-        resetStatus(gui.lungsStatus);
+        resetStatus(gui.lungsStatus, OrganEnergy.DEFAULT_LUNG_NUTRITION_USE);
         gui.liverBox.setSelected(false);
         gui.liverDetoxificationSpinner.setValue(1);
         gui.liverOxygenUseSpinner.setValue(1.0);
-        resetStatus(gui.liverStatus);
+        resetStatus(gui.liverStatus, OrganEnergy.DEFAULT_LIVER_NUTRITION_USE);
         gui.brainBox.setSelected(false);
         gui.brainOxygenUseSpinner.setValue(3.0);
-        resetStatus(gui.brainStatus);
+        resetStatus(gui.brainStatus, OrganEnergy.DEFAULT_BRAIN_NUTRITION_USE);
         gui.stomachBox.setSelected(false);
         gui.stomachCapacitySpinner.setValue(50.0);
         gui.stomachAbsorptionSpinner.setValue(1.0);
         gui.stomachOxygenUseSpinner.setValue(0.5);
-        resetStatus(gui.stomachStatus);
+        resetStatus(gui.stomachStatus, OrganEnergy.DEFAULT_STOMACH_NUTRITION_USE);
         gui.stomachChemicalsField.setText("");
         gui.cardiovascularBox.setSelected(false);
         gui.cardiovascularOxygenSpinner.setValue(0.0);
@@ -536,44 +536,44 @@ class AssetMakerGUIController {
                     ? organs.getHeart().getCirculationPerSecond() : organs.getHeart().getMaxBlood()));
             gui.heartOxygenUseSpinner.setValue((double) (organs.getHeart().hasOxygenUsePerSecond()
                     ? organs.getHeart().getOxygenUsePerSecond() : 1.0f));
-            populateStatus(gui.heartStatus, organs.getHeart().getStatus());
+            populateStatus(gui.heartStatus, organs.getHeart().getStatus(), OrganEnergy.DEFAULT_HEART_NUTRITION_USE);
         } else {
             gui.heartBloodSpinner.setValue(100.0);
             gui.heartMaxBloodSpinner.setValue(100.0);
             gui.heartCirculationSpinner.setValue(10.0);
             gui.heartOxygenUseSpinner.setValue(1.0);
-            resetStatus(gui.heartStatus);
+            resetStatus(gui.heartStatus, OrganEnergy.DEFAULT_HEART_NUTRITION_USE);
         }
         gui.lungsBox.setSelected(organs.hasLungs());
         if (organs.hasLungs()) {
             gui.lungsOxygenSpinner.setValue(organs.getLungs().getOxygen());
             gui.lungsOxygenUseSpinner.setValue((double) (organs.getLungs().hasOxygenUsePerSecond()
                     ? organs.getLungs().getOxygenUsePerSecond() : 0.5f));
-            populateStatus(gui.lungsStatus, organs.getLungs().getStatus());
+            populateStatus(gui.lungsStatus, organs.getLungs().getStatus(), OrganEnergy.DEFAULT_LUNG_NUTRITION_USE);
         } else {
             gui.lungsOxygenSpinner.setValue(10);
             gui.lungsOxygenUseSpinner.setValue(0.5);
-            resetStatus(gui.lungsStatus);
+            resetStatus(gui.lungsStatus, OrganEnergy.DEFAULT_LUNG_NUTRITION_USE);
         }
         gui.liverBox.setSelected(organs.hasLiver());
         if (organs.hasLiver()) {
             gui.liverDetoxificationSpinner.setValue(organs.getLiver().getDetoxification());
             gui.liverOxygenUseSpinner.setValue((double) (organs.getLiver().hasOxygenUsePerSecond()
                     ? organs.getLiver().getOxygenUsePerSecond() : 1.0f));
-            populateStatus(gui.liverStatus, organs.getLiver().getStatus());
+            populateStatus(gui.liverStatus, organs.getLiver().getStatus(), OrganEnergy.DEFAULT_LIVER_NUTRITION_USE);
         } else {
             gui.liverDetoxificationSpinner.setValue(1);
             gui.liverOxygenUseSpinner.setValue(1.0);
-            resetStatus(gui.liverStatus);
+            resetStatus(gui.liverStatus, OrganEnergy.DEFAULT_LIVER_NUTRITION_USE);
         }
         gui.brainBox.setSelected(organs.hasBrain());
         if (organs.hasBrain()) {
             gui.brainOxygenUseSpinner.setValue((double) (organs.getBrain().hasOxygenUsePerSecond()
                     ? organs.getBrain().getOxygenUsePerSecond() : 3.0f));
-            populateStatus(gui.brainStatus, organs.getBrain().getStatus());
+            populateStatus(gui.brainStatus, organs.getBrain().getStatus(), OrganEnergy.DEFAULT_BRAIN_NUTRITION_USE);
         } else {
             gui.brainOxygenUseSpinner.setValue(3.0);
-            resetStatus(gui.brainStatus);
+            resetStatus(gui.brainStatus, OrganEnergy.DEFAULT_BRAIN_NUTRITION_USE);
         }
         gui.stomachBox.setSelected(organs.hasStomach());
         if (organs.hasStomach()) {
@@ -584,13 +584,13 @@ class AssetMakerGUIController {
                     ? stomach.getAbsorptionPerSecond() : 1.0f));
             gui.stomachOxygenUseSpinner.setValue((double) (stomach.hasOxygenUsePerSecond()
                     ? stomach.getOxygenUsePerSecond() : 0.5f));
-            populateStatus(gui.stomachStatus, stomach.getStatus());
+            populateStatus(gui.stomachStatus, stomach.getStatus(), OrganEnergy.DEFAULT_STOMACH_NUTRITION_USE);
             gui.stomachChemicalsField.setText(formatStomachChemicals(stomach));
         } else {
             gui.stomachCapacitySpinner.setValue(50.0);
             gui.stomachAbsorptionSpinner.setValue(1.0);
             gui.stomachOxygenUseSpinner.setValue(0.5);
-            resetStatus(gui.stomachStatus);
+            resetStatus(gui.stomachStatus, OrganEnergy.DEFAULT_STOMACH_NUTRITION_USE);
             gui.stomachChemicalsField.setText("");
         }
         gui.cardiovascularBox.setSelected(organs.hasCardiovascularSystem());
@@ -603,6 +603,9 @@ class AssetMakerGUIController {
             gui.cardiovascularPowerSpinner.setValue((double) cardiovascular.getElectricalPower());
             gui.cardiovascularMaxPowerSpinner.setValue((double) (cardiovascular.hasMaxElectricalPower()
                     ? cardiovascular.getMaxElectricalPower() : cardiovascular.getElectricalPower()));
+            gui.cardiovascularNutritionSpinner.setValue((double) cardiovascular.getNutrition());
+            gui.cardiovascularMaxNutritionSpinner.setValue((double) (cardiovascular.hasMaxNutrition()
+                    ? cardiovascular.getMaxNutrition() : cardiovascular.getNutrition()));
             gui.cardiovascularFluidCapacitySpinner.setValue((double) (cardiovascular.hasFluidCapacity()
                     ? cardiovascular.getFluidCapacity() : maximumBlood + 50.0f));
             gui.cardiovascularChemicalsField.setText(
@@ -613,6 +616,8 @@ class AssetMakerGUIController {
             gui.cardiovascularMaxOxygenSpinner.setValue((double) maximumBlood);
             gui.cardiovascularPowerSpinner.setValue(0.0);
             gui.cardiovascularMaxPowerSpinner.setValue(0.0);
+            gui.cardiovascularNutritionSpinner.setValue(100.0);
+            gui.cardiovascularMaxNutritionSpinner.setValue(100.0);
             gui.cardiovascularFluidCapacitySpinner.setValue((double) maximumBlood + 50.0);
             gui.cardiovascularChemicalsField.setText("");
         }
@@ -721,21 +726,19 @@ class AssetMakerGUIController {
         return result.toString();
     }
 
-    /** Converts legacy one-unit stomach entries and amount-aware entries to id=amountU. */
     private static String formatStomachChemicals(Stomach stomach) {
-        Map<Integer, Float> combined = new LinkedHashMap<>();
-        for (Integer id : stomach.getChemicalsList()) combined.merge(id, 1.0f, Float::sum);
+        Map<String, Float> combined = new LinkedHashMap<>();
+        for (String name : stomach.getChemicalsList()) combined.merge(name, 1.0f, Float::sum);
         for (Chemical chemical : stomach.getContentsList()) {
             combined.merge(chemical.getName(), chemical.getAmount(), Float::sum);
         }
         StringBuilder result = new StringBuilder();
-        for (Map.Entry<Integer, Float> entry : combined.entrySet()) {
+        for (Map.Entry<String, Float> entry : combined.entrySet()) {
             result.append(entry.getKey()).append('=').append(fmt(entry.getValue())).append('\n');
         }
         return result.toString();
     }
 
-    /** Formats full Chemical messages as id=amount entries. */
     private static String formatChemicalMessages(List<Chemical> chemicals) {
         StringBuilder result = new StringBuilder();
         for (Chemical chemical : chemicals) {
@@ -806,6 +809,8 @@ class AssetMakerGUIController {
                     .setMaxOxygen(spinFloat(gui.cardiovascularMaxOxygenSpinner))
                     .setElectricalPower(spinFloat(gui.cardiovascularPowerSpinner))
                     .setMaxElectricalPower(spinFloat(gui.cardiovascularMaxPowerSpinner))
+                    .setNutrition(spinFloat(gui.cardiovascularNutritionSpinner))
+                    .setMaxNutrition(spinFloat(gui.cardiovascularMaxNutritionSpinner))
                     .setFluidCapacity(spinFloat(gui.cardiovascularFluidCapacitySpinner))
                     .addAllChemicals(parseChemicals(
                             gui.cardiovascularChemicalsField.getText(), "Bloodstream chemical")));
@@ -847,14 +852,16 @@ class AssetMakerGUIController {
             line = line.trim();
             if (line.isEmpty()) continue;
             int equals = line.indexOf('=');
-            if (equals < 0) throw new NumberFormatException(label + " must use chemicalId=amountU");
+            if (equals < 0) throw new NumberFormatException(label + " must use chemicalName=amountU");
             try {
+                String name = line.substring(0, equals).trim();
+                if (name.isEmpty()) throw new NumberFormatException("name cannot be blank");
                 float amount = Float.parseFloat(line.substring(equals + 1).trim());
                 if (!Float.isFinite(amount) || amount < 0) {
                     throw new NumberFormatException("amount must be zero or greater");
                 }
                 values.add(Chemical.newBuilder()
-                        .setName(Integer.parseInt(line.substring(0, equals).trim()))
+                        .setName(name)
                         .setAmount(amount).build());
             } catch (NumberFormatException ex) {
                 throw new NumberFormatException(label + ": " + ex.getMessage());
@@ -872,10 +879,14 @@ class AssetMakerGUIController {
                 .setHealth(spinFloat(controls.healthPercent) / 100.0f)
                 .setEfficiency(spinFloat(controls.efficiencyPercent) / 100.0f)
                 .setPowerUsePerSecond(spinFloat(controls.powerUse))
+                .setNutritionUsePerSecond(spinFloat(controls.nutritionUse))
                 .build();
     }
 
-    private static void populateStatus(AssetMakerGUI.OrganStatusControls controls, OrganStatus status) {
+    private static void populateStatus(
+            AssetMakerGUI.OrganStatusControls controls,
+            OrganStatus status,
+            double defaultNutritionUse) {
         controls.type.setSelectedItem(status.getType() == OrganType.ORGAN_TYPE_CYBERNETIC
                 ? "Cybernetic" : "Biological");
         double health = (status.hasHealth() ? status.getHealth() : 1.0f) * 100.0;
@@ -883,13 +894,18 @@ class AssetMakerGUIController {
         controls.healthPercent.setValue(Math.max(0.0, Math.min(100.0, health)));
         controls.efficiencyPercent.setValue(Math.max(0.0, Math.min(200.0, efficiency)));
         controls.powerUse.setValue((double) status.getPowerUsePerSecond());
+        controls.nutritionUse.setValue((double) (status.hasNutritionUsePerSecond()
+                ? status.getNutritionUsePerSecond() : defaultNutritionUse));
     }
 
-    private static void resetStatus(AssetMakerGUI.OrganStatusControls controls) {
+    private static void resetStatus(
+            AssetMakerGUI.OrganStatusControls controls,
+            double defaultNutritionUse) {
         controls.type.setSelectedItem("Biological");
         controls.healthPercent.setValue(100.0);
         controls.efficiencyPercent.setValue(100.0);
         controls.powerUse.setValue(0.0);
+        controls.nutritionUse.setValue(defaultNutritionUse);
     }
 
     /** Writes the identity and movement tab into the protobuf builder. */

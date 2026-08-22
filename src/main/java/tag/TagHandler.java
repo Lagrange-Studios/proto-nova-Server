@@ -15,6 +15,8 @@ import ai.PathfindingHandler;
 import entity.EntityFinder;
 import entity.EntityManager;
 import file.AssetManager;
+import health.ChemicalDigestionManager;
+import health.ChemicalManager;
 import health.CombatManager;
 import health.HealthManager;
 import io.github.classgraph.ClassGraph;
@@ -40,8 +42,10 @@ public class TagHandler {
 	private CombatManager combatManager;
 	private PathfindingHandler pathfindingHandler;
 	private HealthManager healthManager;
+	private ChemicalManager chemicalManager;
+	private ChemicalDigestionManager chemicalDigestionManager;
 
-	public TagHandler(Server server, EntityManager entityManager, AssetManager assetManager, EntityFinder entityFinder, PlaneManager planeManager, CombatManager combatManager, PathfindingHandler pathfindingHandler, HealthManager healthManager) {
+	public TagHandler(Server server, EntityManager entityManager, AssetManager assetManager, EntityFinder entityFinder, PlaneManager planeManager, CombatManager combatManager, PathfindingHandler pathfindingHandler, HealthManager healthManager, ChemicalManager chemicalManager, ChemicalDigestionManager chemicalDigestionManager) {
 		this.server = server;
 		this.entityManager = entityManager;
 		this.assetManager = assetManager;
@@ -50,6 +54,8 @@ public class TagHandler {
 		this.combatManager = combatManager;
 		this.pathfindingHandler = pathfindingHandler;
 		this.healthManager = healthManager;
+		this.chemicalManager = chemicalManager;
+		this.chemicalDigestionManager =chemicalDigestionManager;
 		tagToClass = new ConcurrentHashMap<>();
 		tagCount = new ConcurrentHashMap<>();
 
@@ -298,6 +304,14 @@ public class TagHandler {
 		return healthManager;
 	}
 	
+	public ChemicalDigestionManager getChemicalDigestionManager() {
+	    return chemicalDigestionManager;
+	}
+
+	public ChemicalManager getChemicalManager() {
+		return chemicalManager;
+	}
+
 	public void loadAllTagEntities() {
 		for (Entity entity : entityManager.getAllEntities().values()) {
 			addEntity(entity);

@@ -3,6 +3,7 @@ package health;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
+import java.util.Locale;
 
 import protonova.protobuf.ChemicalProto.Chemical;
 import protonova.protobuf.EntityProto.Entity;
@@ -12,19 +13,21 @@ import protonova.protobuf.OrgansProto.Stomach;
 
 public final class ChemicalManager {
 
-	public Entity addToStomach(Entity entity, int chemicalId, float requestedUnits) {
+	public Entity addToStomach(Entity entity, String chemicalName, float requestedUnits) {
 		Objects.requireNonNull(entity, "entity");
+		chemicalName = normalizeName(chemicalName);
+		if (chemicalName.isEmpty()) return entity;
 		if (!entity.hasOrgans() || !entity.getOrgans().hasStomach()) return entity;
 
 		Stomach stomach = entity.getOrgans().getStomach();
 		float capacity = stomach.hasChemicalCapacity()
 				? positive(stomach.getChemicalCapacity())
 				: ChemicalUnits.DEFAULT_STOMACH_CAPACITY;
-		Map<Integer, Float> contents = stomachContents(stomach);
+		Map<String, Float> contents = stomachContents(stomach);
 		float accepted = Math.min(positive(requestedUnits), remaining(capacity, contents));
 		if (accepted <= 0) return entity;
 
-		contents.merge(chemicalId, accepted, Float::sum);
+		contents.merge(chemicalName, accepted, Float::sum);
 		Stomach.Builder updatedStomach = stomach.toBuilder()
 				.clearChemicals()
 				.clearContents()
@@ -36,8 +39,10 @@ public final class ChemicalManager {
 				.build();
 	}
 
-	public Entity injectIntoCirculation(Entity entity, int chemicalId, float requestedUnits) {
+	public Entity injectIntoCirculation(Entity entity, String chemicalName, float requestedUnits) {
 		Objects.requireNonNull(entity, "entity");
+		chemicalName = normalizeName(chemicalName);
+		if (chemicalName.isEmpty()) return entity;
 		if (!entity.hasOrgans()) return entity;
 
 		Organs organs = entity.getOrgans();
@@ -51,16 +56,16 @@ public final class ChemicalManager {
 		float capacity = cardiovascular.hasFluidCapacity()
 				? Math.max(maximumBlood, positive(cardiovascular.getFluidCapacity()))
 				: maximumBlood + ChemicalUnits.DEFAULT_INJECTION_RESERVE;
-		Map<Integer, Float> chemicals = chemicalContents(cardiovascular);
+		Map<String, Float> chemicals = chemicalContents(cardiovascular);
 		float availableChemicalSpace = Math.max(0, capacity - currentBlood - total(chemicals));
 		float accepted = Math.min(positive(requestedUnits), availableChemicalSpace);
 		if (accepted <= 0) return entity;
 
-		chemicals.merge(chemicalId, accepted, Float::sum);
+		chemicals.merge(chemicalName, accepted, Float::sum);
 		CardiovascularSystem.Builder updatedCardiovascular = cardiovascular.toBuilder()
 				.clearChemicals()
 				.setFluidCapacity(capacity);
-		for (Map.Entry<Integer, Float> entry : chemicals.entrySet()) {
+		for (Map.Entry<String, Float> entry : chemicals.entrySet()) {
 			updatedCardiovascular.addChemicals(chemical(entry.getKey(), entry.getValue()));
 		}
 
@@ -94,38 +99,47 @@ public final class ChemicalManager {
 		return Math.max(0, capacity - currentBlood - total(chemicalContents(cardiovascular)));
 	}
 
-	private static Map<Integer, Float> stomachContents(Stomach stomach) {
-		Map<Integer, Float> contents = new TreeMap<>();
-		for (int chemicalId : stomach.getChemicalsList()) contents.merge(chemicalId, 1.0f, Float::sum);
+	private static Map<String, Float> stomachContents(Stomach stomach) {
+		Map<String, Float> contents = new TreeMap<>();
+		for (String chemicalName : stomach.getChemicalsList()) {
+			chemicalName = normalizeName(chemicalName);
+			if (!chemicalName.isEmpty()) contents.merge(chemicalName, 1.0f, Float::sum);
+		}
 		for (Chemical chemical : stomach.getContentsList()) {
-			contents.merge(chemical.getName(), positive(chemical.getAmount()), Float::sum);
+			String chemicalName = normalizeName(chemical.getName());
+			if (!chemicalName.isEmpty()) {
+				contents.merge(chemicalName, positive(chemical.getAmount()), Float::sum);
+			}
 		}
 		return contents;
 	}
 
-	private static Map<Integer, Float> chemicalContents(CardiovascularSystem cardiovascular) {
-		Map<Integer, Float> contents = new TreeMap<>();
+	private static Map<String, Float> chemicalContents(CardiovascularSystem cardiovascular) {
+		Map<String, Float> contents = new TreeMap<>();
 		for (Chemical chemical : cardiovascular.getChemicalsList()) {
-			contents.merge(chemical.getName(), positive(chemical.getAmount()), Float::sum);
+			String chemicalName = normalizeName(chemical.getName());
+			if (!chemicalName.isEmpty()) {
+				contents.merge(chemicalName, positive(chemical.getAmount()), Float::sum);
+			}
 		}
 		return contents;
 	}
 
-	private static void addChemicals(Stomach.Builder stomach, Map<Integer, Float> contents) {
-		for (Map.Entry<Integer, Float> entry : contents.entrySet()) {
+	private static void addChemicals(Stomach.Builder stomach, Map<String, Float> contents) {
+		for (Map.Entry<String, Float> entry : contents.entrySet()) {
 			if (entry.getValue() > 0) stomach.addContents(chemical(entry.getKey(), entry.getValue()));
 		}
 	}
 
-	private static Chemical chemical(int id, float amount) {
-		return Chemical.newBuilder().setName(id).setAmount(amount).build();
+	private static Chemical chemical(String name, float amount) {
+		return Chemical.newBuilder().setName(name).setAmount(amount).build();
 	}
 
-	private static float remaining(float capacity, Map<Integer, Float> contents) {
+	private static float remaining(float capacity, Map<String, Float> contents) {
 		return Math.max(0, capacity - total(contents));
 	}
 
-	private static float total(Map<Integer, Float> contents) {
+	private static float total(Map<String, Float> contents) {
 		float total = 0;
 		for (float amount : contents.values()) total += positive(amount);
 		return total;
@@ -138,5 +152,9 @@ public final class ChemicalManager {
 	private static float clamp(float value, float minimum, float maximum) {
 		if (!Float.isFinite(value)) return minimum;
 		return Math.max(minimum, Math.min(value, Math.max(minimum, maximum)));
+	}
+
+	private static String normalizeName(String name) {
+		return name == null ? "" : name.trim().toLowerCase(Locale.ROOT);
 	}
 }

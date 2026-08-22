@@ -231,11 +231,12 @@ public class ChemicalDefinition {
                         : 0.0f
         );
 
-        damage.setBleedingPerSecond(
-                jsonObject.has("bleedingPerSecond")
-                        ? jsonObject.get("bleedingPerSecond").getAsFloat()
-                        : 0.0f
-        );
+        float bleeding = jsonObject.has("bleedingPerSecond")
+                ? jsonObject.get("bleedingPerSecond").getAsFloat()
+                : jsonObject.has("bleeding")
+                        ? jsonObject.get("bleeding").getAsFloat()
+                        : 0.0f;
+        damage.setBleedingPerSecond(bleeding);
 
         return damage.build();
     }

@@ -32,6 +32,8 @@ import file.ServerSaver;
 import file.Validater;
 import gamemode.GamemodeManager;
 import generation.Generator;
+import health.ChemicalDigestionManager;
+import health.ChemicalManager;
 import health.CombatManager;
 import health.HealthManager;
 import plane.PlaneManager;
@@ -80,6 +82,8 @@ public class Server {
 	private LootTableManager lootTableManager;
 	private PathfindingHandler pathfindingHandler;
 	private ResourceDiagnostics diagnostics;
+	private ChemicalManager chemicalManager;
+	private ChemicalDigestionManager chemicalDigestionManager;
 	private volatile boolean serverReady = false;
 	private boolean headless;
 	public ThreadPoolExecutor threadPool;
@@ -184,7 +188,10 @@ public class Server {
 		craftingManager = new CraftingManager(entityManager, serverLoader.loadCraftingRecipes(), console, assetManager, planeManager);
 		pathfindingHandler = new PathfindingHandler(entityManager, entityFinder, this, combatManager);
 		
-		tagHandler = new TagHandler(this, entityManager, assetManager, entityFinder, planeManager, combatManager, pathfindingHandler, healthManager);
+		this.chemicalManager = new ChemicalManager();
+		this.chemicalDigestionManager = new ChemicalDigestionManager();
+
+		tagHandler = new TagHandler(this, entityManager, assetManager, entityFinder, planeManager, combatManager, pathfindingHandler, healthManager, chemicalManager, chemicalDigestionManager);
 		entityManager.setClasses(chunkManager,tagHandler, entityFinder, pathfindingHandler);
 		
 		if (shouldGenerate) {

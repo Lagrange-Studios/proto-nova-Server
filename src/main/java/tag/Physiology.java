@@ -16,9 +16,15 @@ public class Physiology extends TagClass {
 	}
 
 	public void secondTick(TagHandler tagHandler, Entity entity) {
-		if (entity == null || !entity.getAlive()) return;
+		if (entity == null) return;
 
-		Entity updated = physiologySystem.update(entity, tagHandler.getEntityManager());
+		Entity updated = entity;
+		if (entity.getAlive()) {
+			updated = physiologySystem.update(entity, tagHandler.getEntityManager());
+		}
+
+		updated = tagHandler.getChemicalDigestionManager().processEntityChemicals(updated);
+
 		tagHandler.updateEntity(updated);
 		tagHandler.getHealthManager().entityCheck(updated);
 	}

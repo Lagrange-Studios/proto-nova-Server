@@ -159,6 +159,8 @@ public class AssetMakerGUI {
     final JSpinner cardiovascularMaxOxygenSpinner = decimalSpinner(100, 0, 100000, 1);
     final JSpinner cardiovascularPowerSpinner = decimalSpinner(0, 0, 100000, 1);
     final JSpinner cardiovascularMaxPowerSpinner = decimalSpinner(0, 0, 100000, 1);
+    final JSpinner cardiovascularNutritionSpinner = decimalSpinner(100, 0, 100000, 1);
+    final JSpinner cardiovascularMaxNutritionSpinner = decimalSpinner(100, 0, 100000, 1);
     final JSpinner cardiovascularFluidCapacitySpinner = decimalSpinner(150, 0, 100000, 1);
     final JTextArea cardiovascularChemicalsField = new JTextArea();
     final JTextField heartOrganAssetField = new JTextField();
@@ -389,7 +391,8 @@ public class AssetMakerGUI {
                 lungsOxygenSpinner, lungsOxygenUseSpinner, liverDetoxificationSpinner, liverOxygenUseSpinner,
                 brainOxygenUseSpinner, stomachCapacitySpinner, stomachAbsorptionSpinner, stomachOxygenUseSpinner,
                 cardiovascularOxygenSpinner, cardiovascularMaxOxygenSpinner, cardiovascularPowerSpinner,
-                cardiovascularMaxPowerSpinner, cardiovascularFluidCapacitySpinner
+                cardiovascularMaxPowerSpinner, cardiovascularNutritionSpinner,
+                cardiovascularMaxNutritionSpinner, cardiovascularFluidCapacitySpinner
         };
         for (JSpinner spinner : otherSpinners) spinners.add(spinner);
         OrganStatusControls[] statuses = { heartStatus, lungsStatus, liverStatus, brainStatus, stomachStatus };
@@ -398,6 +401,7 @@ public class AssetMakerGUI {
             spinners.add(status.healthPercent);
             spinners.add(status.efficiencyPercent);
             spinners.add(status.powerUse);
+            spinners.add(status.nutritionUse);
         }
         for (JSpinner spinner : spinners) spinner.addChangeListener(e -> markDirty());
         lootTableModel.addTableModelListener(e -> markDirty());
@@ -419,6 +423,7 @@ public class AssetMakerGUI {
         final JSpinner healthPercent = decimalSpinner(100, 0, 100, 1);
         final JSpinner efficiencyPercent = decimalSpinner(100, 0, 200, 1);
         final JSpinner powerUse = decimalSpinner(0, 0, 100000, 0.1);
+        final JSpinner nutritionUse = decimalSpinner(0, 0, 100000, 0.001);
     }
 
     /**

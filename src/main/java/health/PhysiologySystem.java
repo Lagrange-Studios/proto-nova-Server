@@ -21,6 +21,7 @@ import protonova.protobuf.OrgansProto.Stomach;
 
 public final class PhysiologySystem {
 
+	// default useage so we can do 200 percent effeciency insted of having to say the number without any context.
 	private static final float DEFAULT_HEART_OXYGEN_USE = 1.0f;
 	private static final float DEFAULT_LUNG_OXYGEN_USE = 0.5f;
 	private static final float DEFAULT_LIVER_OXYGEN_USE = 1.0f;
@@ -88,7 +89,7 @@ public final class PhysiologySystem {
 
 		float safeBreathableOxygen = keepValueInRange(breathableOxygen, 0, 1);
 		PhysiologyUpdate physiologyUpdate = new PhysiologyUpdate(entity, safeBreathableOxygen);
-		physiologyUpdate.resolveCyberneticPowerUse();
+		physiologyUpdate.resolveOrganEnergyUse();
 
 		collectLungChanges(physiologyUpdate);
 		collectHeartChanges(physiologyUpdate);
@@ -218,10 +219,12 @@ public final class PhysiologySystem {
 		updatedCardiovascularSystem.setMaxOxygen(physiologyUpdate.configuredMaximumOxygen);
 		updatedCardiovascularSystem.setElectricalPower(physiologyUpdate.storedElectricalPower);
 		updatedCardiovascularSystem.setMaxElectricalPower(physiologyUpdate.maximumElectricalPower);
+		updatedCardiovascularSystem.setNutrition(physiologyUpdate.storedNutrition);
+		updatedCardiovascularSystem.setMaxNutrition(physiologyUpdate.maximumNutrition);
 		updatedCardiovascularSystem.setFluidCapacity(physiologyUpdate.configuredFluidCapacity);
 		updatedCardiovascularSystem.clearChemicals();
 
-		for (Map.Entry<Integer, Float> chemical : physiologyUpdate.bloodstreamChemicals.entrySet()) {
+		for (Map.Entry<String, Float> chemical : physiologyUpdate.bloodstreamChemicals.entrySet()) {
 			if (chemical.getValue() > 0) {
 				updatedCardiovascularSystem.addChemicals(Chemical.newBuilder()
 						.setName(chemical.getKey())
@@ -244,7 +247,7 @@ public final class PhysiologySystem {
 			updatedStomach.clearContents();
 			updatedStomach.setChemicalCapacity(physiologyUpdate.stomachChemicalCapacity);
 
-			for (Map.Entry<Integer, Float> chemical : physiologyUpdate.stomachChemicals.entrySet()) {
+			for (Map.Entry<String, Float> chemical : physiologyUpdate.stomachChemicals.entrySet()) {
 				if (chemical.getValue() > 0) {
 					updatedStomach.addContents(Chemical.newBuilder()
 							.setName(chemical.getKey())
@@ -441,17 +444,20 @@ public final class PhysiologySystem {
 
 		private final Organs organs;
 		private final float breathableOxygen;
-		private final Map<Integer, Float> bloodstreamChemicals = new TreeMap<>();
-		private final Map<Integer, Float> stomachChemicals = new TreeMap<>();
+		private final Map<String, Float> bloodstreamChemicals = new TreeMap<>();
+		private final Map<String, Float> stomachChemicals = new TreeMap<>();
 		private float configuredMaximumOxygen;
 		private float maximumOxygenForCurrentBlood;
 		private float storedOxygen;
 		private float maximumElectricalPower;
 		private float storedElectricalPower;
+		private float maximumNutrition;
+		private float storedNutrition;
 		private float configuredFluidCapacity;
 		private float availableBloodstreamChemicalSpace;
 		private float stomachChemicalCapacity;
 		private float availableCyberneticPowerRatio = 1;
+		private float availableBiologicalNutritionRatio = 1;
 		private float oxygenAddedByLungs;
 		private float totalOxygenUse;
 		private float brainOxygenUse;
@@ -507,6 +513,13 @@ public final class PhysiologySystem {
 					0,
 					maximumElectricalPower);
 
+			maximumNutrition = OrganEnergy.maximumNutrition(cardiovascularSystem);
+
+			storedNutrition = keepValueInRange(
+					cardiovascularSystem.getNutrition(),
+					0,
+					maximumNutrition);
+
 			float maximumBlood = 0;
 			float currentBlood = 0;
 			if (organs.hasHeart()) {
@@ -543,8 +556,8 @@ public final class PhysiologySystem {
 					stomachChemicalCapacity = ChemicalUnits.DEFAULT_STOMACH_CAPACITY;
 				}
 
-				for (int chemicalEntityId : stomach.getChemicalsList()) {
-					addChemicalAmount(stomachChemicals, chemicalEntityId, 1);
+				for (String chemicalName : stomach.getChemicalsList()) {
+					addChemicalAmount(stomachChemicals, chemicalName, 1);
 				}
 
 				for (Chemical chemical : stomach.getContentsList()) {
@@ -558,32 +571,47 @@ public final class PhysiologySystem {
 			}
 		}
 
-		private void resolveCyberneticPowerUse() {
+		private void resolveOrganEnergyUse() {
 			float totalPowerUse = 0;
+			float totalNutritionUse = 0;
 
 			if (organs.hasHeart()) {
-				totalPowerUse += getCyberneticPowerUse(organs.getHeart().getStatus());
+				totalPowerUse += OrganEnergy.powerUsePerSecond(organs.getHeart().getStatus());
+				totalNutritionUse += OrganEnergy.nutritionUsePerSecond(
+						organs.getHeart().getStatus(), OrganEnergy.DEFAULT_HEART_NUTRITION_USE);
 			}
 			if (organs.hasLungs()) {
-				totalPowerUse += getCyberneticPowerUse(organs.getLungs().getStatus());
+				totalPowerUse += OrganEnergy.powerUsePerSecond(organs.getLungs().getStatus());
+				totalNutritionUse += OrganEnergy.nutritionUsePerSecond(
+						organs.getLungs().getStatus(), OrganEnergy.DEFAULT_LUNG_NUTRITION_USE);
 			}
 			if (organs.hasLiver()) {
-				totalPowerUse += getCyberneticPowerUse(organs.getLiver().getStatus());
+				totalPowerUse += OrganEnergy.powerUsePerSecond(organs.getLiver().getStatus());
+				totalNutritionUse += OrganEnergy.nutritionUsePerSecond(
+						organs.getLiver().getStatus(), OrganEnergy.DEFAULT_LIVER_NUTRITION_USE);
 			}
 			if (organs.hasBrain()) {
-				totalPowerUse += getCyberneticPowerUse(organs.getBrain().getStatus());
+				totalPowerUse += OrganEnergy.powerUsePerSecond(organs.getBrain().getStatus());
+				totalNutritionUse += OrganEnergy.nutritionUsePerSecond(
+						organs.getBrain().getStatus(), OrganEnergy.DEFAULT_BRAIN_NUTRITION_USE);
 			}
 			if (organs.hasStomach()) {
-				totalPowerUse += getCyberneticPowerUse(organs.getStomach().getStatus());
+				totalPowerUse += OrganEnergy.powerUsePerSecond(organs.getStomach().getStatus());
+				totalNutritionUse += OrganEnergy.nutritionUsePerSecond(
+						organs.getStomach().getStatus(), OrganEnergy.DEFAULT_STOMACH_NUTRITION_USE);
 			}
 
-			if (totalPowerUse <= 0) {
-				return;
+			if (totalPowerUse > 0) {
+				float deliveredPower = Math.min(storedElectricalPower, totalPowerUse);
+				availableCyberneticPowerRatio = deliveredPower / totalPowerUse;
+				storedElectricalPower -= deliveredPower;
 			}
 
-			float deliveredPower = Math.min(storedElectricalPower, totalPowerUse);
-			availableCyberneticPowerRatio = deliveredPower / totalPowerUse;
-			storedElectricalPower -= deliveredPower;
+			if (totalNutritionUse > 0) {
+				float deliveredNutrition = Math.min(storedNutrition, totalNutritionUse);
+				availableBiologicalNutritionRatio = deliveredNutrition / totalNutritionUse;
+				storedNutrition -= deliveredNutrition;
+			}
 		}
 
 		private float getOrganFunction(OrganStatus organStatus) {
@@ -597,6 +625,8 @@ public final class PhysiologySystem {
 
 			if (organStatus.getType() == OrganType.ORGAN_TYPE_CYBERNETIC) {
 				availablePower = availableCyberneticPowerRatio;
+			} else {
+				availablePower = availableBiologicalNutritionRatio;
 			}
 
 			return organHealth * organEfficiency * availablePower;
@@ -641,7 +671,7 @@ public final class PhysiologySystem {
 			float absorbedRatio = absorbedAmount / totalStomachChemicalAmount;
 			absorbedRatio = Math.min(1, absorbedRatio);
 
-			for (Map.Entry<Integer, Float> stomachChemical : stomachChemicals.entrySet()) {
+			for (Map.Entry<String, Float> stomachChemical : stomachChemicals.entrySet()) {
 				float amountMovedToBloodstream = stomachChemical.getValue() * absorbedRatio;
 				float amountLeftInStomach = stomachChemical.getValue() - amountMovedToBloodstream;
 				stomachChemical.setValue(amountLeftInStomach);
@@ -679,22 +709,15 @@ public final class PhysiologySystem {
 			float removedChemicalRatio = availableDetoxification / totalBloodstreamChemicalAmount;
 			removedChemicalRatio = Math.min(1, removedChemicalRatio);
 
-			for (Map.Entry<Integer, Float> chemical : bloodstreamChemicals.entrySet()) {
+			for (Map.Entry<String, Float> chemical : bloodstreamChemicals.entrySet()) {
 				float remainingAmount = chemical.getValue() * (1 - removedChemicalRatio);
 				chemical.setValue(remainingAmount);
 			}
 		}
 
-		private static float getCyberneticPowerUse(OrganStatus organStatus) {
-			if (organStatus.getType() != OrganType.ORGAN_TYPE_CYBERNETIC) {
-				return 0;
-			}
-			return getNonNegativeValue(organStatus.getPowerUsePerSecond());
-		}
-
 		private static void addChemicalAmount(
-				Map<Integer, Float> chemicals,
-				int chemicalEntityId,
+				Map<String, Float> chemicals,
+				String chemicalName,
 				float chemicalAmount) {
 
 			float safeChemicalAmount = getNonNegativeValue(chemicalAmount);
@@ -702,15 +725,20 @@ public final class PhysiologySystem {
 				return;
 			}
 
-			if (chemicals.containsKey(chemicalEntityId)) {
-				float combinedAmount = chemicals.get(chemicalEntityId) + safeChemicalAmount;
-				chemicals.put(chemicalEntityId, combinedAmount);
+			if (chemicalName == null || chemicalName.trim().isEmpty()) {
+				return;
+			}
+			chemicalName = chemicalName.trim().toLowerCase(java.util.Locale.ROOT);
+
+			if (chemicals.containsKey(chemicalName)) {
+				float combinedAmount = chemicals.get(chemicalName) + safeChemicalAmount;
+				chemicals.put(chemicalName, combinedAmount);
 			} else {
-				chemicals.put(chemicalEntityId, safeChemicalAmount);
+				chemicals.put(chemicalName, safeChemicalAmount);
 			}
 		}
 
-		private static float getTotalChemicalAmount(Map<Integer, Float> chemicals) {
+		private static float getTotalChemicalAmount(Map<String, Float> chemicals) {
 			float totalChemicalAmount = 0;
 			for (float chemicalAmount : chemicals.values()) {
 				totalChemicalAmount += getNonNegativeValue(chemicalAmount);
@@ -719,7 +747,7 @@ public final class PhysiologySystem {
 		}
 
 		private static void limitChemicalAmount(
-				Map<Integer, Float> chemicals,
+				Map<String, Float> chemicals,
 				float chemicalCapacity) {
 
 			float totalChemicalAmount = getTotalChemicalAmount(chemicals);
@@ -730,7 +758,7 @@ public final class PhysiologySystem {
 			float safeChemicalCapacity = Math.max(0, chemicalCapacity);
 			float retainedChemicalRatio = safeChemicalCapacity / totalChemicalAmount;
 
-			for (Map.Entry<Integer, Float> chemical : chemicals.entrySet()) {
+			for (Map.Entry<String, Float> chemical : chemicals.entrySet()) {
 				float retainedChemicalAmount = chemical.getValue() * retainedChemicalRatio;
 				chemical.setValue(retainedChemicalAmount);
 			}

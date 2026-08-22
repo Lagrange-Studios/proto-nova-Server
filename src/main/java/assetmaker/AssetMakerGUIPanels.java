@@ -21,6 +21,8 @@ import javax.swing.JSpinner;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 
+import health.OrganEnergy;
+
 /**
  * Builds the editor tabs. Each method below represents one logical asset
  * section. To add a new UI section, create a buildXTab method, add its controls
@@ -364,40 +366,40 @@ class AssetMakerGUIPanels {
 
     private JPanel buildHeartPanel() {
         JPanel panel = organPanel("Heart", gui.heartBox, gui.heartStatus);
-        addOrganField(panel, "Current blood volume (u):", gui.heartBloodSpinner, 3);
-        addOrganField(panel, "Maximum blood volume (u):", gui.heartMaxBloodSpinner, 4);
-        addOrganField(panel, "Circulation capacity (u/s):", gui.heartCirculationSpinner, 5);
-        addOrganField(panel, "Oxygen demand (u/s):", gui.heartOxygenUseSpinner, 6);
+        addOrganField(panel, "Current blood volume (u):", gui.heartBloodSpinner, 4);
+        addOrganField(panel, "Maximum blood volume (u):", gui.heartMaxBloodSpinner, 5);
+        addOrganField(panel, "Circulation capacity (u/s):", gui.heartCirculationSpinner, 6);
+        addOrganField(panel, "Oxygen demand (u/s):", gui.heartOxygenUseSpinner, 7);
         return panel;
     }
 
     private JPanel buildLungsPanel() {
         JPanel panel = organPanel("Lungs", gui.lungsBox, gui.lungsStatus);
-        addOrganField(panel, "Oxygen transfer capacity (u/s):", gui.lungsOxygenSpinner, 3);
-        addOrganField(panel, "Oxygen demand (u/s):", gui.lungsOxygenUseSpinner, 4);
+        addOrganField(panel, "Oxygen transfer capacity (u/s):", gui.lungsOxygenSpinner, 4);
+        addOrganField(panel, "Oxygen demand (u/s):", gui.lungsOxygenUseSpinner, 5);
         return panel;
     }
 
     private JPanel buildLiverPanel() {
         JPanel panel = organPanel("Liver", gui.liverBox, gui.liverStatus);
-        addOrganField(panel, "Detoxification capacity (u/s):", gui.liverDetoxificationSpinner, 3);
-        addOrganField(panel, "Oxygen demand (u/s):", gui.liverOxygenUseSpinner, 4);
+        addOrganField(panel, "Detoxification capacity (u/s):", gui.liverDetoxificationSpinner, 4);
+        addOrganField(panel, "Oxygen demand (u/s):", gui.liverOxygenUseSpinner, 5);
         return panel;
     }
 
     private JPanel buildBrainPanel() {
         JPanel panel = organPanel("Brain", gui.brainBox, gui.brainStatus);
-        addOrganField(panel, "Oxygen demand (u/s):", gui.brainOxygenUseSpinner, 3);
+        addOrganField(panel, "Oxygen demand (u/s):", gui.brainOxygenUseSpinner, 4);
         return panel;
     }
 
     private JPanel buildStomachPanel() {
         JPanel panel = organPanel("Stomach", gui.stomachBox, gui.stomachStatus);
-        addOrganField(panel, "Chemical capacity (u):", gui.stomachCapacitySpinner, 3);
-        addOrganField(panel, "Absorption capacity (u/s):", gui.stomachAbsorptionSpinner, 4);
-        addOrganField(panel, "Oxygen demand (u/s):", gui.stomachOxygenUseSpinner, 5);
+        addOrganField(panel, "Chemical capacity (u):", gui.stomachCapacitySpinner, 4);
+        addOrganField(panel, "Absorption capacity (u/s):", gui.stomachAbsorptionSpinner, 5);
+        addOrganField(panel, "Oxygen demand (u/s):", gui.stomachOxygenUseSpinner, 6);
         addChemicalArea(panel, gui.stomachChemicalsField,
-                "Contents (chemicalId=amountU, one per line):", 6);
+                "Contents (chemicalName=amountU, one per line):", 7);
         return panel;
     }
 
@@ -411,10 +413,12 @@ class AssetMakerGUIPanels {
         addOrganField(panel, "Maximum blood oxygen (u):", gui.cardiovascularMaxOxygenSpinner, 2);
         addOrganField(panel, "Stored electrical power (u):", gui.cardiovascularPowerSpinner, 3);
         addOrganField(panel, "Maximum electrical power (u):", gui.cardiovascularMaxPowerSpinner, 4);
+        addOrganField(panel, "Stored nutrition (u):", gui.cardiovascularNutritionSpinner, 5);
+        addOrganField(panel, "Maximum nutrition (u):", gui.cardiovascularMaxNutritionSpinner, 6);
         addOrganField(panel, "Total fluid capacity (blood + chemicals, u):",
-                gui.cardiovascularFluidCapacitySpinner, 5);
+                gui.cardiovascularFluidCapacitySpinner, 7);
         addChemicalArea(panel, gui.cardiovascularChemicalsField,
-                "Bloodstream chemicals (chemicalId=amountU):", 6);
+                "Bloodstream chemicals (chemicalName=amountU):", 8);
         return panel;
     }
 
@@ -434,6 +438,9 @@ class AssetMakerGUIPanels {
         c.weightx = 0;
         c.gridx = 0; c.gridy = 2; panel.add(new JLabel("Cybernetic power demand (u/s):"), c);
         c.gridx = 1; c.gridwidth = 3; c.weightx = 1; panel.add(status.powerUse, c);
+        c.gridx = 0; c.gridy = 3; c.gridwidth = 1; c.weightx = 0;
+        panel.add(new JLabel("Biological nutrition demand (u/s):"), c);
+        c.gridx = 1; c.gridwidth = 3; c.weightx = 1; panel.add(status.nutritionUse, c);
         return panel;
     }
 
@@ -460,11 +467,11 @@ class AssetMakerGUIPanels {
         gui.brainBox.setSelected(true);
         gui.stomachBox.setSelected(true);
         gui.cardiovascularBox.setSelected(true);
-        setBiological(gui.heartStatus);
-        setBiological(gui.lungsStatus);
-        setBiological(gui.liverStatus);
-        setBiological(gui.brainStatus);
-        setBiological(gui.stomachStatus);
+        setBiological(gui.heartStatus, OrganEnergy.DEFAULT_HEART_NUTRITION_USE);
+        setBiological(gui.lungsStatus, OrganEnergy.DEFAULT_LUNG_NUTRITION_USE);
+        setBiological(gui.liverStatus, OrganEnergy.DEFAULT_LIVER_NUTRITION_USE);
+        setBiological(gui.brainStatus, OrganEnergy.DEFAULT_BRAIN_NUTRITION_USE);
+        setBiological(gui.stomachStatus, OrganEnergy.DEFAULT_STOMACH_NUTRITION_USE);
         gui.heartBloodSpinner.setValue(100.0);
         gui.heartMaxBloodSpinner.setValue(100.0);
         gui.heartCirculationSpinner.setValue(10.0);
@@ -481,6 +488,8 @@ class AssetMakerGUIPanels {
         gui.cardiovascularMaxOxygenSpinner.setValue(100.0);
         gui.cardiovascularPowerSpinner.setValue(0.0);
         gui.cardiovascularMaxPowerSpinner.setValue(0.0);
+        gui.cardiovascularNutritionSpinner.setValue(100.0);
+        gui.cardiovascularMaxNutritionSpinner.setValue(100.0);
         gui.cardiovascularFluidCapacitySpinner.setValue(150.0);
         gui.heartOrganAssetField.setText("human heart");
         gui.lungsOrganAssetField.setText("human lungs");
@@ -493,11 +502,14 @@ class AssetMakerGUIPanels {
         }
     }
 
-    private static void setBiological(AssetMakerGUI.OrganStatusControls status) {
+    private static void setBiological(
+            AssetMakerGUI.OrganStatusControls status,
+            double nutritionUsePerSecond) {
         status.type.setSelectedItem("Biological");
         status.healthPercent.setValue(100.0);
         status.efficiencyPercent.setValue(100.0);
         status.powerUse.setValue(0.0);
+        status.nutritionUse.setValue(nutritionUsePerSecond);
     }
 
     /** Less frequently edited fields from Entity.proto. */
