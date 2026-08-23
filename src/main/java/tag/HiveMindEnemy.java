@@ -29,12 +29,14 @@ public class HiveMindEnemy extends TagClass {
 				tagHandler.getPathfindingHandler().newAgent(entity.getId(),"fungusMind");
 			
 			Entity spore = tagHandler.getEntityManager().getEntity(DataUtil.getInt(entity,"parentSpore",0));
-			if (spore.getName().equals("fungus spore") ) {;
+			if (spore != null && spore.getName().equals("fungus spore") ) {;
 
 				tagHandler.getPathfindingHandler().changeGoal(entity.getId(), DataUtil.getInt(spore, "target", 0));
 					
 			}
 			else {
+				tagHandler.getPathfindingHandler().removeEntity(entity);
+				
 				tagHandler.getEntityManager().removeEntity(entity);
 			}
 		}

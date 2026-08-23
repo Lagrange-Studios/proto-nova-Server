@@ -24,8 +24,9 @@ public class Harvestable extends TagClass {
 	
 	public void secondTick(TagHandler tagHandler, Entity entity) {
 		
-		int harvestTimer = DataUtil.getInt(entity, "harvestTimer", 60);
+		if (!entity.getTagsList().contains("harvestable")) return;
 		
+		int harvestTimer = DataUtil.getInt(entity, "harvestTimer", 60);
 		
 		harvestTimer--;
 		// also check to see if the plants still growing

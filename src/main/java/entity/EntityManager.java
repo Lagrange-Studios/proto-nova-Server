@@ -152,7 +152,7 @@ public class EntityManager {
 					.setPosition(entity.getPosition())
 					.build();
 
-			entities.put(entity.getId(), item);
+			entities.put(id, item);
 		}
 		
 		sendUpdate(entity);
