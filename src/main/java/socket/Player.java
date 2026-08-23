@@ -31,6 +31,11 @@ public class Player {
 	private static final int HANDSHAKE_TIMEOUT_MILLIS = 10_000;
 	private static final int IDLE_TIMEOUT_MILLIS = Math.multiplyExact(
 			main.ServerConfig.getInstance().getGameSocketIdleTimeoutSeconds(), 1_000);
+	private static final int OUTBOUND_QUEUE_CAPACITY = Math.max(
+			main.ServerConfig.getInstance().getGameSocketOutboundQueueSize(),
+			Math.multiplyExact(
+					main.ServerConfig.getInstance().getTicksPerSecond(),
+					main.ServerConfig.getInstance().getGameSocketSlowClientTimeoutSeconds()));
 	
 	private DataInputStream input;
 	private DataOutputStream output;
@@ -43,8 +48,7 @@ public class Player {
 	private volatile boolean addedToGame = false;
 	private final AtomicBoolean disconnected = new AtomicBoolean(false);
 	private final AtomicBoolean writeScheduled = new AtomicBoolean(false);
-	private final ArrayBlockingQueue<byte[]> outboundPackets = new ArrayBlockingQueue<>(
-			main.ServerConfig.getInstance().getGameSocketOutboundQueueSize());
+	private final ArrayBlockingQueue<byte[]> outboundPackets = new ArrayBlockingQueue<>(OUTBOUND_QUEUE_CAPACITY);
 	
 	public final HashSet<Integer> entitiesSent = new HashSet<>();
 	public final Set<Integer> updateList =  ConcurrentHashMap.newKeySet();
