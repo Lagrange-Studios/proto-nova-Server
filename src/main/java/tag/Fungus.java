@@ -173,7 +173,7 @@ public class Fungus extends TagClass {
 					
 					//System.out.println("[Fungus] new monster at: "+newMonster.getPosition().getX()+","+newMonster.getPosition().getY());
 					parentSpore = parentSpore.toBuilder()
-							.putCustomData("parentSpore",DataUtil.newInt(monsterCount+1))
+							.putCustomData("monsterCount",DataUtil.newInt(monsterCount+1))
 							.build();
 					
 					tagHandler.updateEntity(parentSpore);
