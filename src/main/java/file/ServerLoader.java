@@ -189,11 +189,11 @@ public class ServerLoader {
 		component.setName(itemJson.getString("name"));
 		component.setConsumed(itemJson.getBoolean("consumed"));
 		
-		if (itemJson.has("minimumSlotValue")) {
-			JSONObject slotValues = itemJson.getJSONObject("minimumSlotValue");
+		if (itemJson.has("minimumDataIntValue")) {
+			JSONObject slotValues = itemJson.getJSONObject("minimumDataIntValue");
 			
 			for (String key : slotValues.keySet()) {
-				component.putMinimumSlotValue(key, slotValues.getInt(key));
+				component.putMinimumDataIntValue(key, slotValues.getInt(key));
 			}
 		}
 		

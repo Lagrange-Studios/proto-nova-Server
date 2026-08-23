@@ -7,7 +7,7 @@
   "item2": {
     "name":"campfire",
     "consumed": false	,
-	"minimumSlotValue": {
+	"minimumDataIntValue": {
 		"fuelTimer": 1
 	},
 	"tagsRequired": ["campfire"]

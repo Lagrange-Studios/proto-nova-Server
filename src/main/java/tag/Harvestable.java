@@ -29,17 +29,17 @@ public class Harvestable extends TagClass {
 		
 		harvestTimer--;
 		// also check to see if the plants still growing
-		if (harvestTimer <= 0 && !entity.containsInventorySlots("currentPlantAge")) {
+		if (entity.hasDisplayTexture() && harvestTimer <= 0 && !entity.containsCustomData("currentPlantAge")) {
 			tagHandler.updateEntity(
 					entity.toBuilder()
-					.putInventorySlots("harvestTimer", harvestTimer)
-					.setDisplayTexture("")
+					.putCustomData("harvestTimer",DataUtil.newInt(harvestTimer))
+					.clearDisplayTexture()
 					.build()
 					);
 		}
-		else tagHandler.updateEntity(
+		else if (harvestTimer >= 0) tagHandler.updateEntity(
 				entity.toBuilder()
-				.putInventorySlots("harvestTimer", harvestTimer)
+				.putCustomData("harvestTimer",DataUtil.newInt(harvestTimer))
 				.setDisplayTexture("empty "+entity.getName())
 				.build()
 				);

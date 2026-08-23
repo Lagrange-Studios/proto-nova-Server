@@ -134,6 +134,8 @@ public class PacketMaker {
 				keyBuilder.append(planeX).append(',').append(planeY);
 				String key = keyBuilder.toString();
 				
+				if (currentPlane == null) System.out.println("ERROR IMPORTANT PRINTING MAP ID: "+playerEntity.getMap());
+				
 				if (currentPlane.getTilesMap().containsKey(key)) {
 					packet.putTiles(key, currentPlane.getTilesMap().get(key));
 				}
