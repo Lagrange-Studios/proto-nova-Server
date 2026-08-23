@@ -108,8 +108,30 @@ public class AssetMakerGUI {
     final JCheckBox isItemBox = new JCheckBox("Is Item");
     final JCheckBox stackableBox = new JCheckBox("Stackable");
     final JCheckBox canDestroyBox = new JCheckBox("Can be damaged and destroyed");
+    final JCheckBox consumableBox = new JCheckBox("Consumable");
     final JSpinner amountSpinner = new JSpinner(new SpinnerNumberModel(1, 0, Integer.MAX_VALUE, 1));
     final JTextArea inventorySlotsField = new JTextArea();
+
+    // ===== Chemistry and custom data controls =====
+    final JSpinner temperatureSpinner = new JSpinner(
+            new SpinnerNumberModel(0, Integer.MIN_VALUE, Integer.MAX_VALUE, 1));
+    final JTextArea entityChemicalsField = new JTextArea();
+    final DefaultTableModel customDataModel = new DefaultTableModel(
+            new Object[]{"Key", "Integer", "Float", "Double", "Boolean", "String"}, 0) {
+        @Override
+        public Class<?> getColumnClass(int column) {
+            switch (column) {
+                case 0: return String.class;
+                case 1: return Integer.class;
+                case 2: return Float.class;
+                case 3: return Double.class;
+                case 4: return Boolean.class;
+                case 5: return String.class;
+                default: return Object.class;
+            }
+        }
+    };
+    final javax.swing.JTable customDataTable = new javax.swing.JTable(customDataModel);
 
     // ===== Loot table controls =====
     // Add a column here and update AssetMakerGUIController.buildLootTable() when
@@ -322,6 +344,7 @@ public class AssetMakerGUI {
         tabs.addTab("5. Looks & Behaviors", wrapEditorTab(p.buildTagsTab()));
         tabs.addTab("6. Drops", wrapEditorTab(p.buildLootTableTab()));
         tabs.addTab("7. Body & Organs", wrapEditorTab(p.buildPhysiologyTab()));
+        tabs.addTab("8. Chemistry & Data", wrapEditorTab(p.buildChemistryTab()));
         tabs.addTab("Expert (Usually Skip)", wrapEditorTab(p.buildAdvancedTab()));
         return tabs;
     }
@@ -353,6 +376,8 @@ public class AssetMakerGUI {
         isItemBox.setToolTipText("Turn this on if a player can pick it up.");
         stackableBox.setToolTipText("Turn this on if several copies can share one inventory slot.");
         canDestroyBox.setToolTipText("Turn this on if attacks should be able to break this item.");
+        consumableBox.setToolTipText("Turn this on if the item can be consumed.");
+        temperatureSpinner.setToolTipText("The entity's current temperature used by chemical reactions.");
     }
 
     private void installDirtyTracking() {
@@ -369,13 +394,15 @@ public class AssetMakerGUI {
         };
         for (JTextField field : textFields) field.getDocument().addDocumentListener(documentListener);
         JTextArea[] textAreas = {
-                inventorySlotsField, internalValuesField, stomachChemicalsField, cardiovascularChemicalsField
+                inventorySlotsField, internalValuesField, stomachChemicalsField, cardiovascularChemicalsField,
+                entityChemicalsField
         };
         for (JTextArea area : textAreas) area.getDocument().addDocumentListener(documentListener);
 
         AbstractButton[] buttons = {
                 anchoredBox, canCollideBox, castShadowBox, aliveBox, isItemBox, stackableBox, canDestroyBox,
-                dropsABodyBox, heartBox, lungsBox, liverBox, brainBox, stomachBox, cardiovascularBox
+                consumableBox, dropsABodyBox, heartBox, lungsBox, liverBox, brainBox, stomachBox,
+                cardiovascularBox
         };
         for (AbstractButton button : buttons) button.addItemListener(e -> markDirty());
         directionCombo.addItemListener(e -> markDirty());
@@ -387,6 +414,7 @@ public class AssetMakerGUI {
         for (JSpinner spinner : hitDmgValues) spinners.add(spinner);
         JSpinner[] otherSpinners = {
                 renderPrioritySpinner, hitCooldownSpinner, maxHealthSpinner, critHealthSpinner, amountSpinner, internalSpaceSpinner,
+                temperatureSpinner,
                 heartBloodSpinner, heartMaxBloodSpinner, heartCirculationSpinner, heartOxygenUseSpinner,
                 lungsOxygenSpinner, lungsOxygenUseSpinner, liverDetoxificationSpinner, liverOxygenUseSpinner,
                 brainOxygenUseSpinner, stomachCapacitySpinner, stomachAbsorptionSpinner, stomachOxygenUseSpinner,
@@ -405,6 +433,7 @@ public class AssetMakerGUI {
         }
         for (JSpinner spinner : spinners) spinner.addChangeListener(e -> markDirty());
         lootTableModel.addTableModelListener(e -> markDirty());
+        customDataModel.addTableModelListener(e -> markDirty());
     }
 
     private void markDirty() {

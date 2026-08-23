@@ -35,6 +35,7 @@ import generation.Generator;
 import health.ChemicalDigestionManager;
 import health.ChemicalManager;
 import health.CombatManager;
+import health.ConsumptionManager;
 import health.HealthManager;
 import plane.PlaneManager;
 import protonova.protobuf.EntityProto.Entity;
@@ -84,6 +85,7 @@ public class Server {
 	private ResourceDiagnostics diagnostics;
 	private ChemicalManager chemicalManager;
 	private ChemicalDigestionManager chemicalDigestionManager;
+	private ConsumptionManager consumptionManager;
 	private volatile boolean serverReady = false;
 	private boolean headless;
 	public ThreadPoolExecutor threadPool;
@@ -193,6 +195,7 @@ public class Server {
 
 		tagHandler = new TagHandler(this, entityManager, assetManager, entityFinder, planeManager, combatManager, pathfindingHandler, healthManager, chemicalManager, chemicalDigestionManager);
 		entityManager.setClasses(chunkManager,tagHandler, entityFinder, pathfindingHandler);
+		consumptionManager = new ConsumptionManager(chemicalDigestionManager, chemicalManager, entityManager);
 		
 		if (shouldGenerate) {
 			console.print("Generating a new world. This may take a few minutes...");
@@ -207,7 +210,7 @@ public class Server {
 		}
 		
 		gamemodeManager = new GamemodeManager(this, console, entityManager, entityFinder, planeManager, assetManager, serverLoader.getGamemode(), tagHandler, chatManager);
-		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager, craftingManager, tagHandler, combatManager, healthManager);
+		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager, craftingManager, tagHandler, combatManager, healthManager, consumptionManager);
 		serverSaver = new ServerSaver(this, entityManager, planeManager, celestialObjectManager, gamemodeManager);
 		
 		packetReciver = new PacketReciver(entityManager, soundManager, chatManager, console, actionHandler, entityFinder, healthManager, planeManager, this);

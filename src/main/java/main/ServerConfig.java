@@ -16,6 +16,7 @@ public class ServerConfig {
     private int gameSocketPort;
     private int gameSocketIdleTimeoutSeconds;
     private int gameSocketOutboundQueueSize;
+    private int gameSocketSlowClientTimeoutSeconds;
     private boolean statusHttpEnabled;
     private int statusHttpPort;
     private String statusHttpBindAddress;
@@ -74,6 +75,7 @@ public class ServerConfig {
         defaultProps.setProperty("game.socket.port", "7675");
         defaultProps.setProperty("game.socket.idle.timeout.seconds", "300");
         defaultProps.setProperty("game.socket.outbound.queue.size", "8");
+        defaultProps.setProperty("game.socket.slow.client.timeout.seconds", "15");
         defaultProps.setProperty("http.status.enabled", "true");
         defaultProps.setProperty("http.status.port", "7674");
         defaultProps.setProperty("http.status.bind.address", "0.0.0.0");
@@ -100,6 +102,8 @@ public class ServerConfig {
         this.gameSocketPort = getPortProperty("game.socket.port", 7675);
         this.gameSocketIdleTimeoutSeconds = getBoundedPositiveIntProperty("game.socket.idle.timeout.seconds", 300, 86_400);
         this.gameSocketOutboundQueueSize = getBoundedPositiveIntProperty("game.socket.outbound.queue.size", 8, 1_024);
+        this.gameSocketSlowClientTimeoutSeconds = getBoundedPositiveIntProperty(
+                "game.socket.slow.client.timeout.seconds", 15, 300);
         this.statusHttpEnabled = getBooleanProperty("http.status.enabled", true);
         this.statusHttpPort = getPortProperty("http.status.port", 7674);
         this.statusHttpBindAddress = getStringProperty("http.status.bind.address", "0.0.0.0").trim();
@@ -169,8 +173,11 @@ public class ServerConfig {
     // Disconnect authenticated clients that send no data for this many seconds.
     public int getGameSocketIdleTimeoutSeconds() { return gameSocketIdleTimeoutSeconds; }
 
-    // Maximum number of unsent server packets retained for one client.
+    // Minimum number of unsent server packets retained for one client.
     public int getGameSocketOutboundQueueSize() { return gameSocketOutboundQueueSize; }
+
+    // Disconnect a client after this many seconds of outbound packets are backlogged.
+    public int getGameSocketSlowClientTimeoutSeconds() { return gameSocketSlowClientTimeoutSeconds; }
     
     // Optional HTTPS server-status endpoint. Do not expose it unless needed.
     public boolean isStatusHttpEnabled() { return statusHttpEnabled; }

@@ -3,6 +3,7 @@ package action;
 import entity.EntityFinder;
 import entity.EntityManager;
 import health.CombatManager;
+import health.ConsumptionManager;
 import health.Health;
 import health.HealthManager;
 import main.Console;
@@ -24,9 +25,11 @@ public class ActionHandler {
 	private TagHandler tagHandler;
 	private CombatManager combatManager;
 	private HealthManager healthManager;
+	private ConsumptionManager consumptionManager;
 
 	public ActionHandler(Console console, EntityManager entityManager, EntityFinder entityFinder, PlaneManager planeManager,
-			CraftingManager craftingManager, TagHandler tagHandler, CombatManager combatManager, HealthManager healthManager) {
+			CraftingManager craftingManager, TagHandler tagHandler, CombatManager combatManager, HealthManager healthManager,
+			ConsumptionManager consumptionManager) {
 		this.console = console;
 		this.entityManager = entityManager;
 		this.entityFinder = entityFinder;
@@ -35,6 +38,7 @@ public class ActionHandler {
 		this.tagHandler = tagHandler;
 		this.combatManager = combatManager;
 		this.healthManager = healthManager;
+		this.consumptionManager = consumptionManager;
 	}
 
 	public Entity executeAction(Player player, Action action, Entity playerEntity) {
@@ -162,6 +166,10 @@ public class ActionHandler {
 				break;
 			case(InteractionType.Standard_VALUE):
 				playerEntity = tagHandler.interact(playerEntity, interactingEntity);
+				break;
+			case(InteractionType.Consume_VALUE):
+				heldItem = entityManager.getEntity(playerEntity.getInventorySlotsMap().get(playerEntity.getSelectedSlot()));
+				consumptionManager.consume(heldItem, interactingEntity);
 				break;
 		}
 		
