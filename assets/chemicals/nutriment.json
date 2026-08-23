@@ -1,0 +1,11 @@
+{
+  "name" : "nutriment",
+  "unitsPerSecond" : 1,
+  
+  "effects" : {
+	   "saturation" : 1
+	   
+  }
+  
+  
+}

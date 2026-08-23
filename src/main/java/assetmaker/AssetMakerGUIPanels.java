@@ -198,6 +198,7 @@ class AssetMakerGUIPanels {
         flags.add(gui.isItemBox);
         flags.add(gui.stackableBox);
         flags.add(gui.canDestroyBox);
+        flags.add(gui.consumableBox);
         root.add(flags);
 
         JLabel durabilityHelp = new JLabel("<html>Items are indestructible unless <b>Can be damaged and destroyed</b> is enabled. " +
@@ -224,6 +225,61 @@ class AssetMakerGUIPanels {
         inv.add(invScroll);
         root.add(inv);
 
+        root.add(Box.createVerticalGlue());
+        return root;
+    }
+
+    /** Entity temperature, carried chemicals, and schema-defined custom values. */
+    JPanel buildChemistryTab() {
+        JPanel root = new JPanel();
+        root.setLayout(new BoxLayout(root, BoxLayout.Y_AXIS));
+        root.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+
+        JPanel temperature = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        temperature.add(new JLabel("Temperature:"));
+        temperature.add(gui.temperatureSpinner);
+        temperature.add(new JLabel("Used when checking chemical reaction temperature ranges."));
+        root.add(temperature);
+
+        JPanel chemicals = new JPanel(new BorderLayout());
+        chemicals.setBorder(BorderFactory.createTitledBorder("Chemicals carried by this entity"));
+        chemicals.add(new JLabel("Enter one per line as chemicalName=amountU."), BorderLayout.NORTH);
+        gui.entityChemicalsField.setRows(5);
+        gui.entityChemicalsField.setLineWrap(true);
+        gui.entityChemicalsField.setWrapStyleWord(true);
+        chemicals.add(new JScrollPane(gui.entityChemicalsField), BorderLayout.CENTER);
+        root.add(chemicals);
+
+        JPanel customData = new JPanel(new BorderLayout());
+        customData.setBorder(BorderFactory.createTitledBorder("Custom data"));
+        JLabel customHelp = new JLabel("Each key stores all five protobuf value types; unused values can stay at their defaults.");
+        customData.add(customHelp, BorderLayout.NORTH);
+
+        gui.customDataTable.setFillsViewportHeight(true);
+        gui.customDataTable.getColumnModel().getColumn(0).setPreferredWidth(170);
+        gui.customDataTable.getColumnModel().getColumn(5).setPreferredWidth(220);
+        JScrollPane customScroll = new JScrollPane(gui.customDataTable);
+        customScroll.setPreferredSize(new Dimension(700, 220));
+        customData.add(customScroll, BorderLayout.CENTER);
+
+        JPanel customButtons = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        JButton add = new JButton("Add Value");
+        JButton remove = new JButton("Remove Selected");
+        JButton clear = new JButton("Clear All");
+        customButtons.add(add);
+        customButtons.add(remove);
+        customButtons.add(clear);
+        customData.add(customButtons, BorderLayout.SOUTH);
+
+        add.addActionListener(e -> gui.customDataModel.addRow(
+                new Object[]{"newKey", 0, 0.0f, 0.0d, false, ""}));
+        remove.addActionListener(e -> {
+            int row = gui.customDataTable.getSelectedRow();
+            if (row >= 0) gui.customDataModel.removeRow(row);
+        });
+        clear.addActionListener(e -> gui.customDataModel.setRowCount(0));
+
+        root.add(customData);
         root.add(Box.createVerticalGlue());
         return root;
     }

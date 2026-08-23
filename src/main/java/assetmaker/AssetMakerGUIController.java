@@ -16,6 +16,7 @@ import protonova.protobuf.DamageProto.HitDamage;
 import protonova.protobuf.EntityProto.Direction;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.ChemicalProto.Chemical;
+import protonova.protobuf.CustomDataProto.CustomData;
 import protonova.protobuf.LootTableItemProto.lootTableItem;
 import protonova.protobuf.OrgansProto.CardiovascularSystem;
 import protonova.protobuf.OrgansProto.OrganAssetSlots;
@@ -125,6 +126,7 @@ class AssetMakerGUIController {
         gui.isItemBox.setSelected(false);
         gui.stackableBox.setSelected(false);
         gui.canDestroyBox.setSelected(false);
+        gui.consumableBox.setSelected(false);
         gui.amountSpinner.setValue(1);
         gui.anchoredBox.setSelected(true);
         gui.canCollideBox.setSelected(true);
@@ -367,8 +369,13 @@ class AssetMakerGUIController {
         gui.isItemBox.setSelected(false);
         gui.stackableBox.setSelected(false);
         gui.canDestroyBox.setSelected(false);
+        gui.consumableBox.setSelected(false);
         gui.amountSpinner.setValue(0);
         gui.inventorySlotsField.setText("");
+
+        gui.temperatureSpinner.setValue(0);
+        gui.entityChemicalsField.setText("");
+        gui.customDataModel.setRowCount(0);
 
         gui.lootTableModel.setRowCount(0);
 
@@ -496,7 +503,20 @@ class AssetMakerGUIController {
         gui.isItemBox.setSelected(entity.getIsItem());
         gui.stackableBox.setSelected(entity.getStackable());
         gui.canDestroyBox.setSelected(entity.getCanDestroy());
+        gui.consumableBox.setSelected(entity.getConsumable());
         gui.amountSpinner.setValue(entity.getAmount());
+
+        // ===== Chemistry and custom data =====
+        gui.temperatureSpinner.setValue(entity.getTemperature());
+        gui.entityChemicalsField.setText(formatChemicalMessages(entity.getChemicalsList()));
+        gui.customDataModel.setRowCount(0);
+        for (Map.Entry<String, CustomData> entry : entity.getCustomDataMap().entrySet()) {
+            CustomData value = entry.getValue();
+            gui.customDataModel.addRow(new Object[]{
+                    entry.getKey(), value.getIntValue(), value.getFloatValue(), value.getDoubleValue(),
+                    value.getBooleanValue(), value.getStringValue()
+            });
+        }
 
         // ===== Loot table =====
         // Populate loot table
@@ -652,6 +672,10 @@ class AssetMakerGUIController {
         sb.append("tags:      ").append(String.join(", ", entity.getTagsList())).append("<br>");
         sb.append("slots:     ").append(entity.getInventorySlotsMap().size()).append("<br>");
         sb.append("loot:      ").append(entity.getLootTableCount()).append(" entries").append("<br>");
+        sb.append("chemistry: ").append(entity.getTemperature()).append(" temp, ")
+                .append(entity.getChemicalsCount()).append(" chemical(s), consumable: ")
+                .append(entity.getConsumable()).append("<br>");
+        sb.append("custom:    ").append(entity.getCustomDataCount()).append(" value(s)<br>");
         sb.append("body:      ").append(entity.getDropsABody())
                 .append("  organs: ").append(entity.getOrgans().getAllFields().size()).append("<br>");
         sb.append("internal:  ").append(entity.getInternalMap().size())
@@ -689,6 +713,7 @@ class AssetMakerGUIController {
         builder.setIsItem(gui.isItemBox.isSelected())
                 .setStackable(gui.stackableBox.isSelected())
                 .setCanDestroy(gui.canDestroyBox.isSelected())
+                .setConsumable(gui.consumableBox.isSelected())
                 .setAmount((Integer) gui.amountSpinner.getValue())
                 .putAllInventorySlots(parseInventorySlots());
 
@@ -703,6 +728,11 @@ class AssetMakerGUIController {
                 .setInternalSpace((Integer) gui.internalSpaceSpinner.getValue())
                 .putAllInternal(parseInternalValues())
 				.setOrganAssetSlots(buildOrganAssetSlots());
+		builder.setTemperature((Integer) gui.temperatureSpinner.getValue())
+				.clearChemicals()
+				.addAllChemicals(parseChemicals(gui.entityChemicalsField.getText(), "Entity chemical"))
+				.clearCustomData()
+				.putAllCustomData(buildCustomData());
 		Organs builtOrgans = buildOrgans();
 		builder.setOrgans(builtOrgans.toBuilder()
 				.clearHeart().clearLungs().clearLiver().clearBrain().clearStomach());
@@ -764,6 +794,89 @@ class AssetMakerGUIController {
             }
         }
         return values;
+    }
+
+    /** Builds Entity.customData from the editable table. */
+    private Map<String, CustomData> buildCustomData() {
+        Map<String, CustomData> values = new LinkedHashMap<>();
+        for (int row = 0; row < gui.customDataModel.getRowCount(); row++) {
+            Object keyValue = gui.customDataModel.getValueAt(row, 0);
+            String key = keyValue == null ? "" : keyValue.toString().trim();
+            if (key.isEmpty()) continue;
+            if (values.containsKey(key)) {
+                throw new NumberFormatException("Custom data key '" + key + "' is duplicated");
+            }
+
+            CustomData value = CustomData.newBuilder()
+                    .setIntValue(tableInt(row, 1, key, "integer"))
+                    .setFloatValue(tableFloat(row, 2, key, "float"))
+                    .setDoubleValue(tableDouble(row, 3, key, "double"))
+                    .setBooleanValue(tableBoolean(row, 4, key))
+                    .setStringValue(tableString(row, 5))
+                    .build();
+            values.put(key, value);
+        }
+        return values;
+    }
+
+    private int tableInt(int row, int column, String key, String type) {
+        Object value = gui.customDataModel.getValueAt(row, column);
+        if (value == null || value.toString().trim().isEmpty()) return 0;
+        if (value instanceof Number) return ((Number) value).intValue();
+        try {
+            return Integer.parseInt(value.toString().trim());
+        } catch (NumberFormatException ex) {
+            throw customDataNumberError(key, type, value);
+        }
+    }
+
+    private float tableFloat(int row, int column, String key, String type) {
+        Object value = gui.customDataModel.getValueAt(row, column);
+        if (value == null || value.toString().trim().isEmpty()) return 0;
+        try {
+            float number = value instanceof Number
+                    ? ((Number) value).floatValue()
+                    : Float.parseFloat(value.toString().trim());
+            if (!Float.isFinite(number)) throw customDataNumberError(key, type, value);
+            return number;
+        } catch (NumberFormatException ex) {
+            throw customDataNumberError(key, type, value);
+        }
+    }
+
+    private double tableDouble(int row, int column, String key, String type) {
+        Object value = gui.customDataModel.getValueAt(row, column);
+        if (value == null || value.toString().trim().isEmpty()) return 0;
+        try {
+            double number = value instanceof Number
+                    ? ((Number) value).doubleValue()
+                    : Double.parseDouble(value.toString().trim());
+            if (!Double.isFinite(number)) throw customDataNumberError(key, type, value);
+            return number;
+        } catch (NumberFormatException ex) {
+            throw customDataNumberError(key, type, value);
+        }
+    }
+
+    private boolean tableBoolean(int row, int column, String key) {
+        Object value = gui.customDataModel.getValueAt(row, column);
+        if (value == null || value.toString().trim().isEmpty()) return false;
+        if (value instanceof Boolean) return (Boolean) value;
+        String text = value.toString().trim();
+        if ("true".equalsIgnoreCase(text)) return true;
+        if ("false".equalsIgnoreCase(text)) return false;
+        throw new NumberFormatException(
+                "Custom data '" + key + "' boolean must be true or false, not '" + value + "'");
+    }
+
+    private String tableString(int row, int column) {
+        Object value = gui.customDataModel.getValueAt(row, column);
+        return value == null ? "" : value.toString();
+    }
+
+    private static NumberFormatException customDataNumberError(String key, String type, Object value) {
+        return new NumberFormatException(
+                "Custom data '" + key + "' has an invalid " + type + " value: '" + value + "'");
     }
 
     /** Builds the nested Organs message. Blank/unchecked organs are omitted. */
