@@ -6,6 +6,7 @@ import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.EntityProto.Entity.Builder;
 import protonova.protobuf.TileProto.Tile;
 import protonova.protobuf.VectorProto.Vector;
+import util.DataUtil;
 
 public class Plant extends TagClass {
 
@@ -34,11 +35,11 @@ public class Plant extends TagClass {
 	public void secondTick(TagHandler tagHandler, Entity entity) {
 		
 		// check to see if it has the right tags for growing
-		if (entity.containsInventorySlots("totalPlantGrowTime") && 
-				entity.containsInventorySlots("currentPlantAge")) {
+		if (entity.containsCustomData("totalPlantGrowTime") && 
+				entity.containsCustomData("currentPlantAge")) {
 			
-			int totalPlantGrowTime = entity.getInventorySlotsMap().get("totalPlantGrowTime");
-			int currentPlantAge = entity.getInventorySlotsMap().get("currentPlantAge");
+			int totalPlantGrowTime = DataUtil.getInt(entity, "totalPlantGrowTime", 0);
+			int currentPlantAge = DataUtil.getInt(entity, "currentPlantAge", 0);
 			
 			
 			float sizeX = entity.getSize().getX();
@@ -55,13 +56,13 @@ public class Plant extends TagClass {
 			float updatedSizeY = grownSizeY * newRatio;
 			
 			Builder entityBuilder = entity.toBuilder()
-					.putInventorySlots("currentPlantAge", currentPlantAge)
+					.putCustomData("currentPlantAge", DataUtil.newInt(currentPlantAge))
 					.setSize(Vector.newBuilder()
 							.setX(updatedSizeX)
 							.setY(updatedSizeY)
 							.build());
 			
-			if (currentPlantAge >= totalPlantGrowTime) entityBuilder.removeInventorySlots("currentPlantAge");
+			if (currentPlantAge >= totalPlantGrowTime) entityBuilder.removeCustomData("currentPlantAge");
 			
 			entity = entityBuilder.build();
 			tagHandler.updateEntity(entity);
@@ -70,8 +71,8 @@ public class Plant extends TagClass {
 		// check to see if its grown
 		else if (!entity.containsInventorySlots("currentPlantAge")) {
 			
-			int randomSproutChance = getSlot(entity, "randomSproutChance", defaultRandomSproutChance);
-			int totalPlantGrowTime = getSlot(entity, "totalPlantGrowTime", defaultTotalPlantGrowTime);
+			int randomSproutChance = DataUtil.getInt(entity, "randomSproutChance", defaultRandomSproutChance);
+			int totalPlantGrowTime = DataUtil.getInt(entity, "totalPlantGrowTime", defaultTotalPlantGrowTime);
 			
 			// chance check
 			if (Math.round(Math.random()*randomSproutChance) == 1) {
@@ -102,8 +103,8 @@ public class Plant extends TagClass {
 								.setX(entitySize.getX()*spawnSizeRatio)
 								.setY(entitySize.getY()*spawnSizeRatio)
 								.build())
-						.putInventorySlots("currentPlantAge", 1)
-						.putInventorySlots("totalPlantGrowTime", totalPlantGrowTime)
+						.putCustomData("currentPlantAge", DataUtil.newInt(1))
+						.putCustomData("totalPlantGrowTime", DataUtil.newInt(totalPlantGrowTime))
 						.setId(tagHandler.getEntityManager().reserveNewEntityId())
 						.build();
 				

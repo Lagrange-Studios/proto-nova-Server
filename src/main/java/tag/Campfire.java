@@ -14,7 +14,7 @@ public class Campfire extends Furnace {
 
 	@Override
 	protected int getFuelTimeAdded() {
-		return 20 * 20;
+		return 60 * 20;
 	}
 
 	@Override

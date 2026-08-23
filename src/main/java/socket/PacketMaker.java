@@ -164,7 +164,7 @@ public class PacketMaker {
 			if (deleteList.contains(id) ||
 				entityManager.getEntity(id) == null ||
 				VectorMath.distanceSquared(playerEntity.getPosition(), entityManager.getEntity(id).getPosition()) > renderDistanceSquared &&
-				!playerEntity.getInventorySlotsMap().containsValue(id) && entityManager.getEntity(id).getMap() != 0) {
+				!playerEntity.getInventorySlotsMap().containsValue(id)) {
 				
 				entitiesSent.remove(id);
 				packet.addRemovedEntities(id);

@@ -146,6 +146,15 @@ public class EntityManager {
 			velocityEntities.remove(entity.getId());
 		}
 		
+		// have items follow the entity
+		for (int id : entity.getInventorySlotsMap().values()) {
+			Entity item = getEntity(id).toBuilder()
+					.setPosition(entity.getPosition())
+					.build();
+
+			entities.put(entity.getId(), item);
+		}
+		
 		sendUpdate(entity);
 		entities.put(entity.getId(), entity);
 

@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 
+import protonova.protobuf.CustomDataProto.CustomData;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.TileProto.Tile;
 import protonova.protobuf.VectorProto.Vector;
 import util.CoordinateConverter;
+import util.DataUtil;
 import util.DebugPrinter;
 import util.Random;
 import util.VectorMath;
@@ -42,8 +44,9 @@ public class Fungus extends TagClass {
 	
 	/*
 	 * This class makes the entity act as a fungus by spreading and growing
-	 * inventory:
+	 * data:
 	 * -parentSpore: the spore this entity relies on. if it dies so does this
+	 * -monsterCount: the spore this entity relies on. if it dies so does this
 	 * 
 	 * name: if name is fortified fungus vein then none of these changes will occur
 	 */
@@ -56,7 +59,7 @@ public class Fungus extends TagClass {
 		// check to see if parent is still alive
 		if (!entity.containsInventorySlots("parentSpore")) return;
 		
-		Entity parentSpore = tagHandler.getEntityManager().getEntity(entity.getInventorySlotsMap().get("parentSpore"));
+		Entity parentSpore = tagHandler.getEntityManager().getEntity(DataUtil.getInt(entity,"parentSpore",0));
 		if (parentSpore != null  && parentSpore.getName().equals("fungus spore")) {
 			
 			// update the hivemind target if its a spore
@@ -80,14 +83,14 @@ public class Fungus extends TagClass {
 				
 				if (closestTarget != null) {
 					entity = entity.toBuilder()
-							.putInventorySlots("target", closestTarget.getId())
+							.putCustomData("target", DataUtil.newInt(closestTarget.getId()))
 							.build();
 					
 					tagHandler.updateEntity(entity);
 				}
-				else if (entity.containsInventorySlots("target")) {
+				else if (entity.containsCustomData("target")) {
 					entity = entity.toBuilder()
-							.removeInventorySlots("target")
+							.removeCustomData("target")
 							.build();
 					
 					tagHandler.updateEntity(entity);
@@ -140,7 +143,7 @@ public class Fungus extends TagClass {
 						newClone = newClone.toBuilder()
 								.setDirectionValue(Random.randomInt(0, 3))
 								.setPosition(newPosition)
-								.putInventorySlots("parentSpore", entity.getInventorySlotsMap().get("parentSpore"))
+								.putCustomData("parentSpore", DataUtil.newInt(parentSpore.getId()))
 								.build();
 						
 						tagHandler.updateEntity(newClone);
@@ -155,7 +158,7 @@ public class Fungus extends TagClass {
 					surroundedByVeins(entity, tagHandler)) {
 				
 				// check for max monsters
-				int monsterCount = getSlot(parentSpore, "monsterCount",0);
+				int monsterCount = DataUtil.getInt(parentSpore, "monsterCount", 0);
 				
 				// chance to spawn a monster along with fortifying
 				if (Random.randomInt(1, fungusMonsterChance) == 1 && monsterCount < MAX_MONSTERS_PER_SPORE) {
@@ -163,14 +166,14 @@ public class Fungus extends TagClass {
 					
 					newMonster = newMonster.toBuilder()
 							.setPosition(entity.getPosition())
-							.putInventorySlots("parentSpore", entity.getInventorySlotsMap().get("parentSpore"))
+							.putCustomData("parentSpore", DataUtil.newInt(parentSpore.getId()))
 							.build();
 					
 					tagHandler.updateEntity(newMonster);
 					
 					//System.out.println("[Fungus] new monster at: "+newMonster.getPosition().getX()+","+newMonster.getPosition().getY());
 					parentSpore = parentSpore.toBuilder()
-							.putInventorySlots("monsterCount", monsterCount+1)
+							.putCustomData("parentSpore",DataUtil.newInt(monsterCount+1))
 							.build();
 					
 					tagHandler.updateEntity(parentSpore);
@@ -190,7 +193,7 @@ public class Fungus extends TagClass {
 		else {
 			Entity.Builder entityBuilder = entity.toBuilder()
 					.setName("dead fungus vein")
-					.removeInventorySlots("parentSpore")
+					.removeCustomData("parentSpore")
 					.clearTags();
 			
 			for (int i=0;i<entity.getTagsCount()-1;i++) {

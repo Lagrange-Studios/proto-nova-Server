@@ -1,6 +1,7 @@
 package tag;
 
 import protonova.protobuf.EntityProto.Entity;
+import util.DataUtil;
 
 public class Door extends TagClass {
 
@@ -19,28 +20,31 @@ public class Door extends TagClass {
 	
 	public Entity interact(TagHandler tagHandler, Entity interactingEntity, Entity thisEntity) {
 		
-		int state = getSlot(thisEntity, "doorState", 0);
+		boolean isOpen = DataUtil.getBoolean(thisEntity, "isOpen", false);
+		Entity.Builder builder = thisEntity.toBuilder();
 		
 		// starts closed
-		if (state == 0) {
-			thisEntity = thisEntity.toBuilder()
+		if (!isOpen) {
+			builder = thisEntity.toBuilder()
 					.putInventorySlots("doorState", 1)
 					.setDisplayTexture(thisEntity.getName()+" open")
 					.setCanCollide(false)
-					.setCastShadow(false)
-					.build();
+					.setCastShadow(false);
+			
+			DataUtil.setBoolean(builder, "isOpen", true);
 		}
 		// starts open
-		else if (state == 1) {
-			thisEntity = thisEntity.toBuilder()
+		else if (isOpen) {
+			builder = thisEntity.toBuilder()
 					.putInventorySlots("doorState", 0)
 					.clearDisplayTexture()
 					.setCanCollide(true)
-					.setCastShadow(true)
-					.build();
+					.setCastShadow(true);
+			
+			DataUtil.setBoolean(builder, "isOpen", false);
 		}
 		
-		tagHandler.updateEntity(thisEntity);
+		tagHandler.updateEntity(builder.build());
 		
 		return interactingEntity;
 	}

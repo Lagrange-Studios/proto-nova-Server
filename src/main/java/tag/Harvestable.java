@@ -1,6 +1,7 @@
 package tag;
 
 import protonova.protobuf.EntityProto.Entity;
+import util.DataUtil;
 
 public class Harvestable extends TagClass {
 
@@ -11,7 +12,7 @@ public class Harvestable extends TagClass {
 	/*
 	 * This class makes the entity harvestable
 	 * selectedSlot is the result from harvest
-	 * inventory:
+	 * data:
 	 * -harvestTimer: starts at harvest time and decrments to 0
 	 * -harvestInterval: is the amount of time in second it should take between harvests
 	 * 
@@ -23,7 +24,7 @@ public class Harvestable extends TagClass {
 	
 	public void secondTick(TagHandler tagHandler, Entity entity) {
 		
-		int harvestTimer = getSlot(entity, "harvestTimer", 60);
+		int harvestTimer = DataUtil.getInt(entity, "harvestTimer", 60);
 		
 		
 		harvestTimer--;
@@ -45,23 +46,20 @@ public class Harvestable extends TagClass {
 	}
 	
 	public Entity interact(TagHandler tagHandler, Entity interactingEntity, Entity thisEntity) {
-		int harvestTimer = getSlot(thisEntity, "harvestTimer", 60);
+		int harvestTimer = DataUtil.getInt(thisEntity, "harvestTimer", 60);
 		
 		if (harvestTimer <= 0) {
-			int harvestInterval = getSlot(thisEntity, "harvestInterval", 60);
+			int harvestInterval = DataUtil.getInt(thisEntity, "harvestInterval", 60);
 			
 			harvestTimer = harvestInterval;
 			thisEntity = thisEntity.toBuilder()
-				.putInventorySlots("harvestTimer", harvestInterval)
+				.putCustomData("harvestTimer", DataUtil.newInt(harvestTimer))
 				.setDisplayTexture("empty "+thisEntity.getName())
 				.build();
 			
 			tagHandler.updateEntity(thisEntity);
 			
-			Entity harvest = tagHandler.getAssetManager().getEntity(thisEntity.getSelectedSlot(), thisEntity.getMap());
-			harvest = harvest.toBuilder()
-					.setPosition(thisEntity.getPosition())
-					.build();
+			Entity harvest = tagHandler.getAssetManager().getEntity(thisEntity.getSelectedSlot(), thisEntity.getMap(), thisEntity.getPosition());
 			
 			tagHandler.updateEntity(harvest);
 		}

@@ -2,6 +2,7 @@ package tag;
 
 import protonova.protobuf.EntityProto.Direction;
 import protonova.protobuf.EntityProto.Entity;
+import util.DataUtil;
 
 public class Furnace extends TagClass {
 
@@ -34,7 +35,7 @@ public class Furnace extends TagClass {
 	 * It can intake fuel
 	 * It can also be used in furnace recipes
 	 *
-	 * inventory:
+	 * data:
 	 * -fuelTimer: fuel time left in ticks
 	 * 
 	 * fuelTypeName: the type name of items that can be used for fuel
@@ -46,13 +47,13 @@ public class Furnace extends TagClass {
 	
 	public void tick(TagHandler tagHandler, Entity entity) {
 		
-		int fuelTime = getSlot(entity, "fuelTimer", 0);
+		int fuelTime = DataUtil.getInt(entity, "fuelTimer", 0);
 		
 		if (fuelTime > 0) {
 			fuelTime--;
 			
 			Entity.Builder builder = entity.toBuilder();
-			builder.putInventorySlots("fuelTimer", fuelTime);
+			DataUtil.setInt(builder, "fuelTimer", fuelTime);
 			
 			if (fuelTime == 0) {
 				builder = unlight(builder);
@@ -75,13 +76,13 @@ public class Furnace extends TagClass {
 				
 				if (item != null && item.getTagsList().contains(getFuelType())) {
 					interactingEntity = tagHandler.getEntityManager().decrementSlot(interactingEntity, slot);
-					
-					int fuelTimer = getSlot(thisEntity, "fuelTimer", 0) + getFuelTimeAdded();
+
+					int fuelTime = DataUtil.getInt(thisEntity, "fuelTimer", 0) + getFuelTimeAdded();
 					
 					thisEntity = light(thisEntity);
 					
 					thisEntity = thisEntity.toBuilder()
-							.putInventorySlots("fuelTimer", fuelTimer)
+							.putCustomData("fuelTimer", DataUtil.newInt(fuelTime))
 							.build();
 					
 					tagHandler.updateEntity(thisEntity);

@@ -11,6 +11,7 @@ import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.OrgansProto.OrganAssetSlots;
 import protonova.protobuf.OrgansProto.OrganComponent;
 import protonova.protobuf.OrgansProto.OrganSlots;
+import protonova.protobuf.VectorProto.Vector;
 
 public class AssetManager {
 	private HashMap<String, Entity> entityAssets;
@@ -35,68 +36,31 @@ public class AssetManager {
 		}
 	}
 	
+	public Entity getEntity(String name, int mapId, Vector newPosition) {
+			
+			if (entityAssets.containsKey(name)) {
+				Entity entity = entityAssets.get(name).toBuilder()
+					.setId(entityManager.reserveNewEntityId())
+					.setMap(mapId)
+					.setPosition(newPosition).build();
+						
+				return attachOrgans(entity);
+			}
+			else console.print("Error: Could not find asset: "+name);
+			return null;
+		}
+	
 	public Entity getEntity(String name, int mapId) {
 		
 		if (entityAssets.containsKey(name)) {
-			Entity clone = prepareEntityForSpawn(
-					entityAssets.get(name),
-					entityManager.reserveNewEntityId(),
-					mapId);
-
-			return attachOrgans(clone);
+			Entity entity = entityAssets.get(name).toBuilder()
+				.setId(entityManager.reserveNewEntityId())
+				.setMap(mapId).build();
+					
+			return attachOrgans(entity);
 		}
 		else console.print("Error: Could not find asset: "+name);
 		return null;
-	}
-
-	static Entity prepareEntityForSpawn(Entity asset, int entityId, int mapId) {
-		Entity normalizedAsset = normalizeItemCombatStats(asset);
-		return normalizedAsset.toBuilder()
-				.setId(entityId)
-				.setMap(mapId)
-				.setHitDamage(normalizedAsset.getHitDamage().toBuilder().setCanAttack(true))
-				.build();
-	}
-
-	/**
-	 * Item assets describe damage dealt in {@code hitDamage}; {@code damage} is the
-	 * item's current health damage. Migrate legacy weapon assets that stored their
-	 * attack values in the latter so newly spawned weapons are undamaged and still
-	 * deal the configured damage.
-	 */
-	static Entity normalizeItemCombatStats(Entity asset) {
-		if (!asset.getIsItem()) return asset;
-
-		Damage currentDamage = asset.getDamage();
-		HitDamage hitDamage = asset.getHitDamage();
-		HitDamage.Builder hitBuilder = hitDamage.toBuilder();
-		if (hasCurrentDamage(currentDamage)) {
-			if (currentDamage.getBruteDamage() != 0) hitBuilder.setBruteDamage(currentDamage.getBruteDamage());
-			if (currentDamage.getAsphyxiationDamage() != 0) hitBuilder.setAsphyxiationDamage(currentDamage.getAsphyxiationDamage());
-			if (currentDamage.getBurnDamage() != 0) hitBuilder.setBurnDamage(currentDamage.getBurnDamage());
-			if (currentDamage.getToxinDamage() != 0) hitBuilder.setToxinDamage(currentDamage.getToxinDamage());
-			if (currentDamage.getGeneticDamage() != 0) hitBuilder.setGeneticDamage(currentDamage.getGeneticDamage());
-			if (currentDamage.getStructuralDamage() != 0) hitBuilder.setStructuralDamage(currentDamage.getStructuralDamage());
-			if (currentDamage.getBleedingPerSecond() != 0) hitBuilder.setBleedingPerTick(currentDamage.getBleedingPerSecond());
-		}
-
-		Damage cleanDamage = currentDamage.toBuilder()
-				.clearBruteDamage()
-				.clearAsphyxiationDamage()
-				.clearBurnDamage()
-				.clearToxinDamage()
-				.clearGeneticDamage()
-				.clearStructuralDamage()
-				.clearBleedingPerSecond()
-				.build();
-		return asset.toBuilder().setDamage(cleanDamage).setHitDamage(hitBuilder).build();
-	}
-
-	private static boolean hasCurrentDamage(Damage damage) {
-		return damage.getBruteDamage() != 0 || damage.getAsphyxiationDamage() != 0
-				|| damage.getBurnDamage() != 0 || damage.getToxinDamage() != 0
-				|| damage.getGeneticDamage() != 0 || damage.getStructuralDamage() != 0
-				|| damage.getBleedingPerSecond() != 0;
 	}
 
 	private Entity attachOrgans(Entity body) {

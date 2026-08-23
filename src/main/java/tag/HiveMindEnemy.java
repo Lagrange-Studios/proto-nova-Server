@@ -2,6 +2,7 @@ package tag;
 
 
 import protonova.protobuf.EntityProto.Entity;
+import util.DataUtil;
 
 public class HiveMindEnemy extends TagClass {
 
@@ -27,13 +28,10 @@ public class HiveMindEnemy extends TagClass {
 			if (!tagHandler.getPathfindingHandler().hasAgent(entity.getId()))
 				tagHandler.getPathfindingHandler().newAgent(entity.getId(),"fungusMind");
 			
-			Entity spore = tagHandler.getEntityManager().getEntity(entity.getInventorySlotsMap().get("parentSpore"));
+			Entity spore = tagHandler.getEntityManager().getEntity(DataUtil.getInt(entity,"parentSpore",0));
 			if (spore.getName().equals("fungus spore") ) {;
-			
-				if (spore.containsInventorySlots("target"))
-					tagHandler.getPathfindingHandler().changeGoal(entity.getId(), spore.getInventorySlotsMap().get("target"));
-				else
-					tagHandler.getPathfindingHandler().changeGoal(entity.getId(), 0);
+
+				tagHandler.getPathfindingHandler().changeGoal(entity.getId(), DataUtil.getInt(spore, "target", 0));
 					
 			}
 			else {
