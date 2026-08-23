@@ -1,13 +1,13 @@
 {
   "item1": {
     "mustBeHeld": false,
-    "name":"plank",
+    "name":"copper sword blade",
     "consumed": true
   },
   "item2": {
-    "name":"string",
+    "name":"stick",
     "consumed": true
   },
 
-  "result":"wood wall"
+  "result":"copper sword"
 }

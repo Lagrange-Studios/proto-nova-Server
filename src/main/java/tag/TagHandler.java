@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import ai.PathfindingHandler;
+import chat.ChatManager;
 import entity.EntityFinder;
 import entity.EntityManager;
 import file.AssetManager;
@@ -44,8 +45,9 @@ public class TagHandler {
 	private HealthManager healthManager;
 	private ChemicalManager chemicalManager;
 	private ChemicalDigestionManager chemicalDigestionManager;
+	private ChatManager chatManager;
 
-	public TagHandler(Server server, EntityManager entityManager, AssetManager assetManager, EntityFinder entityFinder, PlaneManager planeManager, CombatManager combatManager, PathfindingHandler pathfindingHandler, HealthManager healthManager, ChemicalManager chemicalManager, ChemicalDigestionManager chemicalDigestionManager) {
+	public TagHandler(Server server, EntityManager entityManager, AssetManager assetManager, EntityFinder entityFinder, PlaneManager planeManager, CombatManager combatManager, PathfindingHandler pathfindingHandler, HealthManager healthManager, ChemicalManager chemicalManager, ChemicalDigestionManager chemicalDigestionManager, ChatManager chatManager) {
 		this.server = server;
 		this.entityManager = entityManager;
 		this.assetManager = assetManager;
@@ -55,7 +57,8 @@ public class TagHandler {
 		this.pathfindingHandler = pathfindingHandler;
 		this.healthManager = healthManager;
 		this.chemicalManager = chemicalManager;
-		this.chemicalDigestionManager =chemicalDigestionManager;
+		this.chemicalDigestionManager = chemicalDigestionManager;
+		this.chatManager = chatManager;
 		tagToClass = new ConcurrentHashMap<>();
 		tagCount = new ConcurrentHashMap<>();
 
@@ -312,6 +315,10 @@ public class TagHandler {
 		return chemicalManager;
 	}
 
+	public ChatManager getChatManager() {
+		return chatManager;
+	}
+	
 	public void loadAllTagEntities() {
 		for (Entity entity : entityManager.getAllEntities().values()) {
 			addEntity(entity);

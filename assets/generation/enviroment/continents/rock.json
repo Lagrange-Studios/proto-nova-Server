@@ -1,6 +1,6 @@
 {
 	"name": "rock",
 	"tiles": ["stone"],
-	"tileDensity": 10,
+	"tileDensity": 50,
 	"grid": true
 }

@@ -1,17 +1,17 @@
 {
   "item1": {
     "mustBeHeld": true,
-    "name":"unlit torch",
+    "name":"copper ore",
     "consumed": true
   },
   "item2": {
-    "name":"campfire",
+    "name":"clay furnace",
     "consumed": false,
 	"minimumDataIntValue": {
 		"fuelTimer": 1
 	},
-	"tagsRequired": ["campfire"]
+	"tagsRequired": ["furnace"]
   },
 
-  "result":"lit torch"
+  "result":"copper ingot"
 }

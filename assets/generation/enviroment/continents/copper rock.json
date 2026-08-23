@@ -1,0 +1,6 @@
+{
+	"name": "copper rock",
+	"tiles": ["stone"],
+	"tileDensity": 125,
+	"grid": true
+}

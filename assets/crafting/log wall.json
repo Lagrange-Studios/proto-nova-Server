@@ -1,7 +1,7 @@
 {
   "item1": {
     "mustBeHeld": false,
-    "name":"plank",
+    "name":"log",
     "consumed": true
   },
   "item2": {
@@ -9,5 +9,5 @@
     "consumed": true
   },
 
-  "result":"wood wall"
+  "result":"log wall"
 }

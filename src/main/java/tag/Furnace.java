@@ -11,7 +11,7 @@ public class Furnace extends TagClass {
 	}
 	
 	protected String getFuelType() {
-		return "basicFuel";
+		return "tier1Fuel";
 	}
 	
 	protected int getFuelTimeAdded() {

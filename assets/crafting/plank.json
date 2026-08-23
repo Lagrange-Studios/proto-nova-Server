@@ -5,10 +5,9 @@
     "consumed": false
   },
   "item2": {
-    "name":"plank",
+    "name":"log",
     "consumed": true
   },
 
-  "tileResult": true,
-  "result":"wood floor"
+  "result":"plank"
 }

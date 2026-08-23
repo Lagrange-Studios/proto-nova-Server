@@ -5,9 +5,9 @@
     "consumed": true
   },
   "item2": {
-    "name":"clay furnace base",
+    "name":"campfire",
     "consumed": true
   },
 
-  "result":"clay furnace"
+  "result":"clay furnace base"
 }

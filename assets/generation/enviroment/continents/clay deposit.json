@@ -1,6 +1,6 @@
 {
 	"name": "clay deposit",
 	"tiles": ["sand"],
-	"tileDensity": 100,
+	"tileDensity": 80,
 	"grid": true
 }

@@ -1,7 +1,7 @@
 {
   "item1": {
     "mustBeHeld": false,
-    "name":"log",
+    "name":"plank",
     "consumed": true
   },
   "item2": {

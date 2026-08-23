@@ -193,7 +193,7 @@ public class Server {
 		this.chemicalManager = new ChemicalManager(entityManager);
 		this.chemicalDigestionManager = new ChemicalDigestionManager();
 
-		tagHandler = new TagHandler(this, entityManager, assetManager, entityFinder, planeManager, combatManager, pathfindingHandler, healthManager, chemicalManager, chemicalDigestionManager);
+		tagHandler = new TagHandler(this, entityManager, assetManager, entityFinder, planeManager, combatManager, pathfindingHandler, healthManager, chemicalManager, chemicalDigestionManager, chatManager);
 		entityManager.setClasses(chunkManager,tagHandler, entityFinder, pathfindingHandler);
 		consumptionManager = new ConsumptionManager(chemicalManager, entityManager);
 		
@@ -205,7 +205,12 @@ public class Server {
 			for (Entity entity : entityFinder.getAllEntitiesInRadius(Vector.newBuilder().setX(0).setY(0).build(),1,2)) {
 				entityManager.removeEntity(entity);
 			}
+			
 			chunkManager.groupAllEntites();
+			
+			Entity lightEntity = assetManager.getEntity("clear", 1, Vector.newBuilder().setX(0).setY(0).build());
+			entityManager.updateEntity(lightEntity);
+			
 			console.print("World generation complete.");
 		}
 		
