@@ -19,8 +19,12 @@
 			<attribute name="test" value="true"/>
 		</attributes>
 	</classpathentry>
+<<<<<<< HEAD
 	<classpathentry combineaccessrules="false" kind="src" path="/proto-nova-Library"/>
+=======
+>>>>>>> branch 'alpha' of https://github.com/Lagrange-Studios/proto-nova-Server.git
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11/"/>
 	<classpathentry kind="con" path="org.eclipse.buildship.core.gradleclasspathcontainer"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/proto-nova-Library"/>
 	<classpathentry kind="output" path="bin/default"/>
 </classpath>

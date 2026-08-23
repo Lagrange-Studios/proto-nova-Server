@@ -13,12 +13,13 @@ import protonova.protobuf.VectorProto.Vector;
 import tag.Fungus;
 import tag.TagHandler;
 import util.CoordinateConverter;
+import util.DataUtil;
 import util.Random;
 
 public class Fungi extends CataclysmClass {
 	
 	private final int tilesPerIntroSpore = 30000;
-	private final double FUNGUS_WIN_PERCENTAGE  = 0.02;
+	private final double FUNGUS_WIN_PERCENTAGE  = 0.025;
 	private final double FUNGUS_LOOSE_PERCENTAGE  = 0.001;
 	
 	/**
@@ -28,7 +29,7 @@ public class Fungi extends CataclysmClass {
 			GamemodeManager gamemodeManager, AssetManager assetManager, Cataclysm cataclysm, TagHandler tagHandler, String[] arguments) {
 		super(console, entityManager, entityFinder, planeManager, gamemodeManager, assetManager, cataclysm, tagHandler, arguments);
 		
-		introStartTime = 300;
+		introStartTime = 180;
 		endStartTime = 900;
 		
 		if (!gamemode.has("spores")) gamemode.put("spores", 0);
@@ -89,7 +90,7 @@ public class Fungi extends CataclysmClass {
 		newSpore = Random.randomizeDirection(newSpore);
 		newSpore = newSpore.toBuilder()
 				.setPosition(vector)
-				.putInventorySlots("parentSpore", newSpore.getId())
+				.putCustomData("parentSpore", DataUtil.newInt(newSpore.getId()))
 				.build();
 		
 		System.out.println("[Fungi] new spore at: "+newSpore.getPosition().getX()+","+newSpore.getPosition().getY());

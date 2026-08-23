@@ -20,7 +20,7 @@ public class Fungus extends TagClass {
 	private final int evolveChancePerSecond = chanceOfGrowthPerSecond*2; // one in ten chance
 	private final int fungusMonsterChance = 20; // 1 in x amount 
 	private final int SEARCH_RANGE = 50;
-	private final int MAX_MONSTERS_PER_SPORE = 3;
+	private final int MAX_MONSTERS_PER_SPORE = 5;
 	
 	// tile info
 	public static final HashSet<String> allowedTiles = new HashSet<>(Arrays.asList("grass", "stone", "sand"));
@@ -57,7 +57,7 @@ public class Fungus extends TagClass {
 	
 	public void secondTick(TagHandler tagHandler, Entity entity) {
 		// check to see if parent is still alive
-		if (!entity.containsInventorySlots("parentSpore")) return;
+		if (!entity.containsCustomData("parentSpore")) return;
 		
 		Entity parentSpore = tagHandler.getEntityManager().getEntity(DataUtil.getInt(entity,"parentSpore",0));
 		if (parentSpore != null  && parentSpore.getName().equals("fungus spore")) {

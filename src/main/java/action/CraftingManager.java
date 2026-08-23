@@ -104,9 +104,10 @@ public class CraftingManager {
 	
 	private boolean checkComponent(Entity component, CraftingComponent craftingComponent) {
 		
-		for (String key : craftingComponent.getMinimumSlotValueMap().keySet()) {			
-			if (!component.containsInventorySlots(key) || 
-					component.getInventorySlotsMap().get(key) < craftingComponent.getMinimumSlotValueMap().get(key)) return false;
+		for (String key : craftingComponent.getMinimumDataIntValueMap().keySet()) {
+			
+			if (!component.containsCustomData(key) || 
+					component.getCustomDataMap().get(key).getIntValue() < craftingComponent.getMinimumDataIntValueMap().get(key)) return false;
 		}
 		
 		for (String tag : craftingComponent.getTagsRequiredList()) {
