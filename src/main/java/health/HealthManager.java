@@ -4,6 +4,7 @@ import entity.EntityManager;
 import entity.LootTableManager;
 import health.Health.TraumaState;
 import main.Console;
+import protonova.protobuf.DamageProto.Damage;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.OrgansProto.OrganSlots;
 import socket.Player;
@@ -167,4 +168,5 @@ public class HealthManager {
 
 		entityManager.updateEntity(droppedOrgan.build());
 	}
+
 }

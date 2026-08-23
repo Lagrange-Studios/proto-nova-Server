@@ -30,6 +30,8 @@ public final class PhysiologySystem {
 	private static final float DEFAULT_STOMACH_ABSORPTION = 1.0f;
 	private static final float ASPHYXIATION_DAMAGE_PER_SECOND = 2.0f;
 	private static final float ASPHYXIATION_RECOVERY_PER_SECOND = 0.5f;
+	private static final float BLEEDING_RECOVERY_PER_SECOND = 1.0f;
+	private static final float LIVER_TOXIN_RECOVERY_PER_DETOX_UNIT = 0.05f;
 
 	public Entity update(Entity entity) {
 		return update(entity, 1.0f);
@@ -61,6 +63,7 @@ public final class PhysiologySystem {
 				.build();
 		Entity updatedBody = update(bodyWithInstalledOrgans, breathableOxygen);
 
+		updateHeartEntity(updatedBody, organSlots, entityManager);
 		updateStomachEntity(updatedBody, organSlots, entityManager);
 
 		Organs.Builder bodyPhysiologyState = body.getOrgans().toBuilder();
@@ -87,8 +90,9 @@ public final class PhysiologySystem {
 			return entity;
 		}
 
+		Entity entityAfterBleeding = updateBleeding(entity);
 		float safeBreathableOxygen = keepValueInRange(breathableOxygen, 0, 1);
-		PhysiologyUpdate physiologyUpdate = new PhysiologyUpdate(entity, safeBreathableOxygen);
+		PhysiologyUpdate physiologyUpdate = new PhysiologyUpdate(entityAfterBleeding, safeBreathableOxygen);
 		physiologyUpdate.resolveOrganEnergyUse();
 
 		collectLungChanges(physiologyUpdate);
@@ -98,9 +102,30 @@ public final class PhysiologySystem {
 		collectBrainChanges(physiologyUpdate);
 
 		physiologyUpdate.resolveOxygenChanges();
-		physiologyUpdate.resolveChemicalChanges();
 
-		return applyPhysiologyChanges(entity, physiologyUpdate);
+		return applyPhysiologyChanges(entityAfterBleeding, physiologyUpdate);
+	}
+
+	private Entity updateBleeding(Entity entity) {
+		Damage.Builder damage = entity.getDamage().toBuilder();
+		float bleedingPerSecond = getNonNegativeValue(damage.getBleedingPerSecond());
+		damage.setBleedingPerSecond(Math.max(
+				0,
+				bleedingPerSecond - BLEEDING_RECOVERY_PER_SECOND));
+
+		Organs.Builder organs = entity.getOrgans().toBuilder();
+		if (bleedingPerSecond > 0 && organs.hasHeart()) {
+			Heart heart = organs.getHeart();
+			float maximumBlood = getNonNegativeValue(heart.getMaxBlood());
+			float currentBlood = keepValueInRange(heart.getBlood(), 0, maximumBlood);
+			organs.setHeart(heart.toBuilder()
+					.setBlood(Math.max(0, currentBlood - bleedingPerSecond)));
+		}
+
+		return entity.toBuilder()
+				.setDamage(damage)
+				.setOrgans(organs)
+				.build();
 	}
 
 	private void collectLungChanges(PhysiologyUpdate physiologyUpdate) {
@@ -163,9 +188,11 @@ public final class PhysiologySystem {
 				liver.hasOxygenUsePerSecond(),
 				liver.getOxygenUsePerSecond(),
 				DEFAULT_LIVER_OXYGEN_USE);
-		float detoxification = getNonNegativeValue(liver.getDetoxification()) * organFunction;
+		float toxinRecovery = getNonNegativeValue(liver.getDetoxification())
+				* organFunction
+				* LIVER_TOXIN_RECOVERY_PER_DETOX_UNIT;
 
-		physiologyUpdate.addDetoxification(detoxification);
+		physiologyUpdate.addToxinRecovery(toxinRecovery);
 		physiologyUpdate.addOxygenUse(oxygenUse * organFunction);
 	}
 
@@ -272,6 +299,10 @@ public final class PhysiologySystem {
 		}
 
 		updatedDamage.setAsphyxiationDamage(asphyxiationDamage);
+		updatedDamage.setToxinDamage(Math.max(
+				0,
+				getNonNegativeValue(updatedDamage.getToxinDamage())
+						- physiologyUpdate.toxinRecovery));
 
 		return entity.toBuilder()
 				.setOrgans(updatedOrgans)
@@ -307,6 +338,29 @@ public final class PhysiologySystem {
 						.setStomach(updatedBody.getOrgans().getStomach()))
 				.build();
 		entityManager.updateEntity(updatedStomachEntity);
+	}
+
+	private static void updateHeartEntity(
+			Entity updatedBody,
+			OrganSlots organSlots,
+			EntityManager entityManager) {
+
+		if (!organSlots.hasHeartEntityId() || !updatedBody.getOrgans().hasHeart()) {
+			return;
+		}
+
+		Entity heartEntity = entityManager.getEntity(organSlots.getHeartEntityId());
+		if (heartEntity == null
+				|| !heartEntity.hasOrganComponent()
+				|| !heartEntity.getOrganComponent().hasHeart()) {
+			return;
+		}
+
+		Entity updatedHeartEntity = heartEntity.toBuilder()
+				.setOrganComponent(heartEntity.getOrganComponent().toBuilder()
+						.setHeart(updatedBody.getOrgans().getHeart()))
+				.build();
+		entityManager.updateEntity(updatedHeartEntity);
 	}
 
 	private static int getHeartEntityId(OrganSlots organSlots) {
@@ -462,7 +516,7 @@ public final class PhysiologySystem {
 		private float totalOxygenUse;
 		private float brainOxygenUse;
 		private float availableCirculation;
-		private float availableDetoxification;
+		private float toxinRecovery;
 		private float missingBrainOxygen;
 
 		private PhysiologyUpdate(Entity entity, float breathableOxygen) {
@@ -650,8 +704,8 @@ public final class PhysiologySystem {
 			availableCirculation += getNonNegativeValue(circulationAmount);
 		}
 
-		private void addDetoxification(float detoxificationAmount) {
-			availableDetoxification += getNonNegativeValue(detoxificationAmount);
+		private void addToxinRecovery(float recoveryAmount) {
+			toxinRecovery += getNonNegativeValue(recoveryAmount);
 		}
 
 		private void absorbStomachChemicals(float absorptionAmount) {
@@ -697,22 +751,6 @@ public final class PhysiologySystem {
 
 			float oxygenDeliveredToBrain = deliveredOxygen * brainShareOfOxygenUse;
 			missingBrainOxygen = Math.max(0, brainOxygenUse - oxygenDeliveredToBrain);
-		}
-
-		private void resolveChemicalChanges() {
-			float totalBloodstreamChemicalAmount = getTotalChemicalAmount(bloodstreamChemicals);
-
-			if (totalBloodstreamChemicalAmount <= 0 || availableDetoxification <= 0) {
-				return;
-			}
-
-			float removedChemicalRatio = availableDetoxification / totalBloodstreamChemicalAmount;
-			removedChemicalRatio = Math.min(1, removedChemicalRatio);
-
-			for (Map.Entry<String, Float> chemical : bloodstreamChemicals.entrySet()) {
-				float remainingAmount = chemical.getValue() * (1 - removedChemicalRatio);
-				chemical.setValue(remainingAmount);
-			}
 		}
 
 		private static void addChemicalAmount(

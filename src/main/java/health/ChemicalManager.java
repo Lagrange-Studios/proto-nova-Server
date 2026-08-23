@@ -5,21 +5,33 @@ import java.util.Objects;
 import java.util.TreeMap;
 import java.util.Locale;
 
+import entity.EntityManager;
 import protonova.protobuf.ChemicalProto.Chemical;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.OrgansProto.CardiovascularSystem;
+import protonova.protobuf.OrgansProto.Heart;
+import protonova.protobuf.OrgansProto.OrganComponent;
 import protonova.protobuf.OrgansProto.Organs;
 import protonova.protobuf.OrgansProto.Stomach;
 
 public final class ChemicalManager {
+	private final EntityManager entityManager;
+
+	public ChemicalManager() {
+		this(null);
+	}
+
+	public ChemicalManager(EntityManager entityManager) {
+		this.entityManager = entityManager;
+	}
 
 	public Entity addToStomach(Entity entity, String chemicalName, float requestedUnits) {
 		Objects.requireNonNull(entity, "entity");
 		chemicalName = normalizeName(chemicalName);
 		if (chemicalName.isEmpty()) return entity;
-		if (!entity.hasOrgans() || !entity.getOrgans().hasStomach()) return entity;
+		Stomach stomach = getStomach(entity);
+		if (stomach == null) return entity;
 
-		Stomach stomach = entity.getOrgans().getStomach();
 		float capacity = stomach.hasChemicalCapacity()
 				? positive(stomach.getChemicalCapacity())
 				: ChemicalUnits.DEFAULT_STOMACH_CAPACITY;
@@ -34,9 +46,7 @@ public final class ChemicalManager {
 				.setChemicalCapacity(capacity);
 		addChemicals(updatedStomach, contents);
 
-		return entity.toBuilder()
-				.setOrgans(entity.getOrgans().toBuilder().setStomach(updatedStomach))
-				.build();
+		return storeStomach(entity, updatedStomach.build());
 	}
 
 	public Entity injectIntoCirculation(Entity entity, String chemicalName, float requestedUnits) {
@@ -49,10 +59,11 @@ public final class ChemicalManager {
 		CardiovascularSystem cardiovascular = organs.hasCardiovascularSystem()
 				? organs.getCardiovascularSystem()
 				: CardiovascularSystem.getDefaultInstance();
-		float maximumBlood = organs.hasHeart() ? positive(organs.getHeart().getMaxBlood()) : 0;
-		float currentBlood = organs.hasHeart()
-				? clamp(organs.getHeart().getBlood(), 0, maximumBlood)
-				: 0;
+		Heart heart = getHeart(entity);
+		float maximumBlood = heart == null ? 0 : positive(heart.getMaxBlood());
+		float currentBlood = heart == null
+				? 0
+				: clamp(heart.getBlood(), 0, maximumBlood);
 		float capacity = cardiovascular.hasFluidCapacity()
 				? Math.max(maximumBlood, positive(cardiovascular.getFluidCapacity()))
 				: maximumBlood + ChemicalUnits.DEFAULT_INJECTION_RESERVE;
@@ -75,8 +86,9 @@ public final class ChemicalManager {
 	}
 
 	public float getRemainingStomachCapacity(Entity entity) {
-		if (entity == null || !entity.hasOrgans() || !entity.getOrgans().hasStomach()) return 0;
-		Stomach stomach = entity.getOrgans().getStomach();
+		if (entity == null) return 0;
+		Stomach stomach = getStomach(entity);
+		if (stomach == null) return 0;
 		float capacity = stomach.hasChemicalCapacity()
 				? positive(stomach.getChemicalCapacity())
 				: ChemicalUnits.DEFAULT_STOMACH_CAPACITY;
@@ -89,14 +101,78 @@ public final class ChemicalManager {
 		CardiovascularSystem cardiovascular = organs.hasCardiovascularSystem()
 				? organs.getCardiovascularSystem()
 				: CardiovascularSystem.getDefaultInstance();
-		float maximumBlood = organs.hasHeart() ? positive(organs.getHeart().getMaxBlood()) : 0;
-		float currentBlood = organs.hasHeart()
-				? clamp(organs.getHeart().getBlood(), 0, maximumBlood)
-				: 0;
+		Heart heart = getHeart(entity);
+		float maximumBlood = heart == null ? 0 : positive(heart.getMaxBlood());
+		float currentBlood = heart == null
+				? 0
+				: clamp(heart.getBlood(), 0, maximumBlood);
 		float capacity = cardiovascular.hasFluidCapacity()
 				? Math.max(maximumBlood, positive(cardiovascular.getFluidCapacity()))
 				: maximumBlood + ChemicalUnits.DEFAULT_INJECTION_RESERVE;
 		return Math.max(0, capacity - currentBlood - total(chemicalContents(cardiovascular)));
+	}
+
+	private Stomach getStomach(Entity body) {
+		Entity organEntity = getInstalledOrgan(body, getStomachEntityId(body));
+		if (organEntity != null
+				&& organEntity.hasOrganComponent()
+				&& organEntity.getOrganComponent().hasStomach()) {
+			return organEntity.getOrganComponent().getStomach();
+		}
+		if (body.hasOrgans() && body.getOrgans().hasStomach()) {
+			return body.getOrgans().getStomach();
+		}
+		return null;
+	}
+
+	private Heart getHeart(Entity body) {
+		Entity organEntity = getInstalledOrgan(body, getHeartEntityId(body));
+		if (organEntity != null
+				&& organEntity.hasOrganComponent()
+				&& organEntity.getOrganComponent().hasHeart()) {
+			return organEntity.getOrganComponent().getHeart();
+		}
+		if (body.hasOrgans() && body.getOrgans().hasHeart()) {
+			return body.getOrgans().getHeart();
+		}
+		return null;
+	}
+
+	private Entity storeStomach(Entity body, Stomach stomach) {
+		Entity organEntity = getInstalledOrgan(body, getStomachEntityId(body));
+		if (organEntity != null
+				&& organEntity.hasOrganComponent()
+				&& organEntity.getOrganComponent().hasStomach()) {
+			OrganComponent updatedComponent = organEntity.getOrganComponent().toBuilder()
+					.setStomach(stomach)
+					.build();
+			entityManager.updateEntity(organEntity.toBuilder()
+					.setOrganComponent(updatedComponent)
+					.build());
+			return body;
+		}
+
+		Organs updatedOrgans = body.getOrgans().toBuilder()
+				.setStomach(stomach)
+				.build();
+		return body.toBuilder().setOrgans(updatedOrgans).build();
+	}
+
+	private Entity getInstalledOrgan(Entity body, int organEntityId) {
+		if (entityManager == null || organEntityId < 0) return null;
+		return entityManager.getEntity(organEntityId);
+	}
+
+	private static int getHeartEntityId(Entity body) {
+		return body.hasOrganSlots() && body.getOrganSlots().hasHeartEntityId()
+				? body.getOrganSlots().getHeartEntityId()
+				: -1;
+	}
+
+	private static int getStomachEntityId(Entity body) {
+		return body.hasOrganSlots() && body.getOrganSlots().hasStomachEntityId()
+				? body.getOrganSlots().getStomachEntityId()
+				: -1;
 	}
 
 	private static Map<String, Float> stomachContents(Stomach stomach) {

@@ -1,0 +1,18 @@
+{
+  "name" : "blood",
+  "unitsPerSecond" : 1,
+  
+  "effects" : {  	  
+  	  "damage" : {
+  		"toxin" : 0,
+  		"genetic" : 0,
+  		"structural" : 0,
+  		"bleedingPerSecond" : 0
+  	   },
+  	   "movementMultiplyer" : 0,
+  	   "saturation" : 0
+  	   
+    }
+  
+  
+}

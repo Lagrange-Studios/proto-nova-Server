@@ -190,12 +190,12 @@ public class Server {
 		craftingManager = new CraftingManager(entityManager, serverLoader.loadCraftingRecipes(), console, assetManager, planeManager);
 		pathfindingHandler = new PathfindingHandler(entityManager, entityFinder, this, combatManager);
 		
-		this.chemicalManager = new ChemicalManager();
+		this.chemicalManager = new ChemicalManager(entityManager);
 		this.chemicalDigestionManager = new ChemicalDigestionManager();
 
 		tagHandler = new TagHandler(this, entityManager, assetManager, entityFinder, planeManager, combatManager, pathfindingHandler, healthManager, chemicalManager, chemicalDigestionManager);
 		entityManager.setClasses(chunkManager,tagHandler, entityFinder, pathfindingHandler);
-		consumptionManager = new ConsumptionManager(chemicalDigestionManager, chemicalManager, entityManager);
+		consumptionManager = new ConsumptionManager(chemicalManager, entityManager);
 		
 		if (shouldGenerate) {
 			console.print("Generating a new world. This may take a few minutes...");
