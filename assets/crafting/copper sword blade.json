@@ -1,14 +1,13 @@
 {
   "item1": {
     "mustBeHeld": true,
-    "name":"copper axe",
+    "name":"copper hammer",
     "consumed": false
   },
   "item2": {
-    "name":"plank",
+    "name":"copper pickaxe head",
     "consumed": true
   },
 
-  "tileResult": true,
-  "result":"wood floor"
+  "result":"copper sword blade"
 }

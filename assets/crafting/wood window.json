@@ -1,13 +1,13 @@
 {
   "item1": {
     "mustBeHeld": true,
-    "name":"clay",
+    "name":"plank",
     "consumed": true
   },
   "item2": {
-    "name":"campfire",
+    "name":"plank",
     "consumed": true
   },
 
-  "result":"clay furnace"
+  "result":"wood window"
 }
