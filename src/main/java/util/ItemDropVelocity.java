@@ -14,7 +14,7 @@ public final class ItemDropVelocity {
 
 	public static Vector createRandomScatterVelocity() {
 		double direction = ThreadLocalRandom.current().nextDouble(0, Math.PI * 2);
-		float speed = ThreadLocalRandom.current().nextFloat(MINIMUM_SPEED, MAXIMUM_SPEED);
+		float speed = MINIMUM_SPEED + (ThreadLocalRandom.current().nextFloat() * (MAXIMUM_SPEED - MINIMUM_SPEED));
 		float horizontalVelocity = (float) Math.cos(direction) * speed;
 		float verticalVelocity = (float) Math.sin(direction) * speed;
 
