@@ -2,7 +2,6 @@ package health;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.TreeMap;
 
 import entity.EntityManager;
 import protonova.protobuf.ChemicalProto.Chemical;
@@ -14,14 +13,11 @@ import protonova.protobuf.OrgansProto.Heart;
 import protonova.protobuf.OrgansProto.Liver;
 import protonova.protobuf.OrgansProto.Lungs;
 import protonova.protobuf.OrgansProto.OrganSlots;
-import protonova.protobuf.OrgansProto.OrganStatus;
-import protonova.protobuf.OrgansProto.OrganType;
 import protonova.protobuf.OrgansProto.Organs;
 import protonova.protobuf.OrgansProto.Stomach;
 
 public final class PhysiologySystem {
 
-	// default useage so we can do 200 percent effeciency insted of having to say the number without any context.
 	private static final float DEFAULT_HEART_OXYGEN_USE = 1.0f;
 	private static final float DEFAULT_LUNG_OXYGEN_USE = 0.5f;
 	private static final float DEFAULT_LIVER_OXYGEN_USE = 1.0f;
@@ -90,25 +86,23 @@ public final class PhysiologySystem {
 			return entity;
 		}
 
-		Entity entityAfterBleeding = updateBleeding(entity);
-		float safeBreathableOxygen = keepValueInRange(breathableOxygen, 0, 1);
-		PhysiologyUpdate physiologyUpdate = new PhysiologyUpdate(entityAfterBleeding, safeBreathableOxygen);
-		physiologyUpdate.resolveOrganEnergyUse();
+		Entity updated = updateBleeding(entity);
+		PhysiologyState state = new PhysiologyState(updated, clamp(breathableOxygen, 0, 1));
+		state.useEnergy();
 
-		collectLungChanges(physiologyUpdate);
-		collectHeartChanges(physiologyUpdate);
-		collectLiverChanges(physiologyUpdate);
-		collectStomachChanges(physiologyUpdate);
-		collectBrainChanges(physiologyUpdate);
+		updateLungs(state);
+		updateHeart(state);
+		updateLiver(state);
+		updateStomach(state);
+		updateBrain(state);
 
-		physiologyUpdate.resolveOxygenChanges();
-
-		return applyPhysiologyChanges(entityAfterBleeding, physiologyUpdate);
+		state.useOxygen();
+		return applyChanges(updated, state);
 	}
 
 	private Entity updateBleeding(Entity entity) {
 		Damage.Builder damage = entity.getDamage().toBuilder();
-		float bleedingPerSecond = getNonNegativeValue(damage.getBleedingPerSecond());
+		float bleedingPerSecond = positive(damage.getBleedingPerSecond());
 		damage.setBleedingPerSecond(Math.max(
 				0,
 				bleedingPerSecond - BLEEDING_RECOVERY_PER_SECOND));
@@ -116,8 +110,8 @@ public final class PhysiologySystem {
 		Organs.Builder organs = entity.getOrgans().toBuilder();
 		if (bleedingPerSecond > 0 && organs.hasHeart()) {
 			Heart heart = organs.getHeart();
-			float maximumBlood = getNonNegativeValue(heart.getMaxBlood());
-			float currentBlood = keepValueInRange(heart.getBlood(), 0, maximumBlood);
+			float maximumBlood = positive(heart.getMaxBlood());
+			float currentBlood = clamp(heart.getBlood(), 0, maximumBlood);
 			organs.setHeart(heart.toBuilder()
 					.setBlood(Math.max(0, currentBlood - bleedingPerSecond)));
 		}
@@ -128,111 +122,100 @@ public final class PhysiologySystem {
 				.build();
 	}
 
-	private void collectLungChanges(PhysiologyUpdate physiologyUpdate) {
-		if (!physiologyUpdate.organs.hasLungs()) {
-			return;
-		}
+	private void updateLungs(PhysiologyState state) {
+		if (!state.organs.hasLungs()) return;
 
-		Lungs lungs = physiologyUpdate.organs.getLungs();
-		float organFunction = physiologyUpdate.getOrganFunction(lungs.getStatus());
-		float oxygenTransfer = getNonNegativeValue(lungs.getOxygen());
-		oxygenTransfer = oxygenTransfer * organFunction * physiologyUpdate.breathableOxygen;
+		Lungs lungs = state.organs.getLungs();
+		float organFunction = state.getOrganFunction(lungs.getStatus());
+		float oxygenTransfer = positive(lungs.getOxygen());
+		oxygenTransfer = oxygenTransfer * organFunction * state.breathableOxygen;
 
-		float oxygenUse = getSetValueOrDefault(
+		float oxygenUse = valueOrDefault(
 				lungs.hasOxygenUsePerSecond(),
 				lungs.getOxygenUsePerSecond(),
 				DEFAULT_LUNG_OXYGEN_USE);
 
-		physiologyUpdate.addOxygenSupply(oxygenTransfer);
-		physiologyUpdate.addOxygenUse(oxygenUse * organFunction);
+		state.addOxygen(oxygenTransfer);
+		state.addOxygenUse(oxygenUse * organFunction);
 	}
 
-	private void collectHeartChanges(PhysiologyUpdate physiologyUpdate) {
-		if (!physiologyUpdate.organs.hasHeart()) {
-			return;
-		}
+	private void updateHeart(PhysiologyState state) {
+		if (!state.organs.hasHeart()) return;
 
-		Heart heart = physiologyUpdate.organs.getHeart();
-		float organFunction = physiologyUpdate.getOrganFunction(heart.getStatus());
-		float maximumBlood = getNonNegativeValue(heart.getMaxBlood());
+		Heart heart = state.organs.getHeart();
+		float organFunction = state.getOrganFunction(heart.getStatus());
+		float maximumBlood = positive(heart.getMaxBlood());
 		float currentBloodRatio = 0;
 
 		if (maximumBlood > 0) {
-			currentBloodRatio = keepValueInRange(heart.getBlood() / maximumBlood, 0, 1);
+			currentBloodRatio = clamp(heart.getBlood() / maximumBlood, 0, 1);
 		}
 
-		float circulationPerSecond = getSetValueOrDefault(
+		float circulationPerSecond = valueOrDefault(
 				heart.hasCirculationPerSecond(),
 				heart.getCirculationPerSecond(),
 				maximumBlood);
-		float oxygenUse = getSetValueOrDefault(
+		float oxygenUse = valueOrDefault(
 				heart.hasOxygenUsePerSecond(),
 				heart.getOxygenUsePerSecond(),
 				DEFAULT_HEART_OXYGEN_USE);
 
-		float availableCirculation = getNonNegativeValue(circulationPerSecond);
+		float availableCirculation = positive(circulationPerSecond);
 		availableCirculation = availableCirculation * currentBloodRatio * organFunction;
 
-		physiologyUpdate.addAvailableCirculation(availableCirculation);
-		physiologyUpdate.addOxygenUse(oxygenUse * organFunction);
+		state.addCirculation(availableCirculation);
+		state.addOxygenUse(oxygenUse * organFunction);
 	}
 
-	private void collectLiverChanges(PhysiologyUpdate physiologyUpdate) {
-		if (!physiologyUpdate.organs.hasLiver()) {
-			return;
-		}
+	private void updateLiver(PhysiologyState state) {
+		if (!state.organs.hasLiver()) return;
 
-		Liver liver = physiologyUpdate.organs.getLiver();
-		float organFunction = physiologyUpdate.getOrganFunction(liver.getStatus());
-		float oxygenUse = getSetValueOrDefault(
+		Liver liver = state.organs.getLiver();
+		float organFunction = state.getOrganFunction(liver.getStatus());
+		float oxygenUse = valueOrDefault(
 				liver.hasOxygenUsePerSecond(),
 				liver.getOxygenUsePerSecond(),
 				DEFAULT_LIVER_OXYGEN_USE);
-		float toxinRecovery = getNonNegativeValue(liver.getDetoxification())
+		float toxinRecovery = positive(liver.getDetoxification())
 				* organFunction
 				* LIVER_TOXIN_RECOVERY_PER_DETOX_UNIT;
 
-		physiologyUpdate.addToxinRecovery(toxinRecovery);
-		physiologyUpdate.addOxygenUse(oxygenUse * organFunction);
+		state.addToxinRecovery(toxinRecovery);
+		state.addOxygenUse(oxygenUse * organFunction);
 	}
 
-	private void collectStomachChanges(PhysiologyUpdate physiologyUpdate) {
-		if (!physiologyUpdate.organs.hasStomach()) {
-			return;
-		}
+	private void updateStomach(PhysiologyState state) {
+		if (!state.organs.hasStomach()) return;
 
-		Stomach stomach = physiologyUpdate.organs.getStomach();
-		float organFunction = physiologyUpdate.getOrganFunction(stomach.getStatus());
-		float absorptionPerSecond = getSetValueOrDefault(
+		Stomach stomach = state.organs.getStomach();
+		float organFunction = state.getOrganFunction(stomach.getStatus());
+		float absorptionPerSecond = valueOrDefault(
 				stomach.hasAbsorptionPerSecond(),
 				stomach.getAbsorptionPerSecond(),
 				DEFAULT_STOMACH_ABSORPTION);
-		float oxygenUse = getSetValueOrDefault(
+		float oxygenUse = valueOrDefault(
 				stomach.hasOxygenUsePerSecond(),
 				stomach.getOxygenUsePerSecond(),
 				DEFAULT_STOMACH_OXYGEN_USE);
 
-		physiologyUpdate.absorbStomachChemicals(
-				getNonNegativeValue(absorptionPerSecond * organFunction));
-		physiologyUpdate.addOxygenUse(oxygenUse * organFunction);
+		state.digest(positive(absorptionPerSecond * organFunction));
+		state.addOxygenUse(oxygenUse * organFunction);
 	}
 
-	private void collectBrainChanges(PhysiologyUpdate physiologyUpdate) {
-		if (!physiologyUpdate.organs.hasBrain()) {
-			return;
-		}
+	private void updateBrain(PhysiologyState state) {
+		if (!state.organs.hasBrain()) return;
 
-		Brain brain = physiologyUpdate.organs.getBrain();
-		float organFunction = physiologyUpdate.getOrganFunction(brain.getStatus());
-		float oxygenUse = getSetValueOrDefault(
+		Brain brain = state.organs.getBrain();
+		float organFunction = state.getOrganFunction(brain.getStatus());
+		float oxygenUse = valueOrDefault(
 				brain.hasOxygenUsePerSecond(),
 				brain.getOxygenUsePerSecond(),
 				DEFAULT_BRAIN_OXYGEN_USE);
 
-		physiologyUpdate.addBrainOxygenUse(oxygenUse * organFunction);
+		state.addBrainOxygen(oxygenUse * organFunction);
 	}
 
-	private Entity applyPhysiologyChanges(Entity entity, PhysiologyUpdate physiologyUpdate) {
+	private Entity applyChanges(Entity entity, PhysiologyState state) {
 		Organs.Builder updatedOrgans = entity.getOrgans().toBuilder();
 		CardiovascularSystem.Builder updatedCardiovascularSystem;
 
@@ -242,16 +225,16 @@ public final class PhysiologySystem {
 			updatedCardiovascularSystem = CardiovascularSystem.newBuilder();
 		}
 
-		updatedCardiovascularSystem.setOxygen(physiologyUpdate.storedOxygen);
-		updatedCardiovascularSystem.setMaxOxygen(physiologyUpdate.configuredMaximumOxygen);
-		updatedCardiovascularSystem.setElectricalPower(physiologyUpdate.storedElectricalPower);
-		updatedCardiovascularSystem.setMaxElectricalPower(physiologyUpdate.maximumElectricalPower);
-		updatedCardiovascularSystem.setNutrition(physiologyUpdate.storedNutrition);
-		updatedCardiovascularSystem.setMaxNutrition(physiologyUpdate.maximumNutrition);
-		updatedCardiovascularSystem.setFluidCapacity(physiologyUpdate.configuredFluidCapacity);
+		updatedCardiovascularSystem.setOxygen(state.oxygen);
+		updatedCardiovascularSystem.setMaxOxygen(state.maxOxygen);
+		updatedCardiovascularSystem.setElectricalPower(state.power);
+		updatedCardiovascularSystem.setMaxElectricalPower(state.maxPower);
+		updatedCardiovascularSystem.setNutrition(state.nutrition);
+		updatedCardiovascularSystem.setMaxNutrition(state.maxNutrition);
+		updatedCardiovascularSystem.setFluidCapacity(state.fluidCapacity);
 		updatedCardiovascularSystem.clearChemicals();
 
-		for (Map.Entry<String, Float> chemical : physiologyUpdate.bloodstreamChemicals.entrySet()) {
+		for (Map.Entry<String, Float> chemical : state.bloodChemicals.entrySet()) {
 			if (chemical.getValue() > 0) {
 				updatedCardiovascularSystem.addChemicals(Chemical.newBuilder()
 						.setName(chemical.getKey())
@@ -263,8 +246,8 @@ public final class PhysiologySystem {
 
 		if (updatedOrgans.hasHeart()) {
 			Heart currentHeart = updatedOrgans.getHeart();
-			float maximumBlood = getNonNegativeValue(currentHeart.getMaxBlood());
-			float currentBlood = keepValueInRange(currentHeart.getBlood(), 0, maximumBlood);
+			float maximumBlood = positive(currentHeart.getMaxBlood());
+			float currentBlood = clamp(currentHeart.getBlood(), 0, maximumBlood);
 			updatedOrgans.setHeart(currentHeart.toBuilder().setBlood(currentBlood));
 		}
 
@@ -272,9 +255,9 @@ public final class PhysiologySystem {
 			Stomach.Builder updatedStomach = updatedOrgans.getStomach().toBuilder();
 			updatedStomach.clearChemicals();
 			updatedStomach.clearContents();
-			updatedStomach.setChemicalCapacity(physiologyUpdate.stomachChemicalCapacity);
+			updatedStomach.setChemicalCapacity(state.stomachCapacity);
 
-			for (Map.Entry<String, Float> chemical : physiologyUpdate.stomachChemicals.entrySet()) {
+			for (Map.Entry<String, Float> chemical : state.stomachChemicals.entrySet()) {
 				if (chemical.getValue() > 0) {
 					updatedStomach.addContents(Chemical.newBuilder()
 							.setName(chemical.getKey())
@@ -286,12 +269,11 @@ public final class PhysiologySystem {
 		}
 
 		Damage.Builder updatedDamage = entity.getDamage().toBuilder();
-		float asphyxiationDamage = getNonNegativeValue(updatedDamage.getAsphyxiationDamage());
+		float asphyxiationDamage = positive(updatedDamage.getAsphyxiationDamage());
 
-		if (physiologyUpdate.brainOxygenUse > 0 && physiologyUpdate.missingBrainOxygen > 0) {
-			float oxygenShortageRatio = physiologyUpdate.missingBrainOxygen
-					/ physiologyUpdate.brainOxygenUse;
-			oxygenShortageRatio = keepValueInRange(oxygenShortageRatio, 0, 1);
+		if (state.brainOxygenUse > 0 && state.brainOxygenShortage > 0) {
+			float oxygenShortageRatio = state.brainOxygenShortage / state.brainOxygenUse;
+			oxygenShortageRatio = clamp(oxygenShortageRatio, 0, 1);
 			asphyxiationDamage += ASPHYXIATION_DAMAGE_PER_SECOND * oxygenShortageRatio;
 		} else {
 			asphyxiationDamage -= ASPHYXIATION_RECOVERY_PER_SECOND;
@@ -301,8 +283,7 @@ public final class PhysiologySystem {
 		updatedDamage.setAsphyxiationDamage(asphyxiationDamage);
 		updatedDamage.setToxinDamage(Math.max(
 				0,
-				getNonNegativeValue(updatedDamage.getToxinDamage())
-						- physiologyUpdate.toxinRecovery));
+				positive(updatedDamage.getToxinDamage()) - state.toxinRecovery));
 
 		return entity.toBuilder()
 				.setOrgans(updatedOrgans)
@@ -364,45 +345,27 @@ public final class PhysiologySystem {
 	}
 
 	private static int getHeartEntityId(OrganSlots organSlots) {
-		if (organSlots.hasHeartEntityId()) {
-			return organSlots.getHeartEntityId();
-		}
-		return -1;
+		return organSlots.hasHeartEntityId() ? organSlots.getHeartEntityId() : -1;
 	}
 
 	private static int getLungsEntityId(OrganSlots organSlots) {
-		if (organSlots.hasLungsEntityId()) {
-			return organSlots.getLungsEntityId();
-		}
-		return -1;
+		return organSlots.hasLungsEntityId() ? organSlots.getLungsEntityId() : -1;
 	}
 
 	private static int getLiverEntityId(OrganSlots organSlots) {
-		if (organSlots.hasLiverEntityId()) {
-			return organSlots.getLiverEntityId();
-		}
-		return -1;
+		return organSlots.hasLiverEntityId() ? organSlots.getLiverEntityId() : -1;
 	}
 
 	private static int getBrainEntityId(OrganSlots organSlots) {
-		if (organSlots.hasBrainEntityId()) {
-			return organSlots.getBrainEntityId();
-		}
-		return -1;
+		return organSlots.hasBrainEntityId() ? organSlots.getBrainEntityId() : -1;
 	}
 
 	private static int getStomachEntityId(OrganSlots organSlots) {
-		if (organSlots.hasStomachEntityId()) {
-			return organSlots.getStomachEntityId();
-		}
-		return -1;
+		return organSlots.hasStomachEntityId() ? organSlots.getStomachEntityId() : -1;
 	}
 
-	private static float getSetValueOrDefault(boolean valueIsSet, float value, float defaultValue) {
-		if (valueIsSet) {
-			return getNonNegativeValue(value);
-		}
-		return defaultValue;
+	private static float valueOrDefault(boolean valueIsSet, float value, float defaultValue) {
+		return valueIsSet ? positive(value) : defaultValue;
 	}
 
 	private static void loadHeartFromEntity(
@@ -470,336 +433,12 @@ public final class PhysiologySystem {
 		}
 	}
 
-	private static float getOrganCondition(boolean conditionIsSet, float condition) {
-		if (conditionIsSet) {
-			return keepValueInRange(condition, 0, 1);
-		}
-		return 1;
+	private static float positive(float value) {
+		return Float.isFinite(value) ? Math.max(0, value) : 0;
 	}
 
-	private static float getNonNegativeValue(float value) {
-		if (!Float.isFinite(value)) {
-			return 0;
-		}
-		return Math.max(0, value);
-	}
-
-	private static float keepValueInRange(float value, float minimum, float maximum) {
-		if (!Float.isFinite(value)) {
-			return minimum;
-		}
-
-		float safeMaximum = Math.max(minimum, maximum);
-		float valueAboveMinimum = Math.max(minimum, value);
-		return Math.min(valueAboveMinimum, safeMaximum);
-	}
-
-	private static final class PhysiologyUpdate {
-
-		private final Organs organs;
-		private final float breathableOxygen;
-		private final Map<String, Float> bloodstreamChemicals = new TreeMap<>();
-		private final Map<String, Float> stomachChemicals = new TreeMap<>();
-		private float configuredMaximumOxygen;
-		private float maximumOxygenForCurrentBlood;
-		private float storedOxygen;
-		private float maximumElectricalPower;
-		private float storedElectricalPower;
-		private float maximumNutrition;
-		private float storedNutrition;
-		private float configuredFluidCapacity;
-		private float availableBloodstreamChemicalSpace;
-		private float stomachChemicalCapacity;
-		private float availableCyberneticPowerRatio = 1;
-		private float availableBiologicalNutritionRatio = 1;
-		private float oxygenAddedByLungs;
-		private float totalOxygenUse;
-		private float brainOxygenUse;
-		private float availableCirculation;
-		private float toxinRecovery;
-		private float missingBrainOxygen;
-
-		private PhysiologyUpdate(Entity entity, float breathableOxygen) {
-			this.organs = entity.getOrgans();
-			this.breathableOxygen = breathableOxygen;
-
-			CardiovascularSystem cardiovascularSystem;
-			if (organs.hasCardiovascularSystem()) {
-				cardiovascularSystem = organs.getCardiovascularSystem();
-			} else {
-				cardiovascularSystem = CardiovascularSystem.getDefaultInstance();
-			}
-
-			float bloodOxygenCapacity = 0;
-			if (organs.hasHeart()) {
-				bloodOxygenCapacity = getNonNegativeValue(organs.getHeart().getMaxBlood());
-			}
-
-			float fullBloodOxygenCapacity = bloodOxygenCapacity;
-			if (cardiovascularSystem.hasMaxOxygen()) {
-				fullBloodOxygenCapacity = getNonNegativeValue(cardiovascularSystem.getMaxOxygen());
-			}
-
-			configuredMaximumOxygen = fullBloodOxygenCapacity;
-
-			float currentBloodRatio = 0;
-			if (bloodOxygenCapacity > 0) {
-				currentBloodRatio = organs.getHeart().getBlood() / bloodOxygenCapacity;
-				currentBloodRatio = keepValueInRange(currentBloodRatio, 0, 1);
-			}
-
-			maximumOxygenForCurrentBlood = fullBloodOxygenCapacity * currentBloodRatio;
-			storedOxygen = keepValueInRange(
-					cardiovascularSystem.getOxygen(),
-					0,
-					maximumOxygenForCurrentBlood);
-
-			if (cardiovascularSystem.hasMaxElectricalPower()) {
-				maximumElectricalPower = getNonNegativeValue(
-						cardiovascularSystem.getMaxElectricalPower());
-			} else {
-				maximumElectricalPower = getNonNegativeValue(
-						cardiovascularSystem.getElectricalPower());
-			}
-
-			storedElectricalPower = keepValueInRange(
-					cardiovascularSystem.getElectricalPower(),
-					0,
-					maximumElectricalPower);
-
-			maximumNutrition = OrganEnergy.maximumNutrition(cardiovascularSystem);
-
-			storedNutrition = keepValueInRange(
-					cardiovascularSystem.getNutrition(),
-					0,
-					maximumNutrition);
-
-			float maximumBlood = 0;
-			float currentBlood = 0;
-			if (organs.hasHeart()) {
-				maximumBlood = getNonNegativeValue(organs.getHeart().getMaxBlood());
-				currentBlood = keepValueInRange(organs.getHeart().getBlood(), 0, maximumBlood);
-			}
-
-			float requestedFluidCapacity;
-			if (cardiovascularSystem.hasFluidCapacity()) {
-				requestedFluidCapacity = getNonNegativeValue(
-						cardiovascularSystem.getFluidCapacity());
-			} else {
-				requestedFluidCapacity = maximumBlood + ChemicalUnits.DEFAULT_INJECTION_RESERVE;
-			}
-
-			configuredFluidCapacity = Math.max(maximumBlood, requestedFluidCapacity);
-			availableBloodstreamChemicalSpace = Math.max(0, configuredFluidCapacity - currentBlood);
-
-			for (Chemical chemical : cardiovascularSystem.getChemicalsList()) {
-				addChemicalAmount(
-						bloodstreamChemicals,
-						chemical.getName(),
-						chemical.getAmount());
-			}
-
-			limitChemicalAmount(bloodstreamChemicals, availableBloodstreamChemicalSpace);
-
-			if (organs.hasStomach()) {
-				Stomach stomach = organs.getStomach();
-
-				if (stomach.hasChemicalCapacity()) {
-					stomachChemicalCapacity = getNonNegativeValue(stomach.getChemicalCapacity());
-				} else {
-					stomachChemicalCapacity = ChemicalUnits.DEFAULT_STOMACH_CAPACITY;
-				}
-
-				for (String chemicalName : stomach.getChemicalsList()) {
-					addChemicalAmount(stomachChemicals, chemicalName, 1);
-				}
-
-				for (Chemical chemical : stomach.getContentsList()) {
-					addChemicalAmount(
-							stomachChemicals,
-							chemical.getName(),
-							chemical.getAmount());
-				}
-
-				limitChemicalAmount(stomachChemicals, stomachChemicalCapacity);
-			}
-		}
-
-		private void resolveOrganEnergyUse() {
-			float totalPowerUse = 0;
-			float totalNutritionUse = 0;
-
-			if (organs.hasHeart()) {
-				totalPowerUse += OrganEnergy.powerUsePerSecond(organs.getHeart().getStatus());
-				totalNutritionUse += OrganEnergy.nutritionUsePerSecond(
-						organs.getHeart().getStatus(), OrganEnergy.DEFAULT_HEART_NUTRITION_USE);
-			}
-			if (organs.hasLungs()) {
-				totalPowerUse += OrganEnergy.powerUsePerSecond(organs.getLungs().getStatus());
-				totalNutritionUse += OrganEnergy.nutritionUsePerSecond(
-						organs.getLungs().getStatus(), OrganEnergy.DEFAULT_LUNG_NUTRITION_USE);
-			}
-			if (organs.hasLiver()) {
-				totalPowerUse += OrganEnergy.powerUsePerSecond(organs.getLiver().getStatus());
-				totalNutritionUse += OrganEnergy.nutritionUsePerSecond(
-						organs.getLiver().getStatus(), OrganEnergy.DEFAULT_LIVER_NUTRITION_USE);
-			}
-			if (organs.hasBrain()) {
-				totalPowerUse += OrganEnergy.powerUsePerSecond(organs.getBrain().getStatus());
-				totalNutritionUse += OrganEnergy.nutritionUsePerSecond(
-						organs.getBrain().getStatus(), OrganEnergy.DEFAULT_BRAIN_NUTRITION_USE);
-			}
-			if (organs.hasStomach()) {
-				totalPowerUse += OrganEnergy.powerUsePerSecond(organs.getStomach().getStatus());
-				totalNutritionUse += OrganEnergy.nutritionUsePerSecond(
-						organs.getStomach().getStatus(), OrganEnergy.DEFAULT_STOMACH_NUTRITION_USE);
-			}
-
-			if (totalPowerUse > 0) {
-				float deliveredPower = Math.min(storedElectricalPower, totalPowerUse);
-				availableCyberneticPowerRatio = deliveredPower / totalPowerUse;
-				storedElectricalPower -= deliveredPower;
-			}
-
-			if (totalNutritionUse > 0) {
-				float deliveredNutrition = Math.min(storedNutrition, totalNutritionUse);
-				availableBiologicalNutritionRatio = deliveredNutrition / totalNutritionUse;
-				storedNutrition -= deliveredNutrition;
-			}
-		}
-
-		private float getOrganFunction(OrganStatus organStatus) {
-			float organHealth = getOrganCondition(
-					organStatus.hasHealth(),
-					organStatus.getHealth());
-			float organEfficiency = getOrganCondition(
-					organStatus.hasEfficiency(),
-					organStatus.getEfficiency());
-			float availablePower = 1;
-
-			if (organStatus.getType() == OrganType.ORGAN_TYPE_CYBERNETIC) {
-				availablePower = availableCyberneticPowerRatio;
-			} else {
-				availablePower = availableBiologicalNutritionRatio;
-			}
-
-			return organHealth * organEfficiency * availablePower;
-		}
-
-		private void addOxygenSupply(float oxygenAmount) {
-			oxygenAddedByLungs += getNonNegativeValue(oxygenAmount);
-		}
-
-		private void addOxygenUse(float oxygenAmount) {
-			totalOxygenUse += getNonNegativeValue(oxygenAmount);
-		}
-
-		private void addBrainOxygenUse(float oxygenAmount) {
-			float safeOxygenAmount = getNonNegativeValue(oxygenAmount);
-			brainOxygenUse += safeOxygenAmount;
-			totalOxygenUse += safeOxygenAmount;
-		}
-
-		private void addAvailableCirculation(float circulationAmount) {
-			availableCirculation += getNonNegativeValue(circulationAmount);
-		}
-
-		private void addToxinRecovery(float recoveryAmount) {
-			toxinRecovery += getNonNegativeValue(recoveryAmount);
-		}
-
-		private void absorbStomachChemicals(float absorptionAmount) {
-			float totalStomachChemicalAmount = getTotalChemicalAmount(stomachChemicals);
-			float currentBloodstreamChemicalAmount = getTotalChemicalAmount(bloodstreamChemicals);
-			float availableChemicalSpace = availableBloodstreamChemicalSpace
-					- currentBloodstreamChemicalAmount;
-			availableChemicalSpace = Math.max(0, availableChemicalSpace);
-
-			if (totalStomachChemicalAmount <= 0
-					|| absorptionAmount <= 0
-					|| availableChemicalSpace <= 0) {
-				return;
-			}
-
-			float absorbedAmount = Math.min(absorptionAmount, availableChemicalSpace);
-			float absorbedRatio = absorbedAmount / totalStomachChemicalAmount;
-			absorbedRatio = Math.min(1, absorbedRatio);
-
-			for (Map.Entry<String, Float> stomachChemical : stomachChemicals.entrySet()) {
-				float amountMovedToBloodstream = stomachChemical.getValue() * absorbedRatio;
-				float amountLeftInStomach = stomachChemical.getValue() - amountMovedToBloodstream;
-				stomachChemical.setValue(amountLeftInStomach);
-				addChemicalAmount(
-						bloodstreamChemicals,
-						stomachChemical.getKey(),
-						amountMovedToBloodstream);
-			}
-		}
-
-		private void resolveOxygenChanges() {
-			storedOxygen += oxygenAddedByLungs;
-			storedOxygen = Math.min(maximumOxygenForCurrentBlood, storedOxygen);
-
-			float oxygenAllowedByCirculation = Math.min(availableCirculation, totalOxygenUse);
-			float deliveredOxygen = Math.min(storedOxygen, oxygenAllowedByCirculation);
-			storedOxygen -= deliveredOxygen;
-
-			float brainShareOfOxygenUse = 0;
-			if (totalOxygenUse > 0) {
-				brainShareOfOxygenUse = brainOxygenUse / totalOxygenUse;
-			}
-
-			float oxygenDeliveredToBrain = deliveredOxygen * brainShareOfOxygenUse;
-			missingBrainOxygen = Math.max(0, brainOxygenUse - oxygenDeliveredToBrain);
-		}
-
-		private static void addChemicalAmount(
-				Map<String, Float> chemicals,
-				String chemicalName,
-				float chemicalAmount) {
-
-			float safeChemicalAmount = getNonNegativeValue(chemicalAmount);
-			if (safeChemicalAmount <= 0) {
-				return;
-			}
-
-			if (chemicalName == null || chemicalName.trim().isEmpty()) {
-				return;
-			}
-			chemicalName = chemicalName.trim().toLowerCase(java.util.Locale.ROOT);
-
-			if (chemicals.containsKey(chemicalName)) {
-				float combinedAmount = chemicals.get(chemicalName) + safeChemicalAmount;
-				chemicals.put(chemicalName, combinedAmount);
-			} else {
-				chemicals.put(chemicalName, safeChemicalAmount);
-			}
-		}
-
-		private static float getTotalChemicalAmount(Map<String, Float> chemicals) {
-			float totalChemicalAmount = 0;
-			for (float chemicalAmount : chemicals.values()) {
-				totalChemicalAmount += getNonNegativeValue(chemicalAmount);
-			}
-			return totalChemicalAmount;
-		}
-
-		private static void limitChemicalAmount(
-				Map<String, Float> chemicals,
-				float chemicalCapacity) {
-
-			float totalChemicalAmount = getTotalChemicalAmount(chemicals);
-			if (totalChemicalAmount <= chemicalCapacity || totalChemicalAmount <= 0) {
-				return;
-			}
-
-			float safeChemicalCapacity = Math.max(0, chemicalCapacity);
-			float retainedChemicalRatio = safeChemicalCapacity / totalChemicalAmount;
-
-			for (Map.Entry<String, Float> chemical : chemicals.entrySet()) {
-				float retainedChemicalAmount = chemical.getValue() * retainedChemicalRatio;
-				chemical.setValue(retainedChemicalAmount);
-			}
-		}
+	private static float clamp(float value, float minimum, float maximum) {
+		if (!Float.isFinite(value)) return minimum;
+		return Math.max(minimum, Math.min(value, Math.max(minimum, maximum)));
 	}
 }
