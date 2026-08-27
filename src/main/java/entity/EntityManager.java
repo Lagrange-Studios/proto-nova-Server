@@ -65,7 +65,7 @@ public class EntityManager {
 	
 	public Player getPlayerEntityFromEntity(Entity entity) {
 		for (Player player : playerList) {
-			if (entity.getId() == player.data.getEntityId()) {
+			if (player.data != null && entity.getId() == player.data.getEntityId()) {
 				return player;
 			}
 		}
@@ -83,6 +83,7 @@ public class EntityManager {
 	}
 	
 	public Entity getEntity(Player player) {
+		if (player == null || player.data == null) return null;
 		return entities.get(player.data.getEntityId());
 	}
 	

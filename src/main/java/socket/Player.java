@@ -43,8 +43,10 @@ public class Player {
 			main.ServerConfig.getInstance().getSecurityLevel3ApiGraceSeconds(), 1_000L);
 	private static final int IDLE_TIMEOUT_MILLIS = Math.multiplyExact(
 			main.ServerConfig.getInstance().getGameSocketIdleTimeoutSeconds(), 1_000);
-	private static final int MAX_PACKETS_PER_SECOND = Math.max(
-			30, main.ServerConfig.getInstance().getTicksPerSecond() * 2);
+	// The official client sends one gameplay packet per 60 Hz client tick. Allow
+	// enough headroom for its bounded catch-up ticks while still rejecting a
+	// sustained packet flood.
+	private static final int MAX_PACKETS_PER_SECOND = 120;
 	private static final long CHAT_INTERVAL_NANOS = 250_000_000L;
 	private static final long INTERACTION_INTERVAL_NANOS = 20_000_000L;
 	private static final int OUTBOUND_QUEUE_CAPACITY = Math.max(

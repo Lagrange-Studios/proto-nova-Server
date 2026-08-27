@@ -368,9 +368,6 @@ public class Server {
 		// Create a copy to avoid ConcurrentModificationException when players disconnect during iteration
 		ArrayList<Player> playerList = new ArrayList<>(serverSocket.getPlayerList());
 		
-		soundManager.processPlayerMovement(playerList, entityManager);
-		soundManager.processSoundMessagesToSend();
-		
 		for (Player player : playerList) {
 			if (player.getState() == State.DISCONNECTED) {
 				serverSocket.removePlayer(player);
@@ -380,6 +377,12 @@ public class Server {
 				player.shouldReconcile = false; // Reset reconciliation flag after sending
 			}
 		}
+
+		// A player's data and entity are initialized while creating their first packet.
+		// Process movement only after that initialization so a newly authenticated
+		// player cannot abort the tick with a null player-data lookup.
+		soundManager.processPlayerMovement(playerList, entityManager);
+		soundManager.processSoundMessagesToSend();
 		
 		chatManager.processChatMessagesToSend();
 		
