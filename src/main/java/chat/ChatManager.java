@@ -2,6 +2,7 @@ package chat;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.google.protobuf.UInt64Value;
 
@@ -16,7 +17,7 @@ import socket.Player;;
 
 public class ChatManager {
 	
-	private ArrayList<ChatMessage> chatQueue;
+	private ConcurrentLinkedQueue<ChatMessage> chatQueue;
 	private ArrayList<ChatMessage> chats;
 	private HashMap<Long, Long> chatCreationTime;
 	private ServerLoader serverLoader;
@@ -31,7 +32,7 @@ public class ChatManager {
 		this.serverLoader = serverLoader;
 		this.server = server;
 		this.playerList = playerList;
-		chatQueue = new ArrayList<ChatMessage>();
+		chatQueue = new ConcurrentLinkedQueue<ChatMessage>();
 		chats = new ArrayList<ChatMessage>();
 		chatCreationTime = new HashMap<>();
 		this.console = console;
@@ -45,10 +46,8 @@ public class ChatManager {
 	
 	public void processChatMessagesToSend() {
 		removeAllChatsFromChuncks();
-		for (ChatMessage message : chatQueue) {
-			makeNewChat(message);
-		}
-		chatQueue.clear();
+		ChatMessage message;
+		while ((message = chatQueue.poll()) != null) makeNewChat(message);
 		
 		// Clean up old chat messages to prevent memory leak
 		cleanupOldChats();

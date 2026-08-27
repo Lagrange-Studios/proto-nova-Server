@@ -209,6 +209,8 @@ class AssetMakerGUIController {
         gui.stomachCapacitySpinner.setValue(50.0);
         gui.cardiovascularOxygenSpinner.setValue(100.0);
         gui.cardiovascularMaxOxygenSpinner.setValue(100.0);
+        gui.cardiovascularNutritionSpinner.setValue(50.0);
+        gui.cardiovascularMaxNutritionSpinner.setValue(100.0);
         gui.cardiovascularFluidCapacitySpinner.setValue(150.0);
         if (!gui.tagsField.getText().contains("physiology")) {
             String tags = gui.tagsField.getText().trim();

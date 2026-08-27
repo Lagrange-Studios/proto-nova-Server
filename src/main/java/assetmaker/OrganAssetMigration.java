@@ -10,6 +10,8 @@ import protonova.protobuf.OrgansProto.Stomach;
 /** One-time migration from embedded human organs to organ assets. Later runs are harmless. */
 public class OrganAssetMigration {
 	private static final float ORGAN_SIZE = 1.0f / 3.0f;
+	private static final float HUMAN_STARTING_NUTRITION = 50.0f;
+	private static final float HUMAN_MAX_NUTRITION = 100.0f;
 
 	public static void main(String[] args) {
 		AssetMaker assets = new AssetMaker();
@@ -18,8 +20,13 @@ public class OrganAssetMigration {
 		if (!human.getTagsList().contains("physiology")) {
 			human = human.toBuilder().addTags("physiology").build();
 		}
+		Organs.Builder humanOrgans = human.getOrgans().toBuilder();
+		humanOrgans.setCardiovascularSystem(humanOrgans.getCardiovascularSystem().toBuilder()
+				.setNutrition(HUMAN_STARTING_NUTRITION)
+				.setMaxNutrition(HUMAN_MAX_NUTRITION));
 		human = human.toBuilder()
 				.setHitDamage(human.getHitDamage().toBuilder().setCanAttack(true))
+				.setOrgans(humanOrgans)
 				.build();
 
 		Organs organs = human.getOrgans();

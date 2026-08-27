@@ -20,6 +20,7 @@ import javax.net.ssl.SSLContext;
 import main.Console;
 import diagnostics.ResourceDiagnostics;
 import security.ServerTlsContext;
+import security.GameAuthService;
 
 public class ServerSocketHandler {
 
@@ -32,12 +33,14 @@ public class ServerSocketHandler {
 	private ExecutorService outboundThreadPool;
 	private Thread serverThread;
 	private ServerSaver serverSaver;
+	private GameAuthService gameAuthService;
 	private volatile boolean closing;
 	
 	public ServerSocketHandler(Console console, PacketReciver packetReciver, ArrayList<Player> playerList,ServerSaver serverSaver) {
 		this.console = console;
 		this.playerList = playerList;
 		this.serverSaver = serverSaver;
+		this.gameAuthService = new GameAuthService();
 		threadPool = new ThreadPoolExecutor(THREAD_POOL_SIZE, THREAD_POOL_SIZE, 0L, TimeUnit.MILLISECONDS,
 				new SynchronousQueue<>(),
 				ResourceDiagnostics.threadFactory("Player-Worker"));
@@ -67,7 +70,7 @@ public class ServerSocketHandler {
 					try {
 						clientSocket.setKeepAlive(true);
 						clientSocket.setTcpNoDelay(true);
-						Player player = new Player(clientSocket, console, packetReciver, this);
+						Player player = new Player(clientSocket, console, packetReciver, this, gameAuthService);
 						threadPool.execute(player::listen);
 					} catch (RejectedExecutionException overloaded) {
 						clientSocket.close();
@@ -100,12 +103,16 @@ public class ServerSocketHandler {
 	/**
 	 * Called by Player when username is received (handshake complete)
 	 */
-	public void addPlayerToGame(Player player) {
+	public boolean addPlayerToGame(Player player) {
 		synchronized (this) {
-			if (closing || player.getState() == enums.Player.State.DISCONNECTED || playerList.contains(player)) return;
+			if (closing || player.getState() == enums.Player.State.DISCONNECTED || playerList.contains(player)) return false;
+			for (Player connected : playerList) {
+				if (connected.getUsername().equalsIgnoreCase(player.getUsername())) return false;
+			}
 			playerList.add(player);
 		}
 		console.print("Player joined: " + player.getUsername());
+		return true;
 	}
 	
 	/**

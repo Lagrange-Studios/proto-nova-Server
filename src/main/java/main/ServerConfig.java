@@ -17,6 +17,11 @@ public class ServerConfig {
     private int gameSocketIdleTimeoutSeconds;
     private int gameSocketOutboundQueueSize;
     private int gameSocketSlowClientTimeoutSeconds;
+    private int securityLevel;
+    private String securityApiUrl;
+    private String securityApiFallbackUrl;
+    private int securityLevel3RecheckSeconds;
+    private int securityLevel3ApiGraceSeconds;
     private boolean statusHttpEnabled;
     private int statusHttpPort;
     private String statusHttpBindAddress;
@@ -76,6 +81,11 @@ public class ServerConfig {
         defaultProps.setProperty("game.socket.idle.timeout.seconds", "300");
         defaultProps.setProperty("game.socket.outbound.queue.size", "8");
         defaultProps.setProperty("game.socket.slow.client.timeout.seconds", "15");
+        defaultProps.setProperty("security.level", "1");
+        defaultProps.setProperty("security.api.url", "https://api.proto-nova.net/api");
+        defaultProps.setProperty("security.api.fallback.url", "https://proto-nova-api.up.railway.app/api");
+        defaultProps.setProperty("security.level3.recheck.seconds", "60");
+        defaultProps.setProperty("security.level3.api.grace.seconds", "180");
         defaultProps.setProperty("http.status.enabled", "true");
         defaultProps.setProperty("http.status.port", "7674");
         defaultProps.setProperty("http.status.bind.address", "0.0.0.0");
@@ -104,6 +114,14 @@ public class ServerConfig {
         this.gameSocketOutboundQueueSize = getBoundedPositiveIntProperty("game.socket.outbound.queue.size", 8, 1_024);
         this.gameSocketSlowClientTimeoutSeconds = getBoundedPositiveIntProperty(
                 "game.socket.slow.client.timeout.seconds", 15, 300);
+        this.securityLevel = getSecurityLevelProperty();
+        this.securityApiUrl = getStringProperty("security.api.url", "https://api.proto-nova.net/api").trim();
+        this.securityApiFallbackUrl = getStringProperty(
+                "security.api.fallback.url", "https://proto-nova-api.up.railway.app/api").trim();
+        this.securityLevel3RecheckSeconds = getBoundedPositiveIntProperty(
+                "security.level3.recheck.seconds", 60, 3_600);
+        this.securityLevel3ApiGraceSeconds = getBoundedPositiveIntProperty(
+                "security.level3.api.grace.seconds", 180, 86_400);
         this.statusHttpEnabled = getBooleanProperty("http.status.enabled", true);
         this.statusHttpPort = getPortProperty("http.status.port", 7674);
         this.statusHttpBindAddress = getStringProperty("http.status.bind.address", "0.0.0.0").trim();
@@ -152,6 +170,13 @@ public class ServerConfig {
         console.print("WARNING: Property '" + key + "' must be between 1 and 65535; using default: " + defaultValue);
         return defaultValue;
     }
+
+    private int getSecurityLevelProperty() {
+        int value = getIntProperty("security.level", 1);
+        if (value >= 1 && value <= 3) return value;
+        console.print("WARNING: Property 'security.level' must be 1, 2, or 3; using default: 1");
+        return 1;
+    }
     
     // Get string property with default fallback
     private String getStringProperty(String key, String defaultValue) {
@@ -178,6 +203,16 @@ public class ServerConfig {
 
     // Disconnect a client after this many seconds of outbound packets are backlogged.
     public int getGameSocketSlowClientTimeoutSeconds() { return gameSocketSlowClientTimeoutSeconds; }
+
+    public int getSecurityLevel() { return securityLevel; }
+
+    public String getSecurityApiUrl() { return securityApiUrl; }
+
+    public String getSecurityApiFallbackUrl() { return securityApiFallbackUrl; }
+
+    public int getSecurityLevel3RecheckSeconds() { return securityLevel3RecheckSeconds; }
+
+    public int getSecurityLevel3ApiGraceSeconds() { return securityLevel3ApiGraceSeconds; }
     
     // Optional HTTPS server-status endpoint. Do not expose it unless needed.
     public boolean isStatusHttpEnabled() { return statusHttpEnabled; }

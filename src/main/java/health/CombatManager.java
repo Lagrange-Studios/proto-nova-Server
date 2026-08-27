@@ -11,6 +11,8 @@ import protonova.protobuf.DamageProto.DamageMultiplier;
 import protonova.protobuf.DamageProto.HitDamage;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.EntityProto.Entity.Builder;
+import sound.SoundManager;
+import util.AudioBuilder;
 import util.TimedTask;
 import util.VectorMath;
 import diagnostics.ResourceDiagnostics;
@@ -21,11 +23,13 @@ public class CombatManager {
 	private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4,
 			ResourceDiagnostics.threadFactory("Combat-Scheduler"));
 	private HealthManager healthManager;
+	private SoundManager soundManager;
 	private final ConcurrentHashMap<Integer, Long> attackCooldownDeadlines = new ConcurrentHashMap<>();
 	
-	public CombatManager(EntityManager entityManager, HealthManager healthManager) {
+	public CombatManager(EntityManager entityManager, HealthManager healthManager, SoundManager soundManager) {
 		this.entityManager = entityManager;
 		this.healthManager = healthManager;
+		this.soundManager = soundManager;
 	}
 	
 	public boolean attemptToDamage(Entity attacker, Entity defender) {
@@ -43,11 +47,19 @@ public class CombatManager {
 			
 			startEntityHitCooldown(attacker);
 			damage(attacker, defender);
+			playHitSound(attacker, defender);
 			return true;
 		} else {
 			return false;
 			
 		}
+	}
+
+	private void playHitSound(Entity attacker, Entity defender) {
+		soundManager.emit(AudioBuilder.createSoundEffect(
+				"Hit", defender.getPosition(), defender.getMap()).toBuilder()
+				.setOriginEntityID(attacker.getId())
+				.build());
 	}
 
 	/** Items are protected from attacks unless their asset explicitly opts in. */
