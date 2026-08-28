@@ -65,7 +65,7 @@ public class EntityManager {
 	
 	public Player getPlayerEntityFromEntity(Entity entity) {
 		for (Player player : playerList) {
-			if (entity.getId() == player.data.getEntityId()) {
+			if (player.data != null && entity.getId() == player.data.getEntityId()) {
 				return player;
 			}
 		}
@@ -83,6 +83,7 @@ public class EntityManager {
 	}
 	
 	public Entity getEntity(Player player) {
+		if (player == null || player.data == null) return null;
 		return entities.get(player.data.getEntityId());
 	}
 	
@@ -298,7 +299,7 @@ public class EntityManager {
 	 * Ticks all the velocity for all entities
 	 * @return stop reading this
 	 */
-	public void tick() {
+	public synchronized void tick() {
 		diagnostics.ResourceDiagnostics resourceDiagnostics = server.getDiagnostics();
 		boolean measureCpu = resourceDiagnostics != null && resourceDiagnostics.isCapturing();
 		for (int id : velocityEntities) {
@@ -307,11 +308,8 @@ public class EntityManager {
 				long started = measureCpu ? System.nanoTime() : 0;
 				
 				try {
-					// TODO: change this to check the brain for human player
-					if (!entity.getName().equals("human")) {
-						entity = simulateVelocity(entity, server.TPS);
-						updateEntity(entity);
-					}
+					entity = simulateVelocity(entity, server.TPS);
+					updateEntity(entity);
 				} finally {
 					if (measureCpu) {
 						resourceDiagnostics.recordEntityCpu(id, System.nanoTime() - started);

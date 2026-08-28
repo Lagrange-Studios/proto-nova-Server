@@ -544,7 +544,7 @@ class AssetMakerGUIPanels {
         gui.cardiovascularMaxOxygenSpinner.setValue(100.0);
         gui.cardiovascularPowerSpinner.setValue(0.0);
         gui.cardiovascularMaxPowerSpinner.setValue(0.0);
-        gui.cardiovascularNutritionSpinner.setValue(100.0);
+        gui.cardiovascularNutritionSpinner.setValue(50.0);
         gui.cardiovascularMaxNutritionSpinner.setValue(100.0);
         gui.cardiovascularFluidCapacitySpinner.setValue(150.0);
         gui.heartOrganAssetField.setText("human heart");

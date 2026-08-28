@@ -177,7 +177,7 @@ public class Server {
 
 		healthManager = new HealthManager(entityManager, console, lootTableManager);
 		entityManager.setHealthManager(healthManager);
-		combatManager = new CombatManager(entityManager, healthManager);
+		combatManager = new CombatManager(entityManager, healthManager, soundManager);
 		
 		entityFinder = new EntityFinder(entityManager.getAllEntities(),chunkManager,this);
 		soundFinder = new SoundFinder(entityManager.getAllEntities(),soundManager.getAllSounds(),chunkManager);
@@ -218,7 +218,7 @@ public class Server {
 		actionHandler = new ActionHandler(console, entityManager, entityFinder, planeManager, craftingManager, tagHandler, combatManager, healthManager, consumptionManager);
 		serverSaver = new ServerSaver(this, entityManager, planeManager, celestialObjectManager, gamemodeManager);
 		
-		packetReciver = new PacketReciver(entityManager, soundManager, chatManager, console, actionHandler, entityFinder, healthManager, planeManager, this);
+		packetReciver = new PacketReciver(entityManager, chatManager, console, actionHandler, entityFinder, healthManager, planeManager, this);
 		
 		console.print("Starting the secure game listener...");
 		serverSocket = new ServerSocketHandler(console, packetReciver, playerList, serverSaver);
@@ -368,10 +368,6 @@ public class Server {
 		// Create a copy to avoid ConcurrentModificationException when players disconnect during iteration
 		ArrayList<Player> playerList = new ArrayList<>(serverSocket.getPlayerList());
 		
-		// Process player movements and generate walking sounds
-		soundManager.processPlayerMovement(entityManager.getAllEntities());
-		soundManager.processSoundMessagesToSend();
-		
 		for (Player player : playerList) {
 			if (player.getState() == State.DISCONNECTED) {
 				serverSocket.removePlayer(player);
@@ -381,6 +377,12 @@ public class Server {
 				player.shouldReconcile = false; // Reset reconciliation flag after sending
 			}
 		}
+
+		// A player's data and entity are initialized while creating their first packet.
+		// Process movement only after that initialization so a newly authenticated
+		// player cannot abort the tick with a null player-data lookup.
+		soundManager.processPlayerMovement(playerList, entityManager);
+		soundManager.processSoundMessagesToSend();
 		
 		chatManager.processChatMessagesToSend();
 		

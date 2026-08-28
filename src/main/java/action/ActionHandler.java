@@ -12,8 +12,10 @@ import protonova.protobuf.ActionProto.Action;
 import protonova.protobuf.ActionProto.ActionType;
 import protonova.protobuf.ActionProto.InteractionType;
 import protonova.protobuf.EntityProto.Entity;
+import protonova.protobuf.VectorProto.Vector;
 import socket.Player;
 import tag.TagHandler;
+import util.VectorMath;
 
 public class ActionHandler {
 
@@ -58,10 +60,11 @@ public class ActionHandler {
 					console.print("Warning: Null interaction entity");
 					break;
 				}
-				if (!interactingEntity.getIsItem()) break;
+				if (!interactingEntity.getIsItem() || !isInRange(playerEntity, interactingEntity)) break;
 				
 				if (playerEntity.getInventorySlotsMap().containsKey(playerEntity.getSelectedSlot())) {
 					Entity heldItem = entityManager.getEntity(playerEntity.getInventorySlotsMap().get(playerEntity.getSelectedSlot()));
+					if (heldItem == null) break;
 					
 					// check for same item and stacking
 					if (interactingEntity.getName().equals(heldItem.getName()) && heldItem.getStackable() && interactingEntity.getId() != heldItem.getId()) {
@@ -106,8 +109,10 @@ public class ActionHandler {
 			case(InteractionType.Drop_VALUE):
 				
 				if (!playerEntity.getInventorySlotsMap().containsKey(playerEntity.getSelectedSlot())) break;
+				if (!isValidDropPosition(playerEntity, action.getInteractionPosition())) break;
 				
 				Entity item = entityManager.getEntity(playerEntity.getInventorySlotsMap().get(playerEntity.getSelectedSlot()));
+				if (item == null) break;
 				item = item.toBuilder()
 					.setPosition(action.getInteractionPosition())
 					.setMap(playerEntity.getMap())
@@ -123,8 +128,10 @@ public class ActionHandler {
 			case(InteractionType.DropOne_VALUE):
 				
 				if (!playerEntity.getInventorySlotsMap().containsKey(playerEntity.getSelectedSlot())) break;
+				if (!isValidDropPosition(playerEntity, action.getInteractionPosition())) break;
 				
 				Entity heldItem = entityManager.getEntity(playerEntity.getInventorySlotsMap().get(playerEntity.getSelectedSlot()));
+				if (heldItem == null) break;
 				
 				// item is not stackable or there is just one
 				if (!heldItem.getStackable() || heldItem.getAmount() == 1) {
@@ -158,18 +165,24 @@ public class ActionHandler {
 				
 				break;
 			case(InteractionType.Craft_VALUE):
+				if (!isInRange(playerEntity, interactingEntity)) break;
 				playerEntity = craftingManager.attemptCraftingRecipe(playerEntity, interactingEntity);
 				break;
 			case(InteractionType.Hit_VALUE):
+				if (!isInRange(playerEntity, interactingEntity)) break;
 				combatManager.attemptToDamage(playerEntity, interactingEntity);
 				playerEntity = entityManager.getEntity(player);
 				break;
 			case(InteractionType.Standard_VALUE):
+				if (!isInRange(playerEntity, interactingEntity)) break;
 				playerEntity = tagHandler.interact(playerEntity, interactingEntity);
 				break;
 			case(InteractionType.Consume_VALUE):
+				if (!playerEntity.getInventorySlotsMap().containsKey(playerEntity.getSelectedSlot())) break;
 				heldItem = entityManager.getEntity(playerEntity.getInventorySlotsMap().get(playerEntity.getSelectedSlot()));
-				consumptionManager.consume(heldItem, interactingEntity);
+				if (heldItem == null || !heldItem.getConsumable()) break;
+				consumptionManager.consume(heldItem, playerEntity);
+				playerEntity = entityManager.getEntity(player);
 				break;
 			case(InteractionType.Inventory_VALUE):
 				
@@ -262,5 +275,17 @@ public class ActionHandler {
 			
 			entityManager.updateEntity(item);
 		}
+	}
+
+	private static boolean isInRange(Entity player, Entity target) {
+		if (player == null || target == null || player.getMap() != target.getMap()) return false;
+		double reach = player.getReach() > 0 ? player.getReach() : 1.5;
+		return VectorMath.distanceSquared(player.getPosition(), target.getPosition()) <= reach * reach;
+	}
+
+	private static boolean isValidDropPosition(Entity player, Vector position) {
+		if (position == null || !Float.isFinite(position.getX()) || !Float.isFinite(position.getY())) return false;
+		double reach = player.getReach() > 0 ? player.getReach() : 1.5;
+		return VectorMath.distanceSquared(player.getPosition(), position) <= reach * reach;
 	}
 }
