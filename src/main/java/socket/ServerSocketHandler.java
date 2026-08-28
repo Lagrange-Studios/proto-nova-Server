@@ -40,7 +40,7 @@ public class ServerSocketHandler {
 		this.console = console;
 		this.playerList = playerList;
 		this.serverSaver = serverSaver;
-		this.gameAuthService = new GameAuthService();
+		this.gameAuthService = new GameAuthService(console);
 		threadPool = new ThreadPoolExecutor(THREAD_POOL_SIZE, THREAD_POOL_SIZE, 0L, TimeUnit.MILLISECONDS,
 				new SynchronousQueue<>(),
 				ResourceDiagnostics.threadFactory("Player-Worker"));

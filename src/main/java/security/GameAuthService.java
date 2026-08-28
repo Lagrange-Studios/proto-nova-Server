@@ -10,6 +10,7 @@ import java.util.concurrent.CompletableFuture;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import main.Console;
 import main.ServerConfig;
 
 public final class GameAuthService {
@@ -38,8 +39,10 @@ public final class GameAuthService {
             .connectTimeout(Duration.ofSeconds(5))
             .build();
     private final String[] apiUrls;
+    private final Console console;
 
-    public GameAuthService() {
+    public GameAuthService(Console console) {
+        this.console = console;
         ServerConfig config = ServerConfig.getInstance();
         apiUrls = new String[] {
                 normalizeBaseUrl(config.getSecurityApiUrl()),
@@ -59,14 +62,25 @@ public final class GameAuthService {
             if (apiUrl == null) continue;
             try {
                 HttpResponse<String> response = post(apiUrl + "/game/join-tickets/consume", body);
-                if (response.statusCode() >= 500) continue;
-                if (response.statusCode() != 200) return null;
+                if (response.statusCode() >= 500) {
+                    logApiFailure("join-ticket consumption", apiUrl, response);
+                    continue;
+                }
+                if (response.statusCode() != 200) {
+                    logApiFailure("join-ticket consumption", apiUrl, response);
+                    return null;
+                }
                 JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
                 String username = json.get("username").getAsString();
                 String sessionKey = continuous ? json.get("sessionKey").getAsString() : null;
-                if (username.isBlank() || (continuous && (sessionKey == null || sessionKey.isBlank()))) return null;
+                if (username.isBlank() || (continuous && (sessionKey == null || sessionKey.isBlank()))) {
+                    console.print("WARNING: Security API returned an incomplete join-ticket response from " + apiUrl);
+                    return null;
+                }
                 return new JoinResult(username, sessionKey);
-            } catch (Exception ignored) {}
+            } catch (Exception error) {
+                logApiException("join-ticket consumption", apiUrl, error);
+            }
         }
         return null;
     }
@@ -85,15 +99,48 @@ public final class GameAuthService {
             if (apiUrl == null) continue;
             try {
                 HttpResponse<String> response = post(apiUrl + "/game/sessions/validate", body);
-                if (response.statusCode() >= 500) continue;
+                if (response.statusCode() >= 500) {
+                    logApiFailure("session validation", apiUrl, response);
+                    continue;
+                }
                 reachedApi = true;
-                if (response.statusCode() != 200) return ValidationStatus.REJECTED;
+                if (response.statusCode() != 200) {
+                    logApiFailure("session validation", apiUrl, response);
+                    return ValidationStatus.REJECTED;
+                }
                 JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
                 return json.has("valid") && json.get("valid").getAsBoolean()
                         ? ValidationStatus.VALID : ValidationStatus.REJECTED;
-            } catch (Exception ignored) {}
+            } catch (Exception error) {
+                logApiException("session validation", apiUrl, error);
+            }
         }
         return reachedApi ? ValidationStatus.REJECTED : ValidationStatus.UNAVAILABLE;
+    }
+
+    private void logApiFailure(String operation, String apiUrl, HttpResponse<String> response) {
+        String detail = "";
+        try {
+            JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
+            if (json.has("error") && json.get("error").isJsonPrimitive()) {
+                detail = ": " + sanitize(json.get("error").getAsString());
+            }
+        } catch (Exception ignored) {}
+        console.print("WARNING: Security API " + operation + " failed at " + apiUrl
+                + " (HTTP " + response.statusCode() + ")" + detail);
+    }
+
+    private void logApiException(String operation, String apiUrl, Exception error) {
+        String message = error.getMessage();
+        String detail = message == null || message.isBlank()
+                ? error.getClass().getSimpleName() : sanitize(message);
+        console.print("WARNING: Security API " + operation + " could not reach " + apiUrl
+                + ": " + detail);
+    }
+
+    private static String sanitize(String value) {
+        String cleaned = value.replace('\r', ' ').replace('\n', ' ').trim();
+        return cleaned.length() <= 160 ? cleaned : cleaned.substring(0, 160);
     }
 
     private HttpResponse<String> post(String url, JsonObject body) throws Exception {
