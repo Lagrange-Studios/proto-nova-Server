@@ -1,0 +1,13 @@
+{
+  "item1": {
+    "mustBeHeld": false,
+    "name":"cloth",
+    "consumed": true
+  },
+  "item2": {
+    "name":"cloth",
+    "consumed": true
+  },
+
+  "result":"large cloth"
+}

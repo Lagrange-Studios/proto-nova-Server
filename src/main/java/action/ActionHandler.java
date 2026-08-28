@@ -184,10 +184,97 @@ public class ActionHandler {
 				consumptionManager.consume(heldItem, playerEntity);
 				playerEntity = entityManager.getEntity(player);
 				break;
+			case(InteractionType.Inventory_VALUE):
+				
+				// is holding item?
+				if (playerEntity.getInventorySlotsMap().containsKey(playerEntity.getSelectedSlot())) {
+					
+					// handle put case
+					if (!playerEntity.containsInventorySlots(action.getSlotName())) {
+						int id = playerEntity.getInventorySlotsMap().get(playerEntity.getSelectedSlot());
+						
+						playerEntity = playerEntity.toBuilder()
+								.removeInventorySlots(playerEntity.getSelectedSlot())
+								.putInventorySlots(action.getSlotName(), id)
+								.build();
+					}
+					else {
+						heldItem = entityManager.getEntity(playerEntity.getInventorySlotsMap().get(playerEntity.getSelectedSlot()));
+						Entity slotItem = entityManager.getEntity(playerEntity.getInventorySlotsMap().get(action.getSlotName()));
+						
+						System.out.println("held name: "+heldItem.getName());
+						System.out.println("slotItem name: "+slotItem.getName());
+						
+						// check for same item and stacking
+						if (slotItem.getName().equals(heldItem.getName()) && heldItem.getStackable() && slotItem.getId() != heldItem.getId()) {
+							int newAmount = heldItem.getAmount() + slotItem.getAmount(); // for held item
+							int leftOver = newAmount - 30; // for interacting entity
+							newAmount = Math.min(newAmount, 30);
+							
+							if (leftOver < 1) {
+								entityManager.removeEntity(slotItem);
+								playerEntity = playerEntity.toBuilder()
+										.removeInventorySlots(action.getSlotName())
+										.build();
+							}
+							else {
+								slotItem = slotItem.toBuilder()
+										.setAmount(leftOver)
+										.build();
+								entityManager.updateEntity(slotItem);
+							}
+							
+							heldItem = heldItem.toBuilder()
+									.setAmount(newAmount)
+									.clearVelocity()
+									.build();
+							
+							entityManager.updateEntity(heldItem);
+						}
+					}
+					
+				}
+				else {
+					// not holding item >:(
+					
+					// is there somthing in the slot?
+					if (playerEntity.containsInventorySlots(action.getSlotName())) {
+						int id = playerEntity.getInventorySlotsMap().get(action.getSlotName());
+						
+						// dropping pockets TODO: fixed this jerry rigged system for mod support
+						if (action.getSlotName().equals("pants")) {
+							dropSlot(playerEntity,"pocket1");
+							dropSlot(playerEntity,"pocket2");
+							playerEntity = playerEntity.toBuilder()
+									.removeInventorySlots("pocket1")
+									.removeInventorySlots("pocket2")
+									.build();
+						}
+						
+						playerEntity = playerEntity.toBuilder()
+								.removeInventorySlots(action.getSlotName())
+								.putInventorySlots(playerEntity.getSelectedSlot(), id)
+								.build();
+					}
+				}
+				
 		}
 		
 		
 		return playerEntity;
+	}
+	
+	// TODO remove this garbage
+	private void dropSlot(Entity entity, String slot) {
+		if (entity.containsInventorySlots(slot)) {
+			Entity item = entityManager.getEntity(entity.getInventorySlotsMap().get(slot));
+			item = item.toBuilder()
+					.setMap(entity.getMap())
+					.setPosition(entity.getPosition())
+					.build();
+			
+			entityManager.updateEntity(item);
+		}
 	}
 
 	private static boolean isInRange(Entity player, Entity target) {
