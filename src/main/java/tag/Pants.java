@@ -6,10 +6,10 @@ import protonova.protobuf.EntityProto.Entity;
 import util.DataUtil;
 import util.VectorMath;
 
-public class Shirt extends TagClass {
+public class Pants extends TagClass {
 
 	public String getTag() {
-		return "shirt";
+		return "pants";
 	}
 	
 	/*
@@ -19,10 +19,10 @@ public class Shirt extends TagClass {
 	
 	public Entity interact(TagHandler tagHandler, Entity interactingEntity, Entity thisEntity) {
 		
-		if (!interactingEntity.containsInventorySlots("shirt")) {
+		if (!interactingEntity.containsInventorySlots("pants")) {
 			interactingEntity = interactingEntity.toBuilder()
 					.removeInventorySlots(interactingEntity.getSelectedSlot())
-					.putInventorySlots("shirt", thisEntity.getId())
+					.putInventorySlots("pants", thisEntity.getId())
 					.build();
 		}
 		
