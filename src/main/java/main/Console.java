@@ -34,6 +34,7 @@ public class Console {
 	protected space.CelestialObjectManager celestialObjectManager;
 	private GamemodeManager gamemodeManager;
 	private ChatManager chatManager;
+	private int headlessStatusSeconds;
 
     public Console(Server server) {
     	this(server, true);
@@ -58,15 +59,13 @@ public class Console {
     private void startHeadlessInputThread() {
 		Thread inputThread = ResourceDiagnostics.newThread("Console-Input", () -> {
     		try (java.util.Scanner scanner = new java.util.Scanner(System.in)) {
-    			while (true) {
-    				if (scanner.hasNextLine()) {
-    					String input = scanner.nextLine().trim();
-    					if (!input.isEmpty()) {
-    						System.out.println("> " + input);
-    						processInput(input);
-    					}
-    				}
-    			}
+			while (scanner.hasNextLine()) {
+				String input = scanner.nextLine().trim();
+				if (!input.isEmpty()) {
+					System.out.println("> " + input);
+					processInput(input);
+				}
+			}
     		}
     	});
     	inputThread.setDaemon(true);
@@ -104,9 +103,16 @@ public class Console {
     	
     	if (server.getTPSPaused()) infoText = infoText + "  " + "[PAUSED]";
     	
-    	if (!headless) {
-    		onUpdateBar(infoText);
-    	}
+		if (!headless) {
+			onUpdateBar(infoText);
+		} else if (server.isServerReady()) {
+			headlessStatusSeconds++;
+			int interval = ServerConfig.getInstance().getHeadlessStatusIntervalSeconds();
+			if (headlessStatusSeconds >= interval) {
+				print("[Status] " + infoText);
+				headlessStatusSeconds = 0;
+			}
+		}
         countedTicks = 0;
     }
     
@@ -119,12 +125,15 @@ public class Console {
     }
 
     protected void processInput(String input) {
-    	if (input.equalsIgnoreCase("exit")) {
-    		print("Goodbye!");
-    		System.exit(0);
-    	} else if (input.equalsIgnoreCase("help")) {
-    		print("Available commands:");
-    		print(" - help: Show this help message");
+		if (input.equalsIgnoreCase("exit") || input.equalsIgnoreCase("stop")) {
+			print("Saving and stopping the server...");
+			server.requestShutdown();
+		} else if (input.equalsIgnoreCase("help")) {
+			print("Available commands:");
+			print(" - help: Show this help message");
+			print(" - status: Show server health, TPS, players, memory, and ports");
+			print(" - config: Show the active configuration file");
+			print(" - stop (or exit): Save the world and stop safely");
     		print(" - time: Show current system time");
     		print(" - time set day: Sets all celestial objects to day (rotation 0.5)");
     		print(" - time set night: Sets all celestial objects to night (rotation 0.0)");
@@ -139,7 +148,17 @@ public class Console {
     		print(" - gamemode: shows current gamemode and time");
     		print(" - message all players [message]: Messages all players the supplied message");
     		print("");
-    	} else if (input.equalsIgnoreCase("time")) {
+		} else if (input.equalsIgnoreCase("status")) {
+			Runtime runtime = Runtime.getRuntime();
+			print("Server: " + (server.isServerReady() ? "READY" : "STARTING"));
+			print("TPS: " + countedTicks + ", players: " + server.getPlayers().size()
+					+ ", memory: " + Math.round((runtime.totalMemory() - runtime.freeMemory()) / byteToMegaByteRatio)
+					+ "/" + Math.round(runtime.totalMemory() / byteToMegaByteRatio) + " MB");
+			print("Game port: " + ServerConfig.getInstance().getGameSocketPort()
+					+ ", HTTPS status/client port: " + ServerConfig.getInstance().getStatusHttpPort());
+		} else if (input.equalsIgnoreCase("config")) {
+			print("Configuration: " + ServerConfig.getConfigPath().toAbsolutePath());
+		} else if (input.equalsIgnoreCase("time")) {
     		print("Current time: " + LocalTime.now());
     		print("");
     	} else if (input.startsWith("time set ")) {

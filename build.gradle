@@ -1,7 +1,6 @@
 plugins {
     id 'java'
     id 'application'
-    id 'com.google.protobuf' version '0.9.4'
     id 'distribution'
 }
 
@@ -16,7 +15,7 @@ java {
 
 repositories {
     mavenCentral()
-    maven { url 'https://jitpack.io' }
+    maven { url = uri('https://jitpack.io') }
 }
 
 dependencies {
@@ -45,6 +44,9 @@ application {
 
 // Create Fat JAR with all dependencies
 jar {
+    if (project.hasProperty('packageOutputDir')) {
+        destinationDirectory = file(project.property('packageOutputDir'))
+    }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     exclude 'META-INF/*.SF', 'META-INF/*.RSA', 'META-INF/*.DSA'
     manifest {

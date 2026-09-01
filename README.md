@@ -1,15 +1,38 @@
-Welcome to the proto nova server program. Use the exe to start the server and type help to get all the commands.
-It should automaticly publish the server to your local network but if you want players outside of your network you will have to port forward or use another method.
-To get your server put on the public server list use the website proto-nova.net to request your server be put up.
-Tip: deleting the world root will reset the server just make sure to close it before you delete and then re open the server
+# Proto Nova Server
 
-## Survival-only servers
+## Development
 
-Set the following property in `proto-nova.properties`, then restart the server:
+Run the repository-level `run.bat` to build the local game, launcher, and
+development server together. To run only the dedicated server:
 
-```properties
-game.cataclysm.enabled=false
+```text
+gradle run --args="--headless"
 ```
 
-The world will continue running normally, but cataclysm events and their win
-condition will not advance. Set it back to `true` and restart to re-enable them.
+Useful startup options:
+
+- `--headless` or `--nogui`: terminal-only server suitable for hosting.
+- `--gui`: desktop console.
+- `--init-config`: create `proto-nova.properties` without starting a world.
+- `--check-config`: strictly validate the configuration and exit.
+- `--healthcheck`: check the local configured game listener.
+- `--help` and `--version`: command information.
+
+In the headless console, use `help`, `status`, `save`, and `stop`. The `stop`
+command and operating-system shutdown hook save the world before closing.
+
+Set only `game.socket.port`. The HTTPS status and signed client-download
+listener automatically uses the port immediately below it. For example, base
+port `8125` requires TCP `8125` and `8124` to be forwarded, while players enter
+only `host:8125` in the Launcher.
+
+## Distribution
+
+Use the Proto-Nova Packager to make a server release. A packaged server includes
+a minimized Java runtime, its signed downloadable game client, a detailed server
+guide, headless setup scripts, backup tools, and side-by-side update/import
+helpers. Docker packages include equivalent management commands and persistent
+storage.
+
+Do not distribute a development checkout: it may contain test worlds, server
+identity files, logs, or credentials. The packager explicitly excludes them.

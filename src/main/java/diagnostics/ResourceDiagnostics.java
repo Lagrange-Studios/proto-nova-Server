@@ -23,6 +23,7 @@ import entity.EntityManager;
 import protonova.protobuf.EntityProto.Entity;
 
 /** Collects honest, low-overhead diagnostics for the server diagnostics window. */
+@SuppressWarnings("deprecation") // Thread.getId remains necessary while the server targets Java 11.
 public class ResourceDiagnostics {
     private static volatile ConcurrentHashMap<Long, LongAdder> threadRx;
     private static volatile ConcurrentHashMap<Long, LongAdder> threadTx;

@@ -196,13 +196,19 @@ public class Player {
 	}
 
 	private void sendSecurityHandshake() throws IOException {
+		ClientDistribution distribution = main.ServerConfig.getInstance().isStatusHttpEnabled()
+				? ClientDistribution.getIfAvailable() : null;
 		securityChallenge = new byte[SECURITY_LEVEL >= 2 ? 32 : 0];
 		if (securityChallenge.length > 0) new SecureRandom().nextBytes(securityChallenge);
-		byte[] bytes = ServerHandshake.newBuilder()
+		ServerHandshake.Builder handshake = ServerHandshake.newBuilder()
 				.setSecurityLevel(SECURITY_LEVEL)
-				.setChallenge(ByteString.copyFrom(securityChallenge))
-				.build()
-				.toByteArray();
+				.setChallenge(ByteString.copyFrom(securityChallenge));
+		if (distribution != null) {
+			handshake.setClientVersion(distribution.getVersion())
+					.setClientDownloadPort(main.ServerConfig.getInstance().getStatusHttpPort())
+					.setClientManifestSha256(distribution.getManifestSha256());
+		}
+		byte[] bytes = handshake.build().toByteArray();
 		output.writeInt(bytes.length);
 		output.write(bytes);
 		output.flush();

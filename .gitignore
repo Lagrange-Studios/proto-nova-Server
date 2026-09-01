@@ -34,6 +34,7 @@ proto-nova.properties
 # Generated files
 /extracted-include-protos/
 /extracted-protos/
+/client-distribution/
 
 # Runtime/World files
 /worldRoot/

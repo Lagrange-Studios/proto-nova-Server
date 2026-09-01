@@ -7,6 +7,7 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -49,6 +50,8 @@ public class ServerStatusHandler {
             httpServer = httpsServer;
             
             httpServer.createContext("/status", new StatusHandler());
+            httpServer.createContext("/client/manifest", new ClientManifestHandler());
+            httpServer.createContext("/client/archive", new ClientArchiveHandler());
             int workerThreads = main.ServerConfig.getInstance().getStatusHttpWorkerThreads();
             int queueSize = main.ServerConfig.getInstance().getStatusHttpQueueSize();
             httpExecutor = new ThreadPoolExecutor(workerThreads, workerThreads, 0L, TimeUnit.MILLISECONDS,
@@ -62,6 +65,52 @@ public class ServerStatusHandler {
             throw e;
         } catch (Exception e) {
             throw new IOException(e);
+        }
+    }
+
+    private abstract class DownloadHandler implements HttpHandler {
+        @Override public final void handle(HttpExchange exchange) throws IOException {
+            try {
+                exchange.getResponseHeaders().set("Cache-Control", "no-store");
+                exchange.getResponseHeaders().set("X-Content-Type-Options", "nosniff");
+                if (!"GET".equals(exchange.getRequestMethod())) {
+                    sendError(exchange, 405, "Method Not Allowed");
+                    return;
+                }
+                ClientDistribution distribution = ClientDistribution.getIfAvailable();
+                if (distribution == null) {
+                    sendError(exchange, 503, "This server has no client distribution installed");
+                    return;
+                }
+                send(exchange, distribution);
+            } finally {
+                exchange.close();
+            }
+        }
+
+        abstract void send(HttpExchange exchange, ClientDistribution distribution) throws IOException;
+    }
+
+    private final class ClientManifestHandler extends DownloadHandler {
+        @Override void send(HttpExchange exchange, ClientDistribution distribution) throws IOException {
+            byte[] bytes = distribution.getManifest();
+            exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
+            exchange.sendResponseHeaders(200, bytes.length);
+            try (OutputStream output = exchange.getResponseBody()) { output.write(bytes); }
+        }
+    }
+
+    private final class ClientArchiveHandler extends DownloadHandler {
+        @Override void send(HttpExchange exchange, ClientDistribution distribution) throws IOException {
+            long size = java.nio.file.Files.size(distribution.getArchivePath());
+            exchange.getResponseHeaders().set("Content-Type", "application/zip");
+            exchange.sendResponseHeaders(200, size);
+            try (InputStream input = java.nio.file.Files.newInputStream(distribution.getArchivePath());
+                    OutputStream output = exchange.getResponseBody()) {
+                byte[] buffer = new byte[64 * 1024];
+                int count;
+                while ((count = input.read(buffer)) != -1) output.write(buffer, 0, count);
+            }
         }
     }
     

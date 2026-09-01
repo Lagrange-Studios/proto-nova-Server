@@ -12,6 +12,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.SwingUtilities;
 
@@ -88,6 +89,7 @@ public class Server {
 	private ConsumptionManager consumptionManager;
 	private volatile boolean serverReady = false;
 	private boolean headless;
+	private final AtomicBoolean shuttingDown = new AtomicBoolean(false);
 	public ThreadPoolExecutor threadPool;
 	
 	private int saveCounter = 0;
@@ -236,6 +238,9 @@ public class Server {
 		
 		startThread();
 		serverReady = true;
+		console.print("Server ready. Game port: " + ServerConfig.getInstance().getGameSocketPort()
+				+ ", HTTPS status/client port: " + ServerConfig.getInstance().getStatusHttpPort());
+		if (headless) console.print("Type 'help' for commands and 'stop' for a safe shutdown.");
 		
 		packetMaker = new PacketMaker(serverSocket,serverLoader,serverSaver,entityManager,entityFinder,soundFinder,chatFinder,planeManager,celestialObjectManager,diagnostics);
 		
@@ -473,8 +478,16 @@ public class Server {
 		return diagnostics;
 	}
 	
+	public void requestShutdown() {
+		shutdown();
+		System.exit(0);
+	}
+
 	private void shutdown() {
+		if (!shuttingDown.compareAndSet(false, true)) return;
 		try {
+			serverReady = false;
+			if (serverSaver != null) console.print(serverSaver.save());
 			console.shutdown();
 			if (statusHandler != null) {
 				statusHandler.stop();
