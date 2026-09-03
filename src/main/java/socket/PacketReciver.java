@@ -30,10 +30,10 @@ public class PacketReciver {
 	private EntityFinder entityFinder;
 	private HealthManager healthManager;
 	private PlaneManager planeManager;
-	private final double reconcileCoefficient = 5; // this is very tight could cuase rubber banding in the future
+	private final double reconcileCoefficient = 10; // this is very tight could cuase rubber banding in the future
 	private static final int MAX_ACTIONS_PER_PACKET = 8;
-	private static final int MAX_INTERACTIONS_PER_PACKET = 1;
-	private static final int MAX_CHAT_MESSAGES_PER_PACKET = 1;
+	private static final int MAX_INTERACTIONS_PER_PACKET = 8;
+	private static final int MAX_CHAT_MESSAGES_PER_PACKET = 8;
 	private static final int MAX_CHAT_LENGTH = 512;
 	private Server server;
 	
@@ -111,7 +111,7 @@ public class PacketReciver {
 					.setEntityID(serverEntity.getId())
 					.setPosition(serverEntity.getPosition())
 					.setMap(serverEntity.getMap())
-					.setMaxTime(0)
+					.setMaxTime(5)
 					.setChatID(0)
 					.build());
 		}
@@ -122,7 +122,7 @@ public class PacketReciver {
 		
 		
 		double reconcileDistance = Math.max(0.05,
-				(serverEntity.getSpeed() * speedMultiplier / server.CLIENT_TPS) * reconcileCoefficient);
+				(serverEntity.getSpeed() * speedMultiplier / server.TPS) * reconcileCoefficient);
 		if (isFinite(clientEntity.getPosition())
 				&& VectorMath.distance(clientEntity.getPosition(), serverEntity.getPosition())
 						>= reconcileDistance) {

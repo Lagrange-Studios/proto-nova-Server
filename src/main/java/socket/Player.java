@@ -24,6 +24,7 @@ import protonova.protobuf.PlayerDataProto.PlayerData;
 import protonova.protobuf.UserDataProto.UserData;
 import protonova.protobuf.ServerHandshakeProto.ServerHandshake;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.UnknownFieldSet;
 import enums.Player.State;
 import diagnostics.ResourceDiagnostics;
 import security.GameAuthService;
@@ -208,11 +209,31 @@ public class Player {
 					.setClientDownloadPort(main.ServerConfig.getInstance().getStatusHttpPort())
 					.setClientManifestSha256(distribution.getManifestSha256());
 		}
+		setOptionalIntField(handshake, "setServerTicksPerSecond", main.ServerConfig.getInstance().getTicksPerSecond());
 		byte[] bytes = handshake.build().toByteArray();
 		output.writeInt(bytes.length);
 		output.write(bytes);
 		output.flush();
 		ResourceDiagnostics.recordNetworkWrite(bytes.length + Integer.BYTES);
+	}
+
+	private static void setOptionalIntField(Object target, String methodName, int value) throws IOException {
+		try {
+			target.getClass().getMethod(methodName, int.class).invoke(target, value);
+			return;
+		} catch (NoSuchMethodException ignored) {
+			// Older generated protobuf classes do not expose the tick-rate field yet.
+		} catch (ReflectiveOperationException e) {
+			throw new IOException("Failed to populate the server tick rate in the handshake.", e);
+		}
+		if (target instanceof ServerHandshake.Builder) {
+			UnknownFieldSet.Field field = UnknownFieldSet.Field.newBuilder().addVarint(value).build();
+			UnknownFieldSet.Builder unknownFields = UnknownFieldSet.newBuilder(((ServerHandshake.Builder) target).getUnknownFields());
+			unknownFields.mergeField(6, field);
+			((ServerHandshake.Builder) target).mergeUnknownFields(unknownFields.build());
+			return;
+		}
+		throw new IOException("Handshake builder does not support TPS serialization.");
 	}
 
 	private boolean allowApiSession() {
