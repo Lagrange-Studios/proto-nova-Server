@@ -7,10 +7,15 @@ plugins {
 group = 'com.protonova'
 version = '1.0-SNAPSHOT'
 
-// Java version compatibility
+// Build and run against Java 21.
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 21
 }
 
 repositories {

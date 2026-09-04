@@ -23,7 +23,6 @@ import entity.EntityManager;
 import protonova.protobuf.EntityProto.Entity;
 
 /** Collects honest, low-overhead diagnostics for the server diagnostics window. */
-@SuppressWarnings("deprecation") // Thread.getId remains necessary while the server targets Java 11.
 public class ResourceDiagnostics {
     private static volatile ConcurrentHashMap<Long, LongAdder> threadRx;
     private static volatile ConcurrentHashMap<Long, LongAdder> threadTx;
@@ -128,13 +127,13 @@ public class ResourceDiagnostics {
     public static void recordNetworkRead(long bytes) {
         ConcurrentHashMap<Long, LongAdder> counters = threadRx;
         if (counters == null || bytes <= 0) return;
-        counters.computeIfAbsent(Thread.currentThread().getId(), id -> new LongAdder()).add(bytes);
+        counters.computeIfAbsent(Thread.currentThread().threadId(), id -> new LongAdder()).add(bytes);
     }
 
     public static void recordNetworkWrite(long bytes) {
         ConcurrentHashMap<Long, LongAdder> counters = threadTx;
         if (counters == null || bytes <= 0) return;
-        counters.computeIfAbsent(Thread.currentThread().getId(), id -> new LongAdder()).add(bytes);
+        counters.computeIfAbsent(Thread.currentThread().threadId(), id -> new LongAdder()).add(bytes);
     }
 
     private static synchronized void activateGlobalCapture() {
