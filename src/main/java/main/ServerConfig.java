@@ -41,6 +41,8 @@ public class ServerConfig {
     private String keystorePath;
     private String legacyKeystorePassword;
     private int keystoreValidityDays;
+    private int updateMultiplier;
+    private float updateMultiplierFloat;
     
     private ServerConfig(Console console) throws IOException {
         this.console = console;
@@ -155,6 +157,8 @@ public class ServerConfig {
         this.keystorePath = getStringProperty("keystore.path", "keystore.jks");
         this.legacyKeystorePassword = getStringProperty("keystore.password", "");
         this.keystoreValidityDays = getIntProperty("keystore.validity.days", 365);
+        this.updateMultiplier = getIntProperty("server.update.multiplier", 1);
+        this.updateMultiplierFloat = getFloatProperty("server.update.multiplier", 1.0f);
         
     }
     
@@ -227,6 +231,20 @@ public class ServerConfig {
         }
         console.print("⚠ Invalid boolean for property '" + key + "', using default: " + defaultValue);
         return defaultValue;
+    }
+    
+    // Get float property with default fallback
+    private float getFloatProperty(String key, float defaultValue) {
+        try {
+            String value = properties.getProperty(key, String.valueOf(defaultValue));
+            return Float.parseFloat(value);
+        } catch (NumberFormatException e) {
+            if (Boolean.getBoolean("protonova.strictConfig")) {
+                throw new IllegalArgumentException("Property '" + key + "' must be a float.");
+            }
+            console.print("⚠ Invalid float for property '" + key + "', using default: " + defaultValue);
+            return defaultValue;
+        }
     }
     
     // Port for SSL/TLS encrypted game connections
@@ -307,4 +325,8 @@ public class ServerConfig {
     
     // Validity period for self-signed certificates in days
     public int getKeystoreValidityDays() { return keystoreValidityDays; }
+
+    public int getUpdateMultiplier() { return updateMultiplier; }
+
+    public float getUpdateMultiplierFloat() { return updateMultiplierFloat; }
 }

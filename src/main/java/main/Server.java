@@ -112,6 +112,8 @@ public class Server {
 	private static final long IDLE_TIMEOUT_MS = 60 * 1000; // 1 minute in milliseconds
 	private ScheduledFuture<?> idleCheckTask;
 	
+	public float updateMultiplier;
+	
 	public Server() {
 		this(false);
 	}
@@ -141,10 +143,11 @@ public class Server {
 		try {
 			ServerConfig.initialize(console);
 			this.TPS = ServerConfig.getInstance().getTicksPerSecond();
+			this.updateMultiplier = ServerConfig.getInstance().getUpdateMultiplierFloat();
 			console.print("Configuration loaded.");
 		} catch (Exception e) {
 			console.print("✗ Failed to load configuration: " + e.getMessage());
-			e.printStackTrace();
+		 e.printStackTrace();
 			System.exit(1);
 		}
 		
@@ -275,19 +278,19 @@ public class Server {
 				try {
 					tick();
 				} catch (Exception e) {
-					e.printStackTrace();
+				 e.printStackTrace();
 				}
 			};
 			
 			// Schedule the main tick task (will be controlled by pause/resume logic)
-			tickTask = scheduler.scheduleAtFixedRate(task, 1, Math.round(1000/TPS), TimeUnit.MILLISECONDS);
+			tickTask = scheduler.scheduleAtFixedRate(task, 1, Math.round(1000/(TPS * updateMultiplier)), TimeUnit.MILLISECONDS);
 			
 			// Schedule idle check task to run every 5 seconds
 			Runnable idleCheck = () -> {
 				try {
 					checkPlayerIdleStatus();
 				} catch (Exception e) {
-					e.printStackTrace();
+				 e.printStackTrace();
 				}
 			};
 			idleCheckTask = scheduler.scheduleAtFixedRate(idleCheck, 5, 5, TimeUnit.SECONDS);
@@ -297,13 +300,13 @@ public class Server {
 				try {
 					checkResourceLimits();
 				} catch (Exception e) {
-					e.printStackTrace();
+				 e.printStackTrace();
 				}
 			};
 			resourceCheckTask = scheduler.scheduleAtFixedRate(resourceCheck, 10, 10, TimeUnit.SECONDS);*/
 			
 		} catch(Exception e) {
-			e.printStackTrace();
+		 e.printStackTrace();
 		}
 	}
 	
@@ -354,13 +357,13 @@ public class Server {
 					try {
 						tick();
 					} catch (Exception e) {
-						e.printStackTrace();
+					 e.printStackTrace();
 					}
 				};
 				// Reschedule the tick task
-				tickTask = scheduler.scheduleAtFixedRate(task, 1, Math.round(1000/TPS), TimeUnit.MILLISECONDS);
+				tickTask = scheduler.scheduleAtFixedRate(task, 1, Math.round(1000/(TPS * updateMultiplier)), TimeUnit.MILLISECONDS);
 			} catch (Exception e) {
-				e.printStackTrace();
+			 e.printStackTrace();
 			}
 		}
 	}
@@ -512,7 +515,7 @@ public class Server {
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+		 e.printStackTrace();
 		}
 	}
 }

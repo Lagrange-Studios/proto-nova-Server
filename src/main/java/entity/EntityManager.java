@@ -308,7 +308,7 @@ public class EntityManager {
 				long started = measureCpu ? System.nanoTime() : 0;
 				
 				try {
-					entity = simulateVelocity(entity, server.TPS);
+					entity = simulateVelocity(entity, server.TPS, server.updateMultiplier);
 					updateEntity(entity);
 				} finally {
 					if (measureCpu) {
@@ -344,7 +344,7 @@ public class EntityManager {
 		
 		ArrayList<Entity> closeEntities = entityFinder.getAllEntitiesInRadis(entity, 10);
 		
-		Entity entityXAxis = checkCollision(EntitySimulation.simulateVelocityXAxis(entity,tps,speedMultiplier),entity,closeEntities);
+		Entity entityXAxis = checkCollision(EntitySimulation.simulateVelocityXAxis(entity,tps,speedMultiplier, server.updateMultiplier),entity,closeEntities);
 		
 		// check if we actualy did anything
 		if (entityXAxis.getPosition().equals(entity.getPosition())) {
@@ -360,7 +360,7 @@ public class EntityManager {
 		}
 		else entity = entityXAxis;
 		
-		Entity entityYAxis = checkCollision(EntitySimulation.simulateVelocityYAxis(entity,tps,speedMultiplier),entity,closeEntities);
+		Entity entityYAxis = checkCollision(EntitySimulation.simulateVelocityYAxis(entity,tps,speedMultiplier, server.updateMultiplier),entity,closeEntities);
 		
 		// check if we actualy did anything
 		if (entityYAxis.getPosition().equals(entity.getPosition())) {
@@ -376,7 +376,7 @@ public class EntityManager {
 		}
 		else entity = entityYAxis;
 
-		return EntitySimulation.slowItemVelocity(entity, tps);
+		return EntitySimulation.slowItemVelocity(entity, tps, server.updateMultiplier);
 	}
 	
 	private Entity checkCollision(Entity updatedEntity, Entity originalEntity, ArrayList<Entity> closeEntities) {
