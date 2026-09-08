@@ -30,7 +30,7 @@ public class PacketReciver {
 	private EntityFinder entityFinder;
 	private HealthManager healthManager;
 	private PlaneManager planeManager;
-	private final double reconcileCoefficient = 10; // this is very tight could cuase rubber banding in the future
+	private final double reconcileCoefficient = 20; // Multiplier on one tick of movement; higher = more tolerant of client drift before reconciling
 	private static final int MAX_ACTIONS_PER_PACKET = 8;
 	private static final int MAX_INTERACTIONS_PER_PACKET = 8;
 	private static final int MAX_CHAT_MESSAGES_PER_PACKET = 8;
