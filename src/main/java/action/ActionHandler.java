@@ -165,16 +165,16 @@ public class ActionHandler {
 				
 				break;
 			case(InteractionType.Craft_VALUE):
-				if (!isInRange(playerEntity, interactingEntity)) break;
+				if (!isInRange(playerEntity, interactingEntity) && isInMap(playerEntity, interactingEntity)) break;
 				playerEntity = craftingManager.attemptCraftingRecipe(playerEntity, interactingEntity);
 				break;
 			case(InteractionType.Hit_VALUE):
-				if (!isInRange(playerEntity, interactingEntity)) break;
+				if (!isInRange(playerEntity, interactingEntity) && isInMap(playerEntity, interactingEntity)) break;
 				combatManager.attemptToDamage(playerEntity, interactingEntity);
 				playerEntity = entityManager.getEntity(player);
 				break;
 			case(InteractionType.Standard_VALUE):
-				if (!isInRange(playerEntity, interactingEntity)) break;
+				if (!isInRange(playerEntity, interactingEntity) && (isInMap(playerEntity, interactingEntity) || isInInventory(playerEntity, interactingEntity))) break; 
 				playerEntity = tagHandler.interact(playerEntity, interactingEntity);
 				break;
 			case(InteractionType.Consume_VALUE):
@@ -278,9 +278,17 @@ public class ActionHandler {
 	}
 
 	private static boolean isInRange(Entity player, Entity target) {
-		if (player == null || target == null || player.getMap() != target.getMap()) return false;
+		if (player == null || target == null) return false;
 		double reach = player.getReach() > 0 ? player.getReach() : 1.5;
 		return VectorMath.distanceSquared(player.getPosition(), target.getPosition()) <= reach * reach;
+	}
+	
+	private static boolean isInMap(Entity player, Entity target) {
+		return player.getMap() == target.getMap();
+	}
+	
+	private static boolean isInInventory(Entity inventory, Entity item) {
+		return inventory.getInventorySlotsMap().containsValue(item.getId());
 	}
 
 	private static boolean isValidDropPosition(Entity player, Vector position) {
