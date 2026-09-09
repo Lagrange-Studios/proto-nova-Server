@@ -1,0 +1,14 @@
+{
+  "item1": {
+    "mustBeHeld": true,
+    "name":"copper hammer",
+    "consumed": false
+  },
+  "item2": {
+    "name":"copper plate",
+    "consumed": true
+  },
+
+  "result":"copper nails",
+  "amountResult": 5
+}

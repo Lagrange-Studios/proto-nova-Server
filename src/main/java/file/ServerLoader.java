@@ -172,6 +172,8 @@ public class ServerLoader {
 				newRecipe.setResult(jsonRecipe.getString("result"));
 				if (jsonRecipe.has("tileResult")) newRecipe.setTileResult(jsonRecipe.getBoolean("tileResult"));
 				
+				if (jsonRecipe.has("amountResult")) newRecipe.setAmountResult(jsonRecipe.getInt("amountResult"));
+				
 						
 				recipeList.add(newRecipe.build());
 				

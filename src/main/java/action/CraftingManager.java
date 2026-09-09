@@ -82,6 +82,10 @@ public class CraftingManager {
 						result = result.toBuilder().setPosition(position).build();
 					}
 					else result = result.toBuilder().setPosition(component.getPosition()).build();
+					
+					// checking for multiple amount result
+					if (recipe.hasAmountResult()) result = result.toBuilder().setAmount(recipe.getAmountResult()).build();
+					
 					entityManager.updateEntity(result);
 				}
 				
