@@ -185,7 +185,6 @@ public class ActionHandler {
 				playerEntity = entityManager.getEntity(player);
 				break;
 			case(InteractionType.Inventory_VALUE):
-				
 				// is holding item?
 				if (playerEntity.getInventorySlotsMap().containsKey(playerEntity.getSelectedSlot())) {
 					
@@ -202,8 +201,8 @@ public class ActionHandler {
 						heldItem = entityManager.getEntity(playerEntity.getInventorySlotsMap().get(playerEntity.getSelectedSlot()));
 						Entity slotItem = entityManager.getEntity(playerEntity.getInventorySlotsMap().get(action.getSlotName()));
 						
-						System.out.println("held name: "+heldItem.getName());
-						System.out.println("slotItem name: "+slotItem.getName());
+						//System.out.println("held name: "+heldItem.getName());
+						//System.out.println("slotItem name: "+slotItem.getName());
 						
 						// check for same item and stacking
 						if (slotItem.getName().equals(heldItem.getName()) && heldItem.getStackable() && slotItem.getId() != heldItem.getId()) {
@@ -241,7 +240,7 @@ public class ActionHandler {
 					if (playerEntity.containsInventorySlots(action.getSlotName())) {
 						int id = playerEntity.getInventorySlotsMap().get(action.getSlotName());
 						
-						// dropping pockets TODO: fixed this jerry rigged system for mod support
+						// dropping pockets TODO: fix this jerry rigged system for mod support
 						if (action.getSlotName().equals("pants")) {
 							dropSlot(playerEntity,"pocket1");
 							dropSlot(playerEntity,"pocket2");
