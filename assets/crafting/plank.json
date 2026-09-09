@@ -9,5 +9,6 @@
     "consumed": true
   },
 
-  "result":"plank"
+  "result":"plank",
+  "amountResult": 3
 }
