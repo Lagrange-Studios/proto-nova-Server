@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'application'
     id 'distribution'
+    id 'com.diffplug.spotless' version '6.25.0'
 }
 
 group = 'com.protonova'
@@ -65,5 +66,14 @@ jar {
     }
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+spotless {
+    java {
+        googleJavaFormat()
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
     }
 }
