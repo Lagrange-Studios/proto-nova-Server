@@ -4,6 +4,7 @@
 *.class
 *.jar
 *.war
+.settings/org.eclipse.buildship.core.prefs
 
 # Gradle
 .gradle/

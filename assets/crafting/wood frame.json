@@ -1,0 +1,13 @@
+{
+  "item1": {
+    "mustBeHeld": false,
+    "name":"copper hammer",
+    "consumed": false
+  },
+  "item2": {
+    "name":"plank",
+    "consumed": true
+  },
+
+  "result":"wood frame"
+}

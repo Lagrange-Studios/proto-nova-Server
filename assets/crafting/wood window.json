@@ -1,11 +1,11 @@
 {
   "item1": {
     "mustBeHeld": true,
-    "name":"plank",
+    "name":"copper nails",
     "consumed": true
   },
   "item2": {
-    "name":"plank",
+    "name":"wood frame",
     "consumed": true
   },
 
