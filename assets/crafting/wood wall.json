@@ -1,7 +1,7 @@
 {
   "item1": {
     "mustBeHeld": true,
-    "name":"wood plank",
+    "name":"plank",
     "consumed": true
   },
   "item2": {
