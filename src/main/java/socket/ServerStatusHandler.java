@@ -83,7 +83,7 @@ public class ServerStatusHandler {
         }
         ClientDistribution distribution = ClientDistribution.getIfAvailable();
         if (distribution == null) {
-          sendError(exchange, 503, "This server has no client distribution installed");
+          sendError(exchange, 503, "This server has no valid signed client distribution installed");
           return;
         }
         send(exchange, distribution);

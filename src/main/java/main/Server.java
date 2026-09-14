@@ -374,9 +374,8 @@ public class Server {
           };
 
       // Schedule the main tick task (will be controlled by pause/resume logic)
-      tickTask =
-          scheduler.scheduleAtFixedRate(
-              task, 1, Math.round(1000 / (TPS * updateMultiplier)), TimeUnit.MILLISECONDS);
+      long tickPeriodMillis = Math.max(1L, Math.round(1000.0 / (TPS * updateMultiplier)));
+      tickTask = scheduler.scheduleAtFixedRate(task, 1, tickPeriodMillis, TimeUnit.MILLISECONDS);
 
       // Schedule idle check task to run every 5 seconds
       Runnable idleCheck =
@@ -456,9 +455,8 @@ public class Server {
               }
             };
         // Reschedule the tick task
-        tickTask =
-            scheduler.scheduleAtFixedRate(
-                task, 1, Math.round(1000 / (TPS * updateMultiplier)), TimeUnit.MILLISECONDS);
+        long tickPeriodMillis = Math.max(1L, Math.round(1000.0 / (TPS * updateMultiplier)));
+        tickTask = scheduler.scheduleAtFixedRate(task, 1, tickPeriodMillis, TimeUnit.MILLISECONDS);
       } catch (Exception e) {
         e.printStackTrace();
       }

@@ -160,7 +160,10 @@ public class ServerConfig {
     this.statusHttpQueueSize = getBoundedPositiveIntProperty("http.status.queue.size", 32, 10_000);
     this.clientDistributionDirectory =
         getStringProperty("client.distribution.directory", "client-distribution").trim();
-    this.ticksPerSecond = getIntProperty("server.tps", 20);
+    // Tag scheduling uses TPS as a divisor and as the scheduler cadence. Keep it
+    // strictly positive and bounded so a bad config cannot disable the server's
+    // tick loop or produce a zero-millisecond scheduling period.
+    this.ticksPerSecond = getBoundedPositiveIntProperty("server.tps", 20, 240);
     this.threadPoolSize = getBoundedPositiveIntProperty("server.thread.pool.size", 50, 10_000);
     this.processorLimit = getIntProperty("server.processor.limit", 0);
     this.ramLimit = getIntProperty("server.ram.limit", 0);
@@ -171,8 +174,8 @@ public class ServerConfig {
     this.keystorePath = getStringProperty("keystore.path", "keystore.jks");
     this.legacyKeystorePassword = getStringProperty("keystore.password", "");
     this.keystoreValidityDays = getIntProperty("keystore.validity.days", 365);
-    this.updateMultiplier = getIntProperty("server.update.multiplier", 1);
-    this.updateMultiplierFloat = getFloatProperty("server.update.multiplier", 1.0f);
+    this.updateMultiplier = getPositiveIntProperty("server.update.multiplier", 1);
+    this.updateMultiplierFloat = getPositiveFiniteFloatProperty("server.update.multiplier", 1.0f);
   }
 
   // Get integer property with default fallback
@@ -272,6 +275,16 @@ public class ServerConfig {
       console.print("⚠ Invalid float for property '" + key + "', using default: " + defaultValue);
       return defaultValue;
     }
+  }
+
+  private float getPositiveFiniteFloatProperty(String key, float defaultValue) {
+    float value = getFloatProperty(key, defaultValue);
+    if (Float.isFinite(value) && value > 0) return value;
+    if (Boolean.getBoolean("protonova.strictConfig")) {
+      throw new IllegalArgumentException("Property '" + key + "' must be a finite value greater than zero.");
+    }
+    console.print("WARNING: Property '" + key + "' must be finite and greater than zero; using default: " + defaultValue);
+    return defaultValue;
   }
 
   // Port for SSL/TLS encrypted game connections
