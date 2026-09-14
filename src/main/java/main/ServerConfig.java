@@ -281,9 +281,14 @@ public class ServerConfig {
     float value = getFloatProperty(key, defaultValue);
     if (Float.isFinite(value) && value > 0) return value;
     if (Boolean.getBoolean("protonova.strictConfig")) {
-      throw new IllegalArgumentException("Property '" + key + "' must be a finite value greater than zero.");
+      throw new IllegalArgumentException(
+          "Property '" + key + "' must be a finite value greater than zero.");
     }
-    console.print("WARNING: Property '" + key + "' must be finite and greater than zero; using default: " + defaultValue);
+    console.print(
+        "WARNING: Property '"
+            + key
+            + "' must be finite and greater than zero; using default: "
+            + defaultValue);
     return defaultValue;
   }
 
