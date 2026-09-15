@@ -15,6 +15,7 @@ import protonova.protobuf.AudioProto.Audio;
 import protonova.protobuf.ChatProto.ChatMessage;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.PlaneProto.Plane;
+import protonova.protobuf.PlayerDataProto.PlayerData;
 import protonova.protobuf.ServerToClientPacketProto.ServerToClientPacket;
 import protonova.protobuf.ServerToClientPacketProto.ServerToClientPacket.Builder;
 import sound.SoundFinder;
@@ -38,6 +39,12 @@ public class PacketMaker {
   private static final double renderDistanceSquared = Math.pow(renderDistance, 2);
   private static final int TILE_RENDER_X = 30;
   private static final int TILE_RENDER_Y = 20;
+
+  // Delta transmission support
+  private static final long PLAYER_DATA_FULL_SEND_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
+  // Track when player data was last sent to determine if we need full transmission
+  private long lastPlayerDataSent = 0;
 
   public PacketMaker(
       ServerSocketHandler serverSocket,
@@ -154,7 +161,12 @@ public class PacketMaker {
     for (Entity entity : foundEntities) {
       if (entity != null && !entitiesSent.contains(entity.getId())) {
         packet.addEntities(entity);
-        // diagnostics.recordEntityNetwork(entity.getId(), entity.getSerializedSize());
+        String entityName = entity.getName();
+        if (!player.data.getSeenEntitiesList().contains(entityName)) {
+          player.data = player.data.toBuilder()
+              .addSeenEntities(entityName)
+              .build();
+        }
         entitiesSentThisPacket.add(entity.getId());
       }
 
@@ -205,6 +217,41 @@ public class PacketMaker {
     packet.addAllServerMessages(messages);
 
     packet.setReconcile(player.shouldReconcile);
+
+    // Check if we need to send full player data or delta
+    boolean needsFullPlayerData =
+        System.currentTimeMillis() - lastPlayerDataSent >= PLAYER_DATA_FULL_SEND_INTERVAL;
+
+    if (needsFullPlayerData) {
+      // Send full player data
+      packet.setPlayerDataDelta(player.data);
+      lastPlayerDataSent = System.currentTimeMillis();
+    } else {
+      // Send delta - only include newly discovered entities
+      PlayerData.Builder deltaBuilder = PlayerData.newBuilder();
+
+      // Add only newly discovered entities (entities not in sentEntityNames)
+      for (String entityName : player.data.getKnownEntitiesList()) {
+        if (!player.sentEntityNames.contains(entityName)) {
+          deltaBuilder.addKnownEntities(entityName);
+        }
+      }
+
+      for (String entityName : player.data.getSeenEntitiesList()) {
+        if (!player.sentEntityNames.contains(entityName)) {
+          deltaBuilder.addSeenEntities(entityName);
+        }
+      }
+
+      // Only send delta if there's something new to send
+      if (deltaBuilder.getKnownEntitiesCount() > 0 || deltaBuilder.getSeenEntitiesCount() > 0) {
+        packet.setPlayerDataDelta(deltaBuilder.build());
+
+        // Mark these entities as sent
+        player.sentEntityNames.addAll(deltaBuilder.getKnownEntitiesList());
+        player.sentEntityNames.addAll(deltaBuilder.getSeenEntitiesList());
+      }
+    }
 
     player.send(packet.build().toByteArray());
 
