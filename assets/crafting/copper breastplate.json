@@ -1,0 +1,13 @@
+{
+  "item1": {
+    "mustBeHeld": false,
+    "name":"copper plate",
+    "consumed": true
+  },
+  "item2": {
+    "name":"copper plate",
+    "consumed": true
+  },
+
+  "result":"copper breastplate"
+}
