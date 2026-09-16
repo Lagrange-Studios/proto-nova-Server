@@ -323,7 +323,8 @@ public class Server {
         planeManager,
         celestialObjectManager,
         gamemodeManager,
-        chatManager);
+        chatManager,
+        assetManager);
 
     Runtime.getRuntime()
         .addShutdownHook(
