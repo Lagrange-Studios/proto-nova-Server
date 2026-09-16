@@ -44,3 +44,4 @@ proto-nova.properties
 .DS_Store
 Thumbs.db
 *.log
+/keystore.jks.password
