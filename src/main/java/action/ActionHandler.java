@@ -166,7 +166,7 @@ public class ActionHandler {
       case (InteractionType.Craft_VALUE):
         if (!isInRange(playerEntity, interactingEntity) && isInMap(playerEntity, interactingEntity))
           break;
-        playerEntity = craftingManager.attemptCraftingRecipe(playerEntity, interactingEntity);
+        playerEntity = craftingManager.attemptCraftingRecipe(playerEntity, interactingEntity, player);
         break;
       case (InteractionType.Hit_VALUE):
         if (!isInRange(playerEntity, interactingEntity) && isInMap(playerEntity, interactingEntity))
