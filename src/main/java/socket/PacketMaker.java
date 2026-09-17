@@ -163,9 +163,7 @@ public class PacketMaker {
         packet.addEntities(entity);
         String entityName = entity.getName();
         if (!player.data.getSeenEntitiesList().contains(entityName)) {
-          player.data = player.data.toBuilder()
-              .addSeenEntities(entityName)
-              .build();
+          player.data = player.data.toBuilder().addSeenEntities(entityName).build();
         }
         entitiesSentThisPacket.add(entity.getId());
       }
