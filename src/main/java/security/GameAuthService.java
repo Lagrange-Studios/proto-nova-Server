@@ -8,6 +8,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import main.Console;
 import main.ServerConfig;
 
@@ -39,17 +41,21 @@ public final class GameAuthService {
 
   private final HttpClient httpClient =
       HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
-  private final String[] apiUrls;
+  private final ExecutorService validationExecutor =
+      Executors.newFixedThreadPool(
+          2,
+          runnable -> {
+            Thread thread = new Thread(runnable, "security-api-validation");
+            thread.setDaemon(true);
+            return thread;
+          });
+  private final String apiUrl;
   private final Console console;
 
   public GameAuthService(Console console) {
     this.console = console;
     ServerConfig config = ServerConfig.getInstance();
-    apiUrls =
-        new String[] {
-          normalizeBaseUrl(config.getSecurityApiUrl()),
-          normalizeBaseUrl(config.getSecurityApiFallbackUrl())
-        };
+    apiUrl = normalizeBaseUrl(config.getSecurityApiUrl());
   }
 
   public JoinResult consumeJoinTicket(String ticket, byte[] challenge, boolean continuous) {
@@ -61,36 +67,29 @@ public final class GameAuthService {
     body.addProperty("challenge", java.util.Base64.getEncoder().encodeToString(challenge));
     body.addProperty("continuous", continuous);
 
-    for (String apiUrl : apiUrls) {
-      if (apiUrl == null) continue;
-      try {
-        HttpResponse<String> response = post(apiUrl + "/game/join-tickets/consume", body);
-        if (response.statusCode() >= 500) {
-          logApiFailure("join-ticket consumption", apiUrl, response);
-          continue;
-        }
-        if (response.statusCode() != 200) {
-          logApiFailure("join-ticket consumption", apiUrl, response);
-          return null;
-        }
-        JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
-        String username = json.get("username").getAsString();
-        String sessionKey = continuous ? json.get("sessionKey").getAsString() : null;
-        if (username.isBlank() || (continuous && (sessionKey == null || sessionKey.isBlank()))) {
-          console.print(
-              "WARNING: Security API returned an incomplete join-ticket response from " + apiUrl);
-          return null;
-        }
-        return new JoinResult(username, sessionKey);
-      } catch (Exception error) {
-        logApiException("join-ticket consumption", apiUrl, error);
+    try {
+      HttpResponse<String> response = post(apiUrl + "/game/join-tickets/consume", body);
+      if (response.statusCode() != 200) {
+        logApiFailure("join-ticket consumption", apiUrl, response);
+        return null;
       }
+      JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
+      String username = json.get("username").getAsString();
+      String sessionKey = continuous ? json.get("sessionKey").getAsString() : null;
+      if (username.isBlank() || (continuous && (sessionKey == null || sessionKey.isBlank()))) {
+        console.print(
+            "WARNING: Security API returned an incomplete join-ticket response from " + apiUrl);
+        return null;
+      }
+      return new JoinResult(username, sessionKey);
+    } catch (Exception error) {
+      logApiException("join-ticket consumption", apiUrl, error);
     }
     return null;
   }
 
   public CompletableFuture<ValidationStatus> validateSessionAsync(String sessionKey) {
-    return CompletableFuture.supplyAsync(() -> validateSession(sessionKey));
+    return CompletableFuture.supplyAsync(() -> validateSession(sessionKey), validationExecutor);
   }
 
   private ValidationStatus validateSession(String sessionKey) {
@@ -98,29 +97,33 @@ public final class GameAuthService {
     JsonObject body = new JsonObject();
     body.addProperty("sessionKey", sessionKey);
 
-    boolean reachedApi = false;
-    for (String apiUrl : apiUrls) {
-      if (apiUrl == null) continue;
-      try {
-        HttpResponse<String> response = post(apiUrl + "/game/sessions/validate", body);
-        if (response.statusCode() >= 500) {
-          logApiFailure("session validation", apiUrl, response);
-          continue;
-        }
-        reachedApi = true;
-        if (response.statusCode() != 200) {
-          logApiFailure("session validation", apiUrl, response);
-          return ValidationStatus.REJECTED;
-        }
-        JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
-        return json.has("valid") && json.get("valid").getAsBoolean()
-            ? ValidationStatus.VALID
-            : ValidationStatus.REJECTED;
-      } catch (Exception error) {
-        logApiException("session validation", apiUrl, error);
+    try {
+      HttpResponse<String> response = post(apiUrl + "/game/sessions/validate", body);
+      if (isUnavailableStatus(response.statusCode())) {
+        logApiFailure("session validation", apiUrl, response);
+        return ValidationStatus.UNAVAILABLE;
       }
+      if (response.statusCode() != 200) {
+        logApiFailure("session validation", apiUrl, response);
+        return ValidationStatus.REJECTED;
+      }
+      JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
+      return json.has("valid") && json.get("valid").getAsBoolean()
+          ? ValidationStatus.VALID
+          : ValidationStatus.REJECTED;
+    } catch (Exception error) {
+      logApiException("session validation", apiUrl, error);
+      return ValidationStatus.UNAVAILABLE;
     }
-    return reachedApi ? ValidationStatus.REJECTED : ValidationStatus.UNAVAILABLE;
+  }
+
+  private static boolean isUnavailableStatus(int statusCode) {
+    return statusCode >= 500
+        || statusCode == 404
+        || statusCode == 408
+        || statusCode == 409
+        || statusCode == 425
+        || statusCode == 429;
   }
 
   private void logApiFailure(String operation, String apiUrl, HttpResponse<String> response) {
@@ -161,6 +164,7 @@ public final class GameAuthService {
         HttpRequest.newBuilder()
             .uri(URI.create(url))
             .timeout(Duration.ofSeconds(7))
+            .header("Accept", "application/json")
             .header("Content-Type", "application/json")
             .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
             .build();
@@ -168,7 +172,9 @@ public final class GameAuthService {
   }
 
   private static String normalizeBaseUrl(String value) {
-    if (value == null || value.isBlank()) return null;
+    if (value == null || value.isBlank()) {
+      throw new IllegalArgumentException("A security API URL is required.");
+    }
     String normalized = value.endsWith("/") ? value.substring(0, value.length() - 1) : value;
     URI uri = URI.create(normalized);
     boolean local =

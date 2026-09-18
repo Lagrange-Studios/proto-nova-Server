@@ -1,7 +1,10 @@
 package main;
 
+import logging.AppLog;
+
 public class Main {
   public static void main(String[] args) {
+    AppLog.initialize("server");
     boolean headless = java.awt.GraphicsEnvironment.isHeadless();
     for (String arg : args) {
       if (arg.equals("-headless") || arg.equals("--headless") || arg.equals("--nogui"))
