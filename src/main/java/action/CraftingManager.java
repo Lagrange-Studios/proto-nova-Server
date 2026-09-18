@@ -11,6 +11,7 @@ import protonova.protobuf.CraftingRecipeProto.CraftingRecipe;
 import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.TileProto.Tile;
 import protonova.protobuf.VectorProto.Vector;
+import socket.Player;
 
 public class CraftingManager {
   private HashMap<String, CraftingRecipe> itemsToRecipes;
@@ -31,7 +32,6 @@ public class CraftingManager {
     this.assetManager = assetManager;
     this.planeManager = planeManager;
 
-    // make the recipes accesible based on crafting components
     loadRecipes(loadedRecipes);
   }
 
@@ -47,12 +47,11 @@ public class CraftingManager {
     return getRecipe(entity1.getName(), entity2.getName());
   }
 
-  /**
-   * Attempts to craft based on a entitys selected item and another entity
-   *
-   * @return returns the updated form of the crafting entity
-   */
   public Entity attemptCraftingRecipe(Entity craftingEntity, Entity component) {
+    return attemptCraftingRecipe(craftingEntity, component, null);
+  }
+
+  public Entity attemptCraftingRecipe(Entity craftingEntity, Entity component, Player player) {
 
     String selectedSlot = craftingEntity.getSelectedSlot();
     if (!craftingEntity.getInventorySlotsMap().containsKey(selectedSlot)) return craftingEntity;
@@ -60,7 +59,6 @@ public class CraftingManager {
     Entity heldComponent =
         entityManager.getEntity(craftingEntity.getInventorySlotsMap().get(selectedSlot));
 
-    // null check
     if (heldComponent != null && component != null) {
       CraftingRecipe recipe = getrecipe(heldComponent, component);
 
@@ -70,17 +68,18 @@ public class CraftingManager {
           && checkComponent(heldComponent, recipe.getItem1())
           && checkComponent(component, recipe.getItem2())) {
 
-        if (recipe.getTileResult()) {
-          // tile result
+        if (player != null && player.data != null) {
+          String resultName = recipe.getResult();
+          if (!player.data.getKnownEntitiesList().contains(resultName)) {
+            player.data = player.data.toBuilder().addKnownEntities(resultName).build();
+          }
+        }
 
+        if (recipe.getTileResult()) {
           Tile tile = planeManager.getTileAt(component);
           tile = tile.toBuilder().setSurfaceTexture(recipe.getResult()).build();
           planeManager.updateTile(tile, component.getMap());
         } else {
-          // entity result
-
-          // WARNING: this could be a possible dupe glitch in the future but also maybe not since we
-          // track entity ids
           Entity result = assetManager.getEntity(recipe.getResult(), component.getMap());
 
           if (result.getAnchored()) {
@@ -94,7 +93,6 @@ public class CraftingManager {
             result = result.toBuilder().setPosition(position).build();
           } else result = result.toBuilder().setPosition(component.getPosition()).build();
 
-          // checking for multiple amount result
           if (recipe.hasAmountResult())
             result = result.toBuilder().setAmount(recipe.getAmountResult()).build();
 
@@ -136,8 +134,6 @@ public class CraftingManager {
     for (CraftingRecipe recipe : loadedRecipes) {
       attemptToAddRecipe(recipe.getItem1().getName() + recipe.getItem2().getName(), recipe);
 
-      // only add the other variation of recipe if its not forced to be held and theres different
-      // ingredients
       if (!recipe.getItem1MustBeHeld()
           && !recipe.getItem1().getName().equals(recipe.getItem2().getName())) {
         attemptToAddRecipe(recipe.getItem2().getName() + recipe.getItem1().getName(), recipe);
@@ -145,7 +141,6 @@ public class CraftingManager {
     }
   }
 
-  /** Checks the recipe list to see if there is another recipe with this value */
   private void attemptToAddRecipe(String key, CraftingRecipe value) {
 
     if (itemsToRecipes.containsKey(key)) {

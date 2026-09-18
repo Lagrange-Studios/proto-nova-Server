@@ -24,7 +24,6 @@ public class ServerConfig {
   private int gameSocketSlowClientTimeoutSeconds;
   private int securityLevel;
   private String securityApiUrl;
-  private String securityApiFallbackUrl;
   private int securityLevel3RecheckSeconds;
   private int securityLevel3ApiGraceSeconds;
   private boolean statusHttpEnabled;
@@ -97,7 +96,6 @@ public class ServerConfig {
             + "# Player authentication/security level: 1, 2, or 3.\n"
             + "security.level=1\n"
             + "security.api.url=https://api.proto-nova.net/api\n"
-            + "security.api.fallback.url=https://proto-nova-api.up.railway.app/api\n"
             + "security.level3.recheck.seconds=60\n"
             + "security.level3.api.grace.seconds=180\n\n"
             + "# HTTPS status and signed client-download listener uses game.socket.port - 1.\n"
@@ -133,9 +131,6 @@ public class ServerConfig {
     this.securityLevel = getSecurityLevelProperty();
     this.securityApiUrl =
         getStringProperty("security.api.url", "https://api.proto-nova.net/api").trim();
-    this.securityApiFallbackUrl =
-        getStringProperty("security.api.fallback.url", "https://proto-nova-api.up.railway.app/api")
-            .trim();
     this.securityLevel3RecheckSeconds =
         getBoundedPositiveIntProperty("security.level3.recheck.seconds", 60, 3_600);
     this.securityLevel3ApiGraceSeconds =
@@ -318,10 +313,6 @@ public class ServerConfig {
 
   public String getSecurityApiUrl() {
     return securityApiUrl;
-  }
-
-  public String getSecurityApiFallbackUrl() {
-    return securityApiFallbackUrl;
   }
 
   public int getSecurityLevel3RecheckSeconds() {

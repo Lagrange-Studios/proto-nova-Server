@@ -86,12 +86,9 @@ public class Player {
   public final Set<Integer> deleteList = ConcurrentHashMap.newKeySet();
   public final ArrayList<String> messageList = new ArrayList<>();
 
-  // Track which entities have been sent to avoid resending
-  public final Set<String> sentEntityNames = new HashSet<>();
-  // Track when player data was last sent
-  private long lastPlayerDataSent = 0;
-  // Delta transmission interval (send full data every 5 minutes, otherwise send deltas)
-  private static final long PLAYER_DATA_FULL_SEND_INTERVAL = 5 * 60 * 1000; // 5 minutes
+  final Set<String> sentSeenEntityNames = new HashSet<>();
+  final Set<String> sentKnownEntityNames = new HashSet<>();
+  long lastPlayerDataSent = 0;
 
   public Player(
       Socket socket,

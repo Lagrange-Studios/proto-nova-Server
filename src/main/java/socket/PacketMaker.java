@@ -43,9 +43,6 @@ public class PacketMaker {
   // Delta transmission support
   private static final long PLAYER_DATA_FULL_SEND_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
-  // Track when player data was last sent to determine if we need full transmission
-  private long lastPlayerDataSent = 0;
-
   public PacketMaker(
       ServerSocketHandler serverSocket,
       ServerLoader serverLoader,
@@ -163,9 +160,7 @@ public class PacketMaker {
         packet.addEntities(entity);
         String entityName = entity.getName();
         if (!player.data.getSeenEntitiesList().contains(entityName)) {
-          player.data = player.data.toBuilder()
-              .addSeenEntities(entityName)
-              .build();
+          player.data = player.data.toBuilder().addSeenEntities(entityName).build();
         }
         entitiesSentThisPacket.add(entity.getId());
       }
@@ -219,26 +214,30 @@ public class PacketMaker {
     packet.setReconcile(player.shouldReconcile);
 
     // Check if we need to send full player data or delta
+    long now = System.currentTimeMillis();
     boolean needsFullPlayerData =
-        System.currentTimeMillis() - lastPlayerDataSent >= PLAYER_DATA_FULL_SEND_INTERVAL;
+        player.lastPlayerDataSent == 0
+            || now - player.lastPlayerDataSent >= PLAYER_DATA_FULL_SEND_INTERVAL;
 
     if (needsFullPlayerData) {
-      // Send full player data
       packet.setPlayerDataDelta(player.data);
-      lastPlayerDataSent = System.currentTimeMillis();
+      player.lastPlayerDataSent = now;
+      player.sentKnownEntityNames.clear();
+      player.sentKnownEntityNames.addAll(player.data.getKnownEntitiesList());
+      player.sentSeenEntityNames.clear();
+      player.sentSeenEntityNames.addAll(player.data.getSeenEntitiesList());
     } else {
       // Send delta - only include newly discovered entities
       PlayerData.Builder deltaBuilder = PlayerData.newBuilder();
 
-      // Add only newly discovered entities (entities not in sentEntityNames)
       for (String entityName : player.data.getKnownEntitiesList()) {
-        if (!player.sentEntityNames.contains(entityName)) {
+        if (!player.sentKnownEntityNames.contains(entityName)) {
           deltaBuilder.addKnownEntities(entityName);
         }
       }
 
       for (String entityName : player.data.getSeenEntitiesList()) {
-        if (!player.sentEntityNames.contains(entityName)) {
+        if (!player.sentSeenEntityNames.contains(entityName)) {
           deltaBuilder.addSeenEntities(entityName);
         }
       }
@@ -248,8 +247,8 @@ public class PacketMaker {
         packet.setPlayerDataDelta(deltaBuilder.build());
 
         // Mark these entities as sent
-        player.sentEntityNames.addAll(deltaBuilder.getKnownEntitiesList());
-        player.sentEntityNames.addAll(deltaBuilder.getSeenEntitiesList());
+        player.sentKnownEntityNames.addAll(deltaBuilder.getKnownEntitiesList());
+        player.sentSeenEntityNames.addAll(deltaBuilder.getSeenEntitiesList());
       }
     }
 

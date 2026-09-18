@@ -60,13 +60,15 @@ public class ActionHandler {
     Entity interactingEntity = entityManager.getEntity(action.getInteractingEntityId());
 
     switch (action.getInteractionType().getNumber()) {
-      case (InteractionType.PickUp_VALUE):
+      case (InteractionType.PickUp_VALUE): {
         if (interactingEntity == null) {
           console.print("Warning: Null interaction entity");
           break;
         }
         if (!interactingEntity.getIsItem() || !isInRange(playerEntity, interactingEntity)) break;
 
+        boolean pickedUp = false;
+        String pickedUpItemName = interactingEntity.getName();
         if (playerEntity.getInventorySlotsMap().containsKey(playerEntity.getSelectedSlot())) {
           Entity heldItem =
               entityManager.getEntity(
@@ -77,6 +79,7 @@ public class ActionHandler {
           if (interactingEntity.getName().equals(heldItem.getName())
               && heldItem.getStackable()
               && interactingEntity.getId() != heldItem.getId()) {
+            int originalHeldAmount = heldItem.getAmount();
             int newAmount = heldItem.getAmount() + interactingEntity.getAmount(); // for held item
             int leftOver = newAmount - 30; // for interacting entity
             newAmount = Math.min(newAmount, 30);
@@ -91,6 +94,7 @@ public class ActionHandler {
             heldItem = heldItem.toBuilder().setAmount(newAmount).clearVelocity().build();
 
             entityManager.updateEntity(heldItem);
+            pickedUp = newAmount > originalHeldAmount;
           }
         } else {
           // Normal pickup
@@ -102,9 +106,15 @@ public class ActionHandler {
               playerEntity.toBuilder()
                   .putInventorySlots(playerEntity.getSelectedSlot(), interactingEntity.getId())
                   .build();
+          pickedUp = true;
+        }
+
+        if (pickedUp) {
+          markEntityKnown(player, pickedUpItemName);
         }
 
         break;
+      }
 
       case (InteractionType.Drop_VALUE):
         if (!playerEntity.getInventorySlotsMap().containsKey(playerEntity.getSelectedSlot())) break;
@@ -166,7 +176,8 @@ public class ActionHandler {
       case (InteractionType.Craft_VALUE):
         if (!isInRange(playerEntity, interactingEntity) && isInMap(playerEntity, interactingEntity))
           break;
-        playerEntity = craftingManager.attemptCraftingRecipe(playerEntity, interactingEntity);
+        playerEntity =
+            craftingManager.attemptCraftingRecipe(playerEntity, interactingEntity, player);
         break;
       case (InteractionType.Hit_VALUE):
         if (!isInRange(playerEntity, interactingEntity) && isInMap(playerEntity, interactingEntity))
@@ -280,6 +291,17 @@ public class ActionHandler {
     if (player == null || target == null) return false;
     double reach = player.getReach() > 0 ? player.getReach() : 1.5;
     return VectorMath.distanceSquared(player.getPosition(), target.getPosition()) <= reach * reach;
+  }
+
+  private static void markEntityKnown(Player player, String entityName) {
+    if (player == null
+        || player.data == null
+        || entityName == null
+        || entityName.isBlank()
+        || player.data.getKnownEntitiesList().contains(entityName)) {
+      return;
+    }
+    player.data = player.data.toBuilder().addKnownEntities(entityName).build();
   }
 
   private static boolean isInMap(Entity player, Entity target) {

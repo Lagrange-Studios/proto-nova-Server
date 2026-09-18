@@ -1,15 +1,13 @@
 package health;
 
+import character.CharacterConstants;
 import diagnostics.ResourceDiagnostics;
 import entity.EntityManager;
-
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
-import character.CharacterConstants;
 import protonova.protobuf.DamageProto.Damage;
 import protonova.protobuf.DamageProto.DamageMultiplier;
 import protonova.protobuf.DamageProto.HitDamage;
@@ -140,18 +138,19 @@ public class CombatManager {
     }
 
     defender = entityManager.getEntity(defender.getId());
-    
+
     // get the total multiplier based on all gear
     ArrayList<Entity> gear = new ArrayList<>();
-    
+
     for (String slot : CharacterConstants.CLOTHING_SLOTS) {
-    	if (defender.containsInventorySlots(slot)) {
-    		gear.add(entityManager.getEntity(defender.getInventorySlotsMap().get(slot)));
-    	}
+      if (defender.containsInventorySlots(slot)) {
+        gear.add(entityManager.getEntity(defender.getInventorySlotsMap().get(slot)));
+      }
     }
-    
-    DamageMultiplier damageMultipliers = DamageMultiplierUtil.getTotalDamageMultiplier(defender, gear);
-    
+
+    DamageMultiplier damageMultipliers =
+        DamageMultiplierUtil.getTotalDamageMultiplier(defender, gear);
+
     Damage currentDefenderDamage = defender.getDamage();
     Entity.Builder defenderBuilder = defender.toBuilder();
 
