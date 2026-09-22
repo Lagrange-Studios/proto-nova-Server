@@ -221,7 +221,8 @@ public class Server {
             healthManager,
             chemicalManager,
             chemicalDigestionManager,
-            chatManager);
+            chatManager,
+            celestialObjectManager);
     entityManager.setClasses(chunkManager, tagHandler, entityFinder, pathfindingHandler);
     consumptionManager = new ConsumptionManager(chemicalManager, entityManager);
 

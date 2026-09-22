@@ -1,0 +1,6 @@
+{
+	"name": "flint",
+	"tiles": ["stone"],
+	"tileDensity": 500,
+	"grid": false
+}
