@@ -260,7 +260,9 @@ public class PacketMaker {
     // clear only the entities updates and deletes we cloned since its linked values
     deleteLikeValues(deleteList, player.deleteList);
     deleteLikeValues(updateList, player.updateList);
-    deleteLikeValues(messages, player.messageList);
+    for (String message : messages) {
+      player.messageList.remove(message);
+    }
   }
 
   private void updateInventory(
@@ -285,12 +287,6 @@ public class PacketMaker {
   private void deleteLikeValues(HashSet<?> set1, Set<?> set2) {
     for (Object value : set1) {
       set2.remove(value);
-    }
-  }
-
-  private void deleteLikeValues(ArrayList<?> list1, ArrayList<?> list2) {
-    for (Object value : list1) {
-      list2.remove(value);
     }
   }
 }

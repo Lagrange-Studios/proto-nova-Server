@@ -13,12 +13,13 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.security.SecureRandom;
-import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.net.ssl.SSLSocket;
 import main.Console;
@@ -49,6 +50,7 @@ public class Player {
   // sustained packet flood.
   private static final int MAX_PACKETS_PER_SECOND = 120;
   private static final long CHAT_INTERVAL_NANOS = 250_000_000L;
+  private static final int MAX_CHAT_TOKENS = 4;
   private static final long INTERACTION_INTERVAL_NANOS = 20_000_000L;
   private static final int OUTBOUND_QUEUE_CAPACITY =
       Math.max(
@@ -72,7 +74,8 @@ public class Player {
       new ArrayBlockingQueue<>(OUTBOUND_QUEUE_CAPACITY);
   private long packetWindowStarted = System.nanoTime();
   private int packetsInWindow;
-  private long lastChatMessage;
+  private double chatTokens = MAX_CHAT_TOKENS;
+  private long lastChatTokenUpdate = System.nanoTime();
   private long lastInteraction;
   private final GameAuthService gameAuthService;
   private byte[] securityChallenge;
@@ -84,7 +87,7 @@ public class Player {
   public final HashSet<Integer> entitiesSent = new HashSet<>();
   public final Set<Integer> updateList = ConcurrentHashMap.newKeySet();
   public final Set<Integer> deleteList = ConcurrentHashMap.newKeySet();
-  public final ArrayList<String> messageList = new ArrayList<>();
+  public final Queue<String> messageList = new ConcurrentLinkedQueue<>();
 
   final Set<String> sentSeenEntityNames = new HashSet<>();
   final Set<String> sentKnownEntityNames = new HashSet<>();
@@ -305,8 +308,13 @@ public class Player {
 
   public boolean allowChatMessage() {
     long now = System.nanoTime();
-    if (now - lastChatMessage < CHAT_INTERVAL_NANOS) return false;
-    lastChatMessage = now;
+    chatTokens =
+        Math.min(
+            MAX_CHAT_TOKENS,
+            chatTokens + (now - lastChatTokenUpdate) / (double) CHAT_INTERVAL_NANOS);
+    lastChatTokenUpdate = now;
+    if (chatTokens < 1) return false;
+    chatTokens--;
     return true;
   }
 

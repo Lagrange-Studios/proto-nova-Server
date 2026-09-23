@@ -4,7 +4,9 @@ import entity.ChunkManager;
 import entity.EntityManager;
 import file.ServerLoader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
@@ -20,7 +22,7 @@ public class SoundManager {
   private final ConcurrentLinkedQueue<Audio> soundQueue = new ConcurrentLinkedQueue<>();
   private final ArrayList<Audio> sounds = new ArrayList<>();
   private final AtomicLong nextSoundId = new AtomicLong(1);
-  private final Set<Integer> movingPlayers = new HashSet<>();
+  private final Map<Integer, Integer> movingPlayers = new HashMap<>();
   private final Console console;
   private ChunkManager chunkManager;
 
@@ -47,21 +49,36 @@ public class SoundManager {
       boolean moving =
           Math.abs(entity.getVelocity().getX()) > 0.01f
               || Math.abs(entity.getVelocity().getY()) > 0.01f;
-      if (moving && movingPlayers.add(entity.getId())) {
+      Integer previousMap = movingPlayers.get(entity.getId());
+      if (moving && previousMap == null) {
         emit(
             AudioBuilder.createLoopingSoundEffectAtEntity(
                     "walking", entity.getId(), entity.getMap(), 0.7f)
                 .toBuilder()
                 .setOriginEntityID(entity.getId())
                 .build());
-      } else if (!moving && movingPlayers.remove(entity.getId())) {
+        movingPlayers.put(entity.getId(), entity.getMap());
+      } else if (moving && previousMap != entity.getMap()) {
         emit(
-            AudioBuilder.stopLoop("walking", entity.getId(), entity.getMap()).toBuilder()
+            AudioBuilder.stopLoop("walking", entity.getId(), previousMap).toBuilder()
+                .setOriginEntityID(entity.getId())
+                .build());
+        emit(
+            AudioBuilder.createLoopingSoundEffectAtEntity(
+                    "walking", entity.getId(), entity.getMap(), 0.7f)
+                .toBuilder()
+                .setOriginEntityID(entity.getId())
+                .build());
+        movingPlayers.put(entity.getId(), entity.getMap());
+      } else if (!moving && previousMap != null) {
+        movingPlayers.remove(entity.getId());
+        emit(
+            AudioBuilder.stopLoop("walking", entity.getId(), previousMap).toBuilder()
                 .setOriginEntityID(entity.getId())
                 .build());
       }
     }
-    movingPlayers.retainAll(connectedPlayers);
+    movingPlayers.keySet().retainAll(connectedPlayers);
   }
 
   public void processSoundMessagesToSend() {

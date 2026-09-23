@@ -5,6 +5,7 @@ import file.ServerLoader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicLong;
 import main.Console;
 import main.Server;
 import protonova.protobuf.ChatProto.ChatMessage;
@@ -19,7 +20,7 @@ public class ChatManager {
   private ChunkManager chunkManager;
   private Console console;
   private Server server;
-  private long chatID = 0;
+  private final AtomicLong chatID = new AtomicLong();
   private final long CHAT_LIFETIME_MS = 100000; // 100 seconds in milliseconds
   private ArrayList<Player> playerList;
 
@@ -35,8 +36,7 @@ public class ChatManager {
   }
 
   public void addChatToQueue(ChatMessage message) {
-    message = message.toBuilder().setChatID(chatID).build();
-    chatID++;
+    message = message.toBuilder().setChatID(chatID.getAndIncrement()).build();
     chatQueue.add(message);
   }
 

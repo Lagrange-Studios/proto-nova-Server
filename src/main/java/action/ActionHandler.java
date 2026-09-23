@@ -60,61 +60,62 @@ public class ActionHandler {
     Entity interactingEntity = entityManager.getEntity(action.getInteractingEntityId());
 
     switch (action.getInteractionType().getNumber()) {
-      case (InteractionType.PickUp_VALUE): {
-        if (interactingEntity == null) {
-          console.print("Warning: Null interaction entity");
+      case (InteractionType.PickUp_VALUE):
+        {
+          if (interactingEntity == null) {
+            console.print("Warning: Null interaction entity");
+            break;
+          }
+          if (!interactingEntity.getIsItem() || !isInRange(playerEntity, interactingEntity)) break;
+
+          boolean pickedUp = false;
+          String pickedUpItemName = interactingEntity.getName();
+          if (playerEntity.getInventorySlotsMap().containsKey(playerEntity.getSelectedSlot())) {
+            Entity heldItem =
+                entityManager.getEntity(
+                    playerEntity.getInventorySlotsMap().get(playerEntity.getSelectedSlot()));
+            if (heldItem == null) break;
+
+            // check for same item and stacking
+            if (interactingEntity.getName().equals(heldItem.getName())
+                && heldItem.getStackable()
+                && interactingEntity.getId() != heldItem.getId()) {
+              int originalHeldAmount = heldItem.getAmount();
+              int newAmount = heldItem.getAmount() + interactingEntity.getAmount(); // for held item
+              int leftOver = newAmount - 30; // for interacting entity
+              newAmount = Math.min(newAmount, 30);
+
+              if (leftOver < 1) {
+                entityManager.removeEntity(interactingEntity);
+              } else {
+                interactingEntity = interactingEntity.toBuilder().setAmount(leftOver).build();
+                entityManager.updateEntity(interactingEntity);
+              }
+
+              heldItem = heldItem.toBuilder().setAmount(newAmount).clearVelocity().build();
+
+              entityManager.updateEntity(heldItem);
+              pickedUp = newAmount > originalHeldAmount;
+            }
+          } else {
+            // Normal pickup
+            interactingEntity = interactingEntity.toBuilder().setMap(0).clearVelocity().build();
+
+            entityManager.updateEntity(interactingEntity);
+
+            playerEntity =
+                playerEntity.toBuilder()
+                    .putInventorySlots(playerEntity.getSelectedSlot(), interactingEntity.getId())
+                    .build();
+            pickedUp = true;
+          }
+
+          if (pickedUp) {
+            markEntityKnown(player, pickedUpItemName);
+          }
+
           break;
         }
-        if (!interactingEntity.getIsItem() || !isInRange(playerEntity, interactingEntity)) break;
-
-        boolean pickedUp = false;
-        String pickedUpItemName = interactingEntity.getName();
-        if (playerEntity.getInventorySlotsMap().containsKey(playerEntity.getSelectedSlot())) {
-          Entity heldItem =
-              entityManager.getEntity(
-                  playerEntity.getInventorySlotsMap().get(playerEntity.getSelectedSlot()));
-          if (heldItem == null) break;
-
-          // check for same item and stacking
-          if (interactingEntity.getName().equals(heldItem.getName())
-              && heldItem.getStackable()
-              && interactingEntity.getId() != heldItem.getId()) {
-            int originalHeldAmount = heldItem.getAmount();
-            int newAmount = heldItem.getAmount() + interactingEntity.getAmount(); // for held item
-            int leftOver = newAmount - 30; // for interacting entity
-            newAmount = Math.min(newAmount, 30);
-
-            if (leftOver < 1) {
-              entityManager.removeEntity(interactingEntity);
-            } else {
-              interactingEntity = interactingEntity.toBuilder().setAmount(leftOver).build();
-              entityManager.updateEntity(interactingEntity);
-            }
-
-            heldItem = heldItem.toBuilder().setAmount(newAmount).clearVelocity().build();
-
-            entityManager.updateEntity(heldItem);
-            pickedUp = newAmount > originalHeldAmount;
-          }
-        } else {
-          // Normal pickup
-          interactingEntity = interactingEntity.toBuilder().setMap(0).clearVelocity().build();
-
-          entityManager.updateEntity(interactingEntity);
-
-          playerEntity =
-              playerEntity.toBuilder()
-                  .putInventorySlots(playerEntity.getSelectedSlot(), interactingEntity.getId())
-                  .build();
-          pickedUp = true;
-        }
-
-        if (pickedUp) {
-          markEntityKnown(player, pickedUpItemName);
-        }
-
-        break;
-      }
 
       case (InteractionType.Drop_VALUE):
         if (!playerEntity.getInventorySlotsMap().containsKey(playerEntity.getSelectedSlot())) break;

@@ -129,4 +129,3 @@ public final class AppLog {
     }
   }
 }
-
