@@ -23,6 +23,7 @@ import main.Console;
 import main.Server;
 import plane.PlaneManager;
 import protonova.protobuf.EntityProto.Entity;
+import space.CelestialObjectManager;
 
 public class TagHandler {
 
@@ -41,6 +42,7 @@ public class TagHandler {
   private ChemicalManager chemicalManager;
   private ChemicalDigestionManager chemicalDigestionManager;
   private ChatManager chatManager;
+  private CelestialObjectManager celestialObjectManager;
 
   public TagHandler(
       Server server,
@@ -53,7 +55,8 @@ public class TagHandler {
       HealthManager healthManager,
       ChemicalManager chemicalManager,
       ChemicalDigestionManager chemicalDigestionManager,
-      ChatManager chatManager) {
+      ChatManager chatManager,
+      CelestialObjectManager celestialObjectManager) {
     this.server = server;
     this.entityManager = entityManager;
     this.assetManager = assetManager;
@@ -65,6 +68,7 @@ public class TagHandler {
     this.chemicalManager = chemicalManager;
     this.chemicalDigestionManager = chemicalDigestionManager;
     this.chatManager = chatManager;
+    this.celestialObjectManager = celestialObjectManager;
     tagToClass = new ConcurrentHashMap<>();
     tagCount = new ConcurrentHashMap<>();
 
@@ -328,6 +332,10 @@ public class TagHandler {
     return chatManager;
   }
 
+  public CelestialObjectManager getCelestialObjectManager() {
+    return celestialObjectManager;
+  }
+  
   public void loadAllTagEntities() {
     for (Entity entity : entityManager.getAllEntities().values()) {
       addEntity(entity);

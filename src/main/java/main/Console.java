@@ -3,6 +3,7 @@ package main;
 import chat.ChatManager;
 import diagnostics.ResourceDiagnostics;
 import entity.EntityManager;
+import file.AssetManager;
 import file.ServerSaver;
 import gamemode.GamemodeManager;
 import generation.Generator;
@@ -33,6 +34,7 @@ public class Console {
   private GamemodeManager gamemodeManager;
   private ChatManager chatManager;
   private int headlessStatusSeconds;
+  private AssetManager assetManager;
 
   public Console(Server server) {
     this(server, true);
@@ -160,6 +162,8 @@ public class Console {
       print(" - state: shows all the players states");
       print(" - gamemode: shows current gamemode and time");
       print(" - message all players [message]: Messages all players the supplied message");
+      print(" - tp [player] [X] [Y] [PlaneId]");
+      print(" - spawnEntity ([name]) [X] [Y] [PlaneId] NOTE: be sure to put the name in parentheses");
       print("");
     } else if (input.equalsIgnoreCase("status")) {
       Runtime runtime = Runtime.getRuntime();
@@ -351,7 +355,43 @@ public class Console {
         print(argumentError.getMessage());
         return;
       }
-
+    } else if (input.startsWith("spawnEntity ")) {
+	    String args = input.substring(12);
+	
+	    String entityName;
+	    float x;
+	    float y;
+	    int p;
+	
+	    try {
+	      int index1 = args.indexOf(')');
+	      entityName = args.substring(1, index1);
+	
+	      int index2 = args.substring(index1 + 2).indexOf(' ') + index1 + 2;
+	      x = Float.valueOf(args.substring(index1 + 1, index2));
+	
+	      int index3 = args.substring(index2 + 1).indexOf(' ') + index2 + 1;
+	      y = Float.valueOf(args.substring(index2 + 1, index3));
+	
+	      p = Integer.valueOf(args.substring(index3 + 1));
+	
+	      if (!planeManager.getPlanes().containsKey(p))
+	        throw new Exception("Plane Id: " + p + " does not exist");
+	    } catch (Exception argumentError) {
+	      print(argumentError.getMessage());
+	      return;
+	    }
+	    
+	    if (assetManager.containsEntity(entityName)) {
+	    	Entity newEntity = assetManager.getEntity(entityName, p, Vector.newBuilder().setX(x).setY(y).build());
+	    	entityManager.updateEntity(newEntity);
+	    	print("New "+entityName+" spawned at x: "+x+", y: "+y+" on planeId: "+p);
+	    }
+	    else {
+	        print("Entity name: "+entityName+" not found!");
+	        return;
+	    }
+      
     } else {
       print("Unknown command. Type 'help' for options.");
       print("");
@@ -385,7 +425,8 @@ public class Console {
       PlaneManager planeManager,
       CelestialObjectManager celestialObjectManager,
       GamemodeManager gamemodeManager,
-      ChatManager chatManager) {
+      ChatManager chatManager,
+      AssetManager assetManager) {
     this.serverSaver = serverSaver;
     this.generator = generator;
     this.entityManager = entityManager;
@@ -393,6 +434,7 @@ public class Console {
     this.celestialObjectManager = celestialObjectManager;
     this.gamemodeManager = gamemodeManager;
     this.chatManager = chatManager;
+    this.assetManager = assetManager;
   }
 
   private void setGameTime(String timeType) {

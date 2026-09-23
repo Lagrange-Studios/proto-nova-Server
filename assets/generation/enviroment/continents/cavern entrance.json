@@ -1,0 +1,6 @@
+{
+	"name": "cavern entrance",
+	"tiles": ["stone"],
+	"tileDensity": 150,
+	"grid": true
+}

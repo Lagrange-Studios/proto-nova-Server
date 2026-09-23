@@ -5,6 +5,7 @@ import java.util.HashMap;
 import main.Console;
 import main.Server;
 import protonova.protobuf.CelestialObjectProto.CelestialObject;
+import protonova.protobuf.EntityProto.Entity;
 import protonova.protobuf.PlaneProto.Plane;
 
 public class CelestialObjectManager {
@@ -22,7 +23,7 @@ public class CelestialObjectManager {
     readBackMap = new HashMap<Integer, Integer>();
 
     for (CelestialObject object : celesitalObjects.values()) {
-      updateReadBack(object, object.getSurfacePlaneId());
+      updateReadBack(object);
     }
   }
 
@@ -35,7 +36,7 @@ public class CelestialObjectManager {
   }
 
   public void updateCelestialObject(int id, CelestialObject celestialObject) {
-    updateReadBack(id, celestialObject.getSurfacePlaneId());
+    updateReadBack(celestialObject);
     celesitalObjects.put(id, celestialObject);
   }
 
@@ -68,16 +69,18 @@ public class CelestialObjectManager {
   public CelestialObject getCelestialObjectFromPlane(int id) {
     return celesitalObjects.get(readBackMap.get(id));
   }
-
-  private void updateReadBack(int celestialId, int planeId) {
-    if (planeId != 0) {
-      if (readBackMap.containsKey(planeId)) readBackMap.remove(planeId);
-
-      readBackMap.put(planeId, celestialId);
-    }
+  
+  public CelestialObject getCelestialObjectFromEntity(Entity entity) {
+	  return getCelestialObjectFromPlane(entity.getMap());
   }
 
-  private void updateReadBack(CelestialObject celestialObject, int planeId) {
-    updateReadBack(celestialObject.getId(), planeId);
+  private void updateReadBack(CelestialObject celestialObject) {
+	int surface = celestialObject.getSurfacePlaneId();
+	int underground = celestialObject.getUndergroundPlaneId();
+	
+	int celestialId = celestialObject.getId();
+	  
+    if (surface != 0) readBackMap.put(surface, celestialId);
+    if (underground != 0) readBackMap.put(underground, celestialId);
   }
 }
