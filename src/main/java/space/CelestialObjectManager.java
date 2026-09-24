@@ -69,17 +69,17 @@ public class CelestialObjectManager {
   public CelestialObject getCelestialObjectFromPlane(int id) {
     return celesitalObjects.get(readBackMap.get(id));
   }
-  
+
   public CelestialObject getCelestialObjectFromEntity(Entity entity) {
-	  return getCelestialObjectFromPlane(entity.getMap());
+    return getCelestialObjectFromPlane(entity.getMap());
   }
 
   private void updateReadBack(CelestialObject celestialObject) {
-	int surface = celestialObject.getSurfacePlaneId();
-	int underground = celestialObject.getUndergroundPlaneId();
-	
-	int celestialId = celestialObject.getId();
-	  
+    int surface = celestialObject.getSurfacePlaneId();
+    int underground = celestialObject.getUndergroundPlaneId();
+
+    int celestialId = celestialObject.getId();
+
     if (surface != 0) readBackMap.put(surface, celestialId);
     if (underground != 0) readBackMap.put(underground, celestialId);
   }

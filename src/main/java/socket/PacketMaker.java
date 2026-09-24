@@ -178,8 +178,8 @@ public class PacketMaker {
           || VectorMath.distanceSquared(
                       playerEntity.getPosition(), entityManager.getEntity(id).getPosition())
                   > renderDistanceSquared
-              && !playerEntity.getInventorySlotsMap().containsValue(id) ||
-    	  entity.getMap() != 0 && entity.getMap() != playerEntity.getMap() ) {
+              && !playerEntity.getInventorySlotsMap().containsValue(id)
+          || entity.getMap() != 0 && entity.getMap() != playerEntity.getMap()) {
 
         entitiesSent.remove(id);
         packet.addRemovedEntities(id);

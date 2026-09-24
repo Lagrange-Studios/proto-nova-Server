@@ -335,7 +335,7 @@ public class TagHandler {
   public CelestialObjectManager getCelestialObjectManager() {
     return celestialObjectManager;
   }
-  
+
   public void loadAllTagEntities() {
     for (Entity entity : entityManager.getAllEntities().values()) {
       addEntity(entity);

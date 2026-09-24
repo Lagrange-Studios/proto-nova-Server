@@ -67,7 +67,8 @@ public class Generator {
     return null;
   }
 
-  public void generatePlanet(int width, String type, double rotationPeroid, boolean generateUnderground) {
+  public void generatePlanet(
+      int width, String type, double rotationPeroid, boolean generateUnderground) {
 
     Plane surface = generatePlane(type, width);
 
@@ -83,26 +84,23 @@ public class Generator {
               .build();
 
       if (generateUnderground) {
-    	  Plane underground = generatePlane("cavern", width);
-    	  
-    	  planet = planet.toBuilder()
-    			  .setUndergroundPlaneId(underground.getId())
-    			  .build();
+        Plane underground = generatePlane("cavern", width);
+
+        planet = planet.toBuilder().setUndergroundPlaneId(underground.getId()).build();
       }
-      
+
       celestialObjectManager.updateCelestialObject(planet);
 
       console.print("Planet created successfully.");
-    }
-    else {
-        console.print("Planet created unsuccessfully.");
+    } else {
+      console.print("Planet created unsuccessfully.");
     }
   }
 
   public void generatePlanet(String type, boolean generateUnderground) {
     generatePlanet(400, type, 5, generateUnderground);
   }
-  
+
   public void generatePlanet(String type) {
     generatePlanet(400, type, 5, true);
   }
