@@ -110,6 +110,7 @@ public class Fungi extends CataclysmClass {
         newSpore.toBuilder()
             .setPosition(vector)
             .putCustomData("parentSpore", DataUtil.newInt(newSpore.getId()))
+            .putCustomData("fungisPoints", DataUtil.newInt(50))
             .build();
 
     System.out.println(
