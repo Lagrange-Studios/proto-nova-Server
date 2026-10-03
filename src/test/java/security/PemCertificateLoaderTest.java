@@ -63,6 +63,36 @@ public class PemCertificateLoaderTest {
                 certificate, files.getRoot().toPath().resolve("missing.pem")));
   }
 
+  @Test
+  public void reloadsRenewedCertificateAndRetainsIdentityOnInvalidReplacement() throws Exception {
+    KeyPair pair = key("RSA");
+    Path cert = write(certificate(pair, false));
+    Path privateKey = write(pair.getPrivate());
+    var loaded = PemCertificateLoader.load(cert, privateKey);
+    var factory =
+        javax.net.ssl.KeyManagerFactory.getInstance(
+            javax.net.ssl.KeyManagerFactory.getDefaultAlgorithm());
+    factory.init(loaded.keyStore, loaded.password);
+    var manager =
+        new ReloadingKeyManager(
+            (javax.net.ssl.X509ExtendedKeyManager) factory.getKeyManagers()[0], cert, privateKey);
+    var renewed = certificate(pair, false);
+    try (var writer = new JcaPEMWriter(Files.newBufferedWriter(cert))) {
+      writer.writeObject(renewed);
+    }
+    Files.setLastModifiedTime(
+        cert, java.nio.file.attribute.FileTime.fromMillis(System.currentTimeMillis() + 2000));
+    String alias = manager.chooseServerAlias("RSA", null, null);
+    assertArrayEquals(renewed.getEncoded(), manager.getCertificateChain(alias)[0].getEncoded());
+    try (var writer = new JcaPEMWriter(Files.newBufferedWriter(cert))) {
+      writer.writeObject(certificate(key("RSA"), false));
+    }
+    Files.setLastModifiedTime(
+        cert, java.nio.file.attribute.FileTime.fromMillis(System.currentTimeMillis() + 4000));
+    alias = manager.chooseServerAlias("RSA", null, null);
+    assertArrayEquals(renewed.getEncoded(), manager.getCertificateChain(alias)[0].getEncoded());
+  }
+
   private KeyPair key(String algorithm) throws Exception {
     KeyPairGenerator generator =
         KeyPairGenerator.getInstance(

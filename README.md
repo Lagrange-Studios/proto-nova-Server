@@ -120,3 +120,13 @@ Restart the server and connect using the approved hostname. Before expiration,
 repeat the command (it preserves your private key) and submit a new request for
 admin review. The website never automatically approves renewals. Test certificates
 issued in staging are labelled and will still produce browser trust warnings.
+
+### Automatic certificate updates
+
+After the initial production certificate has issued, enable automatic updates on
+its website request and download the private enrollment JSON. Run
+`--certificate-auto-update=path/to/auto-update.json`, then start the server with its
+PEM certificate/private-key paths configured. The server checks hourly, validates
+renewals and reloads TLS for new connections. Keep the enrollment JSON and private
+key in `tls-request` across updates. Renewals are provisionally accepted for admin
+review; denial disables automation and revokes an issued automatic renewal.

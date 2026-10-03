@@ -21,6 +21,15 @@ public class Main {
       } else if (arg.equals("--init-config") || arg.equals("--check-config")) {
         initializeOrCheckConfig(arg.equals("--init-config"));
         return;
+      } else if (arg.startsWith("--certificate-auto-update=")) {
+        try {
+          security.AutomaticCertificateUpdate.enroll(
+              java.nio.file.Path.of(arg.substring("--certificate-auto-update=".length())));
+        } catch (Exception e) {
+          System.err.println("Certificate enrollment failed: " + e.getMessage());
+          System.exit(1);
+        }
+        return;
       } else if (arg.startsWith("--certificate-request=")) {
         try {
           var request =
@@ -32,7 +41,7 @@ public class Main {
               "Upload this signing request at https://proto-nova.net/certificates.html: "
                   + request.toAbsolutePath());
           System.out.println(
-              "Keep tls-request/privkey.pem private. Admin approval is required for issuance and renewal.");
+              "Keep tls-request/privkey.pem private. Initial issuance requires admin approval; optional automatic renewals await admin review.");
         } catch (Exception failure) {
           System.err.println("Certificate request failed: " + failure.getMessage());
           System.exit(1);
@@ -105,6 +114,8 @@ public class Main {
         "  --healthcheck         Check whether the local game listener is reachable");
     System.out.println(
         "  --certificate-request=HOST  Create a signing request for website admin approval");
+    System.out.println(
+        "  --certificate-auto-update=FILE  Enroll automatic certificate updates from website JSON");
     System.out.println("  --version             Print the server version");
     System.out.println("  --help                Show this help");
   }
