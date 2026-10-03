@@ -23,6 +23,18 @@ public class PemCertificateLoaderTest {
   @Rule public TemporaryFolder files = new TemporaryFolder();
 
   @Test
+  public void loadsSingleFileBundle() throws Exception {
+    KeyPair pair = key("RSA");
+    Path bundle = write(certificate(pair, false));
+    Path privateKey = write(pair.getPrivate());
+    Files.writeString(bundle, Files.readString(bundle) + Files.readString(privateKey));
+    var loaded = PemCertificateLoader.load(bundle, bundle);
+    assertEquals(
+        pair.getPublic(), loaded.keyStore.getCertificate("proto-nova-server").getPublicKey());
+    assertNotNull(loaded.keyStore.getKey("proto-nova-server", loaded.password));
+  }
+
+  @Test
   public void loadsRsaAndEcKeys() throws Exception {
     for (String algorithm : new String[] {"RSA", "EC"}) {
       KeyPair pair = key(algorithm);

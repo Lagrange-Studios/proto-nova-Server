@@ -20,7 +20,16 @@ final class PemCertificateLoader {
 
   static KeystoreManager.LoadedKeystore load(Path certificatePath, Path keyPath) throws Exception {
     Certificate[] chain;
-    try (var input = Files.newInputStream(certificatePath)) {
+    String text = Files.readString(certificatePath);
+    var blocks =
+        java.util.regex.Pattern.compile(
+                "-----BEGIN CERTIFICATE-----[\\s\\S]*?-----END CERTIFICATE-----")
+            .matcher(text);
+    StringBuilder certificates = new StringBuilder();
+    while (blocks.find()) certificates.append(blocks.group()).append('\n');
+    try (var input =
+        new java.io.ByteArrayInputStream(
+            certificates.toString().getBytes(java.nio.charset.StandardCharsets.US_ASCII))) {
       chain =
           CertificateFactory.getInstance("X.509")
               .generateCertificates(input)
@@ -31,7 +40,10 @@ final class PemCertificateLoader {
     PrivateKey key;
     try (Reader reader = Files.newBufferedReader(keyPath);
         PEMParser parser = new PEMParser(reader)) {
-      Object pem = parser.readObject();
+      Object pem;
+      do {
+        pem = parser.readObject();
+      } while (pem != null && !(pem instanceof PEMKeyPair) && !(pem instanceof PrivateKeyInfo));
       JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
       if (pem instanceof PEMKeyPair pair) key = converter.getPrivateKey(pair.getPrivateKeyInfo());
       else if (pem instanceof PrivateKeyInfo info) key = converter.getPrivateKey(info);
