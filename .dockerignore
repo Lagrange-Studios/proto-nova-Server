@@ -1,0 +1,8 @@
+**
+!Dockerfile
+!docker-entrypoint.sh
+!build/
+!build/libs/
+!build/libs/proto-nova-Server-*.jar
+!assets/
+!assets/**

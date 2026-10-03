@@ -133,3 +133,11 @@ review; denial disables automation and revokes an issued automatic renewal.
 
 ### Website HTTPS download
 Choose an approved managed server on the Certificates page and request HTTPS without a CSR upload. After admin approval, download `server-https.pem` into `tls-request/` and restart an updated server. With the TLS path settings empty, the server detects this file, validates the key and certificate, and stores a private `server-https-key.pem` for automatic renewals. Keep both files private. Existing explicit TLS paths continue to take precedence. The certificate covers the assigned DNS name; IP changes require a new approved request. Copying the file to another machine cannot be prevented cryptographically.
+
+### Docker HTTPS persistence
+The source Docker image uses non-root UID 10001 and `/var/lib/proto-nova` as its persistent volume.
+Mount a named volume there and publish ports 7675 and 7674 (or your configured pair).
+For website HTTPS, mount a host folder containing `server-https.pem` and optional `auto-update.json`
+read-only at `/etc/proto-nova/tls-request`; the entrypoint imports changed downloads into persistent
+`tls-request` state. Keep the TLS path settings empty for automatic discovery. Retain the same volume
+when recreating/updating containers. The Docker package provides Compose and management scripts.
