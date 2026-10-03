@@ -21,6 +21,23 @@ public class Main {
       } else if (arg.equals("--init-config") || arg.equals("--check-config")) {
         initializeOrCheckConfig(arg.equals("--init-config"));
         return;
+      } else if (arg.startsWith("--certificate-request=")) {
+        try {
+          var request =
+              security.CertificateRequestTool.create(
+                  arg.substring("--certificate-request=".length()),
+                  java.nio.file.Path.of(
+                      System.getProperty("protonova.tlsRequestDir", "tls-request")));
+          System.out.println(
+              "Upload this signing request at https://proto-nova.net/certificates.html: "
+                  + request.toAbsolutePath());
+          System.out.println(
+              "Keep tls-request/privkey.pem private. Admin approval is required for issuance and renewal.");
+        } catch (Exception failure) {
+          System.err.println("Certificate request failed: " + failure.getMessage());
+          System.exit(1);
+        }
+        return;
       } else if (arg.equals("--healthcheck")) {
         runHealthCheck();
         return;
@@ -86,6 +103,8 @@ public class Main {
     System.out.println("  --check-config        Load and validate the configuration, then exit");
     System.out.println(
         "  --healthcheck         Check whether the local game listener is reachable");
+    System.out.println(
+        "  --certificate-request=HOST  Create a signing request for website admin approval");
     System.out.println("  --version             Print the server version");
     System.out.println("  --help                Show this help");
   }

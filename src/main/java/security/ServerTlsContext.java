@@ -4,12 +4,18 @@ import java.security.SecureRandom;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 
-/** Creates the TLS context used only by the game server socket. */
+/** Creates TLS contexts for the game and HTTPS listeners. */
 public final class ServerTlsContext {
   private ServerTlsContext() {}
 
   public static SSLContext create() throws Exception {
-    KeystoreManager.LoadedKeystore loaded = KeystoreManager.loadOrCreate();
+    main.ServerConfig config = main.ServerConfig.getInstance();
+    KeystoreManager.LoadedKeystore loaded =
+        config.getTlsCertificatePath().isEmpty()
+            ? KeystoreManager.loadOrCreate()
+            : PemCertificateLoader.load(
+                java.nio.file.Path.of(config.getTlsCertificatePath()),
+                java.nio.file.Path.of(config.getTlsPrivateKeyPath()));
     KeyManagerFactory keyManagers =
         KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
     keyManagers.init(loaded.keyStore, loaded.password);

@@ -45,3 +45,5 @@ proto-nova.properties
 Thumbs.db
 *.log
 /keystore.jks.password
+
+/tls-request/

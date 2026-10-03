@@ -39,6 +39,8 @@ public class ServerConfig {
   private int workerThreadLimit;
   private boolean cataclysmEnabled;
   private int headlessStatusIntervalSeconds;
+  private String tlsCertificatePath;
+  private String tlsPrivateKeyPath;
   private String keystorePath;
   private String legacyKeystorePassword;
   private int keystoreValidityDays;
@@ -114,6 +116,9 @@ public class ServerConfig {
             + "server.worker.thread.limit=32\n"
             + "headless.status.interval.seconds=60\n\n"
             + "# The server creates and protects its TLS keystore automatically.\n"
+            + "# Optional CA-issued PEM full chain and unencrypted private key. Restart after renewal.\n"
+            + "tls.certificate.path=\n"
+            + "tls.private.key.path=\n"
             + "keystore.path=keystore.jks\n"
             + "keystore.validity.days=365\n";
     Files.writeString(CONFIG_FILE, defaults, StandardCharsets.UTF_8);
@@ -166,6 +171,11 @@ public class ServerConfig {
     this.cataclysmEnabled = getBooleanProperty("game.cataclysm.enabled", true);
     this.headlessStatusIntervalSeconds =
         getBoundedPositiveIntProperty("headless.status.interval.seconds", 60, 3_600);
+    this.tlsCertificatePath = getStringProperty("tls.certificate.path", "").trim();
+    this.tlsPrivateKeyPath = getStringProperty("tls.private.key.path", "").trim();
+    if (tlsCertificatePath.isEmpty() != tlsPrivateKeyPath.isEmpty()) {
+      throw new IllegalArgumentException("Set both tls.certificate.path and tls.private.key.path.");
+    }
     this.keystorePath = getStringProperty("keystore.path", "keystore.jks");
     this.legacyKeystorePassword = getStringProperty("keystore.password", "");
     this.keystoreValidityDays = getIntProperty("keystore.validity.days", 365);
@@ -395,6 +405,14 @@ public class ServerConfig {
 
   public static Path getConfigPath() {
     return CONFIG_FILE;
+  }
+
+  public String getTlsCertificatePath() {
+    return tlsCertificatePath;
+  }
+
+  public String getTlsPrivateKeyPath() {
+    return tlsPrivateKeyPath;
   }
 
   // Path to SSL keystore file
